@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import time
@@ -6,6 +7,8 @@ import zlib
 from datetime import datetime, timezone, date, timedelta
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 URL = "https://wah4pc.echosphere.cfd"
 
@@ -820,7 +823,7 @@ def get_providers():
         return []
 
     except requests.RequestException as e:
-        print(f"[WAH4PC] Error fetching providers: {str(e)}")
+        logger.error(f"[WAH4PC] Error fetching providers: {str(e)}")
         return []
 
 

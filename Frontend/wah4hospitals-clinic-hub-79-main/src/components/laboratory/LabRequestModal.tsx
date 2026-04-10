@@ -64,8 +64,6 @@ export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClos
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log('Form data before conversion:', formData);
-
         // Find selected admission to get subject_id
         const selected = admissions.find(a => a.encounter_id === parseInt(formData.admission));
 
@@ -78,7 +76,6 @@ export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClos
             clinical_reason: formData.clinical_reason
         };
 
-        console.log('Submitting lab request:', requestData);
         onSubmit(requestData);
         onClose();
 

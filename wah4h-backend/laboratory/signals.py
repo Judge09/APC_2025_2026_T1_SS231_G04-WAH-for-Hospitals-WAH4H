@@ -1,8 +1,11 @@
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import DiagnosticReport, LabTestDefinition
 from billing.models import Claim, ClaimItem
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 # @receiver(post_save, sender=DiagnosticReport)
 def create_lab_charge(sender, instance, created, **kwargs):
@@ -48,7 +51,7 @@ def create_lab_charge(sender, instance, created, **kwargs):
             instance.billing_reference = str(claim.claim_id)
             instance.save(update_fields=['billing_reference'])
             
-            print(f"Billing Claim #{claim.claim_id} created for Lab Report #{instance.diagnostic_report_id}")
+            logger.info(f"Billing Claim #{claim.claim_id} created for Lab Report #{instance.diagnostic_report_id}")
             
         except Exception as e:
-            print(f"Error creating billing claim: {e}")
+            logger.error(f"Error creating billing claim: {e}")

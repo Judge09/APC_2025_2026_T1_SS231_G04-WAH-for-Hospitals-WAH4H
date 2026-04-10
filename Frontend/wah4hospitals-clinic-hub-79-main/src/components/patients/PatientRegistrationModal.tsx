@@ -59,13 +59,10 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
   const [allStepsData, setAllStepsData] = useState<Partial<PatientFormData>>({});
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
-  // Debug: Track step changes
+  // Unlock after 100ms to allow form to stabilize
   React.useEffect(() => {
-    console.log('[PatientRegistrationModal] Step changed to:', currentStep);
-    // Unlock after 100ms to allow form to stabilize
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-      console.log('[PatientRegistrationModal] Step transition complete');
     }, 100);
     return () => clearTimeout(timer);
   }, [currentStep]);
@@ -144,13 +141,10 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
 
 
   const handleNextStep = async () => {
-    console.log('[PatientRegistrationModal] handleNextStep called on step:', currentStep);
-
     if (currentStep === 1) {
       const isValid = await step1Form.trigger();
       if (!isValid) return;
       const step1Data = step1Form.getValues();
-      console.log('[PatientRegistrationModal] Step 1 data:', step1Data);
       setAllStepsData(prev => ({
         ...prev,
         ...step1Data,
@@ -162,7 +156,6 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
       const isValid = await step2Form.trigger();
       if (!isValid) return;
       const step2Data = step2Form.getValues();
-      console.log('[PatientRegistrationModal] Step 2 data:', step2Data);
       setAllStepsData(prev => ({
         ...prev,
         ...step2Data,
@@ -185,8 +178,6 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log('[PatientRegistrationModal] handleSubmit called on step:', currentStep, 'isTransitioning:', isTransitioning);
 
     // GUARD 1: Block submission during step transitions
     if (isTransitioning) {
@@ -211,12 +202,9 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
       status: 'active', // Default status field to active
     } as PatientFormData;
 
-    console.log('[PatientRegistrationModal] Final merged data:', finalData);
-
     // Validate complete form
     try {
       const validatedData = patientFormDataSchema.parse(finalData);
-      console.log('[PatientRegistrationModal] Validation passed, submitting:', validatedData);
 
       if (onSuccess) {
         // Await the async API call - if it throws, we catch it below

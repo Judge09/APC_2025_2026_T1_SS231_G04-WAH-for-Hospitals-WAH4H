@@ -43,7 +43,6 @@ const Pharmacy: React.FC = () => {
   const [filteredRequests, setFilteredRequests] = useState<MedicationRequest[]>([]);
   const [requestSearchQuery, setRequestSearchQuery] = useState('');
   const [requestSortBy, setRequestSortBy] = useState<RequestSortOption>('filo');
-  // const [requestStatusFilter, setRequestStatusFilter] = useState('all');
   const [loadingRequests, setLoadingRequests] = useState(true);
 
   // Modal State

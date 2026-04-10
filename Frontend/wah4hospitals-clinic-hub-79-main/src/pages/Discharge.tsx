@@ -150,7 +150,6 @@ const Discharge = () => {
   };
 
   const handlePrintDischarge = () => {
-    console.log('Printing discharge report...');
   };
 
   const handleFilterChange = (filterType: string, value: string) => {

@@ -1,6 +1,9 @@
+import logging
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from .models import Invoice
+
+logger = logging.getLogger(__name__)
 
 @receiver(pre_delete, sender=Invoice)
 def cleanup_invoice_references(sender, instance, **kwargs):
@@ -23,10 +26,10 @@ def cleanup_invoice_references(sender, instance, **kwargs):
             billing_reference=str(instance.identifier)
         ).update(billing_reference=None)
         
-        print(f"Released billing references for Invoice #{instance.identifier}")
+        logger.info(f"Released billing references for Invoice #{instance.identifier}")
         
     except Exception as e:
-        print(f"Error cleaning up invoice references: {e}")
+        logger.error(f"Error cleaning up invoice references: {e}")
 
 @receiver(post_save, sender=Invoice)
 def handle_invoice_cancellation(sender, instance, created, **kwargs):

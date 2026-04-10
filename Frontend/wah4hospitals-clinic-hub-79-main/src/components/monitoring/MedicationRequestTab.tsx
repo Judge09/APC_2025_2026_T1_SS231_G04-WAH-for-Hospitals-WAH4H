@@ -117,12 +117,6 @@ export const MedicationRequestTab: React.FC<MedicationRequestTabProps> = ({ admi
         medication_display: selectedItem?.generic_name
       };
 
-      console.log('Submitting medication request:');
-      console.log('- Admission ID:', admissionId);
-      console.log('- Patient ID:', patientId);
-      console.log('- Selected Item:', selectedItem);
-      console.log('- Complete Payload:', payload);
-
       const completePayload = {
         ...payload,
         notes: JSON.stringify({
@@ -132,8 +126,6 @@ export const MedicationRequestTab: React.FC<MedicationRequestTabProps> = ({ admi
             instructions: notes
         })
       };
-
-      console.log('Submitting medication request with detailed payload:', completePayload);
 
       const newReq = await pharmacyService.createRequest(completePayload);
       setRequests((prev) => [...prev, newReq]);

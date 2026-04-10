@@ -236,8 +236,6 @@ class MonitoringService {
             note: noteContent
         };
 
-        console.log('Adding clinical note with payload:', payload);
-
         try {
             await api.post(`${MONITORING_BASE_URL}/observations/`, payload);
         } catch (error: any) {
@@ -317,8 +315,6 @@ class MonitoringService {
             note: content,
             effective_datetime: new Date().toISOString()
         };
-
-        console.log('Saving dietary order with payload:', payload);
 
         try {
             await api.post(`${MONITORING_BASE_URL}/observations/`, payload);

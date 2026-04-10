@@ -276,11 +276,6 @@ class LabResultPDFView:
             ('LINEBELOW', (0,1), (-1,-1), 0.5, colors.HexColor('#e5e7eb')), # Row lines
         ]
         
-        # Alternating Row Colors
-        # for i in range(1, len(r_data)):
-        #     if i % 2 == 0:
-        #         t_style_cmds.append(('BACKGROUND', (0,i), (-1,i), colors.HexColor('#f9fafb')))
-        
         t_results.setStyle(TableStyle(t_style_cmds))
         elements.append(t_results)
         

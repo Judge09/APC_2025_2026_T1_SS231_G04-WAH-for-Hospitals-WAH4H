@@ -160,7 +160,6 @@ const PhilHealthClaims = () => {
   };
 
   const handlePrintClaims = () => {
-    console.log('Printing PhilHealth claims report...');
   };
 
   const handleFilterChange = (filterType: string, value: string) => {

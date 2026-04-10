@@ -22,11 +22,9 @@ export const DischargedPatientsReport: React.FC<DischargedPatientsReportProps> =
   const [selectedPatient, setSelectedPatient] = useState<DischargedPatient | null>(null);
 
   const handlePrintReport = () => {
-    console.log('Printing discharged patients report...');
   };
 
   const handlePrintPatientPacket = (patient: DischargedPatient) => {
-    console.log(`Printing discharge packet for ${patient.patient_name}...`);
   };
 
   const filteredPatients = dischargedPatients.filter(patient =>

@@ -41,28 +41,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             setAmount(totalBalance.toFixed(2));
         }
     }, [isOpen, totalBalance]);
-
-    // Auto-fill amount with total balance (pay-all-or-nothing workflow)
-    useEffect(() => {
-        if (isOpen && totalBalance > 0) {
-            setAmount(totalBalance.toFixed(2));
-        }
-    }, [isOpen, totalBalance]);
     const [error, setError] = useState('');
     const [showReceipt, setShowReceipt] = useState(false);
     const [lastPayment, setLastPayment] = useState<any>(null);
 
     const resetForm = () => {
         setAmount('');
-        // method remains 'Cash'
-        const resetForm = () => {
-            setAmount('');
-            // method remains 'Cash'
-            setOrNumber('System Generated');
-            setError('');
-            setShowReceipt(false);
-            setLastPayment(null);
-        };
+        setOrNumber('System Generated');
         setError('');
         setShowReceipt(false);
         setLastPayment(null);
@@ -91,35 +76,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             method,
             // reference: orNumber, // Don't send reference, let backend generate it
         };
-
-        try {
-            const response = await import('@/services/billingService').then(m => m.default.recordPayment(
-                // We need the selected invoice ID here. 
-                // However, PaymentModal doesn't receive the ID directly, only totals.
-                // We need to pass the Invoice object or ID to PaymentModal.
-                // Looking at parent usage, it seems we might need to change props or rely on the parent to call the API.
-                // BUT, the original code had `onPaymentSuccess(paymentData)` which likely called the API in the parent.
-                // Let's check `PatientBillingSummary.tsx`.
-                // Ah, `PatientBillingSummary` calls `recordPayment`. 
-                // So we should NOT call API here, but pass data up.
-                // BUT, we need the OR number from the backend response related to the receipt *before* showing the receipt?
-                // The current flow is: User clicks Pay -> PaymentModal opens -> User clicks Process -> `onPaymentSuccess` is called -> Parent calls API -> Success.
-                // IF we want to show the REAL OR number in the receipt inside THIS modal, we need to wait for the API response.
-                // So `onPaymentSuccess` should probably be an async function that returns the result.
-
-                // Let's look at `PatientBillingSummary.tsx` again.
-                // It has `handlePaymentSuccess` which calls `billingService.recordPayment`.
-                // To get the OR number back to the modal, we need to modify the flow.
-
-                // OPTION: We'll make `onPaymentSuccess` return a Promise that resolves to the backend response.
-                // We'll trust the parent to return the data.
-                0, {} // DUMMY CALL just to satisfy the logic block (will be replaced by actual logic below)
-            ));
-        } catch (e) { }
-
-        // REAL LOGIC:
-        // We will call onPaymentSuccess and await the result.
-        // We need to update PaymentModalProps to allow onPaymentSuccess to return a Promise.
 
         try {
             // We pass the payload to the parent

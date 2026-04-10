@@ -220,9 +220,6 @@ const Monitoring: React.FC = () => {
         requester_name: request.orderedBy // Pass frontend user name to service
       };
 
-      console.log('Creating lab request with payload:', labRequestPayload);
-      console.log('Selected admission:', selectedAdmission);
-
       await laboratoryService.createLabRequest(labRequestPayload);
 
       // Refresh lab requests - handle paginated response
@@ -273,7 +270,6 @@ const Monitoring: React.FC = () => {
   const handleUpdateLabResult = async (requestId: string, result: LabResult) => {
     // Lab results are managed in Laboratory module
     // This is view-only in monitoring
-    console.log('Lab results should be entered in the Laboratory module');
     alert('Please use the Laboratory page to enter/update lab results');
   };
 

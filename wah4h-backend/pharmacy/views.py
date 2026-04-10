@@ -1,6 +1,9 @@
+import logging
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 from .models import Inventory, Medication, MedicationRequest, MedicationAdministration
 from .serializers import (
     InventorySerializer, 
@@ -113,7 +116,7 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
                         if request.data.get('quantity'):
                             medication_request.dispense_quantity = dispense_qty
                     else:
-                        print(f"Warning: No inventory item found for {medication_request.medication_display}")
+                        logger.warning(f"No inventory item found for {medication_request.medication_display}")
     
                 medication_request.status = status
                 if note:
@@ -124,7 +127,7 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
             return Response(self.get_serializer(medication_request).data)
             
         except Exception as e:
-            print(f"Error updating medication request: {e}")
+            logger.error(f"Error updating medication request: {e}")
             return Response({"error": str(e)}, status=500)
 
 class MedicationAdministrationViewSet(viewsets.ModelViewSet):

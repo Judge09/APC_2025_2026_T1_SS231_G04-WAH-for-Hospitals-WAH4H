@@ -38,9 +38,6 @@ export const DispenseModal: React.FC<DispenseModalProps> = ({
       // Use pharmacyService to get all inventory
       const allInventory = await pharmacyService.getInventory();
       
-      console.log('All inventory:', allInventory.length);
-      console.log('Looking for medication:', medicationRequest.inventory_item_detail?.generic_name);
-      
       // Filter by matching generic name (case-insensitive)
       const filtered = allInventory.filter((item) => {
         const itemName = item.generic_name?.toLowerCase().trim();
@@ -48,7 +45,6 @@ export const DispenseModal: React.FC<DispenseModalProps> = ({
         return itemName === requestName;
       });
       
-      console.log('Matched inventory items:', filtered);
       setInventory(filtered);
     } catch (err) {
       console.error('Error fetching inventory:', err);

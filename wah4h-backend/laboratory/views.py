@@ -268,13 +268,6 @@ class DiagnosticReportViewSet(viewsets.ModelViewSet):
         
         instance = self.get_object()
         
-        # Only allow PDF for final/completed reports or for testing
-        # if instance.status not in ['final', 'completed', 'amended', 'corrected']:
-        #     return Response(
-        #         {"error": "Report is not ready for printing."}, 
-        #         status=status.HTTP_400_BAD_REQUEST
-        #     )
-            
         pdf_buffer = LabResultPDFView.generate_pdf(instance)
         
         response = HttpResponse(pdf_buffer, content_type='application/pdf')

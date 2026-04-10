@@ -14,10 +14,7 @@ class PharmacyService {
   async getInventory(params?: { show_expired?: boolean; show_inactive?: boolean }): Promise<InventoryItem[]> {
     try {
       const response = await api.get(`${PHARMACY_BASE_URL}/inventory/`, { params });
-      console.log('Raw inventory response:', response.data);
-      
       const items = Array.isArray(response.data) ? response.data : (response.data.results || []);
-      console.log('Items to map:', items.length);
       
       // Map backend fields to frontend InventoryItem interface
       return items.map((item: any) => {
@@ -272,8 +269,6 @@ class PharmacyService {
          authored_on: new Date().toISOString(),
          note: data.notes || ''
      };
-
-     console.log('Creating medication request with payload:', payload);
 
      try {
        const response = await api.post(`${PHARMACY_BASE_URL}/requests/`, payload);

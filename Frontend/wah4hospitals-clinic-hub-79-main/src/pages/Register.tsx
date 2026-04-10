@@ -247,8 +247,6 @@ const Register = () => {
       const normalizedBase = apiBase.endsWith('/') ? apiBase.slice(0, -1) : apiBase;
       const url = `${normalizedBase}/api/accounts/organizations/`;
 
-      console.log('Fetching hospitals from:', url);
-
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
