@@ -251,9 +251,8 @@ class DischargeViewSet(viewsets.ModelViewSet):
                             # Try to resolve code to name
                             try:
                                 loc = Location.objects.filter(identifier=room_code).first()
-                                if loc: room_display = loc.name
-                                else: room_display = room_code
-                            except:
+                                room_display = loc.name if loc else room_code
+                            except Exception:
                                 room_display = room_code
                     elif enc.location_id:
                         room_display = f"Room {enc.location_id}"

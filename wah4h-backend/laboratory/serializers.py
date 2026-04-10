@@ -1,6 +1,9 @@
+import logging
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
+
+logger = logging.getLogger(__name__)
 from .models import (
     DiagnosticReport,
     DiagnosticReportResult,
@@ -168,7 +171,7 @@ class DiagnosticReportListSerializer(serializers.ModelSerializer):
 
     def get_orderedAt(self, obj):
         if obj.effective_datetime: return obj.effective_datetime.isoformat()
-        return obj.created_at.isoformat() if hasattr(obj, 'created_at') else None
+        return obj.created_at.isoformat()
 
     def get_results(self, obj):
         """
@@ -321,7 +324,7 @@ class DiagnosticReportSerializer(serializers.ModelSerializer):
         """Use effective_datetime as order time."""
         if obj.effective_datetime:
             return obj.effective_datetime.isoformat()
-        return obj.created_at.isoformat() if hasattr(obj, 'created_at') else None
+        return obj.created_at.isoformat()
 
     def get_requestedBy(self, obj):
         """Placeholder for requesting nurse."""
@@ -567,9 +570,10 @@ class SpecimenSerializer(serializers.ModelSerializer):
                 "patient_id": patient.patient_id,
                 "name": f"{patient.first_name} {patient.last_name}"
             }
-        except:
+        except Exception:
+            logger.exception("Error resolving subject_id=%s for Specimen", obj.subject_id)
             return None
-    
+
     def get_collector(self, obj):
         """Resolve collector practitioner reference using direct ORM."""
         if not obj.collector_id:
@@ -581,7 +585,8 @@ class SpecimenSerializer(serializers.ModelSerializer):
                 "practitioner_id": practitioner.practitioner_id,
                 "name": f"{practitioner.first_name} {practitioner.last_name}"
             }
-        except:
+        except Exception:
+            logger.exception("Error resolving collector_id=%s for Specimen", obj.collector_id)
             return None
 
 
@@ -633,9 +638,10 @@ class ImagingStudySerializer(serializers.ModelSerializer):
                 "patient_id": patient.patient_id,
                 "name": f"{patient.first_name} {patient.last_name}"
             }
-        except:
+        except Exception:
+            logger.exception("Error resolving subject_id=%s for ImagingStudy", obj.subject_id)
             return None
-    
+
     def get_encounter(self, obj):
         """Resolve encounter reference using direct ORM."""
         if not obj.encounter_id:
@@ -648,9 +654,10 @@ class ImagingStudySerializer(serializers.ModelSerializer):
                 "identifier": encounter.identifier,
                 "status": encounter.status
             }
-        except:
+        except Exception:
+            logger.exception("Error resolving encounter_id=%s for ImagingStudy", obj.encounter_id)
             return None
-    
+
     def get_interpreter(self, obj):
         """Resolve interpreter practitioner reference using direct ORM."""
         if not obj.interpreter_id:
@@ -662,5 +669,6 @@ class ImagingStudySerializer(serializers.ModelSerializer):
                 "practitioner_id": practitioner.practitioner_id,
                 "name": f"{practitioner.first_name} {practitioner.last_name}"
             }
-        except:
+        except Exception:
+            logger.exception("Error resolving interpreter_id=%s for ImagingStudy", obj.interpreter_id)
             return None

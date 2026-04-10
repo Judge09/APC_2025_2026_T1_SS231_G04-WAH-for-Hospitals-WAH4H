@@ -72,6 +72,7 @@ export const AdmissionDetailsModal: React.FC<AdmissionDetailsModalProps> = ({
                });
             } catch (err) {
                console.error("Failed to fetch accurate admission details", err);
+               toast({ title: "Warning", description: "Could not load latest admission data. Showing cached version.", variant: "destructive" });
                // Fallback to prop data if fetch fails
                setCurrentAdmission(admission);
                setEditData({ ...admission, location: admission.location || { building: '', ward: '', room: '', bed: '' } });

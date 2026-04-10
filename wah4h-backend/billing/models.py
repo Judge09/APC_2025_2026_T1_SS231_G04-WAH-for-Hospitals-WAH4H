@@ -790,8 +790,8 @@ class InvoiceLineItem(models.Model):
                     self.net_value = calculated
                 if self.gross_value is None:
                     self.gross_value = calculated # Default to net until tax logic
-            except Exception:
-                pass # Fallback if conversion fails
+            except (ValueError, TypeError, ArithmeticError):
+                pass  # Non-numeric quantity/price — skip auto-calculation
                 
         super().save(*args, **kwargs)
     

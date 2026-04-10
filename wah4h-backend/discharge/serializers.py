@@ -1,9 +1,13 @@
+import json
+import logging
 from rest_framework import serializers
 from .models import Discharge
 from patients.models import Patient
 from admission.models import Encounter
 from accounts.models import Practitioner, Location
 from datetime import date, datetime
+
+logger = logging.getLogger(__name__)
 
 class DischargeSerializer(serializers.ModelSerializer):
     """
@@ -70,11 +74,10 @@ class DischargeSerializer(serializers.ModelSerializer):
                     # Try to resolve code to name
                     try:
                         loc = Location.objects.filter(identifier=room_code).first()
-                        if loc: return loc.name
-                        # Fallback: Check if it matches a location name directly? 
-                        # Or return code if no lookup found
-                    except:
-                        pass
+                        if loc:
+                            return loc.name
+                    except Exception:
+                        logger.exception("Error resolving room code %r to location name", room_code)
                     return room_code
             
             return f"Room {obj.encounter_obj.location_id}" if obj.encounter_obj.location_id else "Unassigned"
@@ -127,7 +130,7 @@ class DischargeSerializer(serializers.ModelSerializer):
         if obj.summary_of_stay and "Diagnosis:" in obj.summary_of_stay:
             try:
                 return obj.summary_of_stay.split("Diagnosis:")[1].split("\n")[0].strip()
-            except:
+            except (IndexError, AttributeError):
                 pass
         return "Pending Diagnosis"
 
@@ -149,10 +152,9 @@ class DischargeSerializer(serializers.ModelSerializer):
         # Merge with stored requirements if any
         if obj.pending_items:
             try:
-                import json
                 stored = json.loads(obj.pending_items)
                 if isinstance(stored, dict):
                     res.update(stored)
-            except:
+            except (json.JSONDecodeError, TypeError):
                 pass
         return res

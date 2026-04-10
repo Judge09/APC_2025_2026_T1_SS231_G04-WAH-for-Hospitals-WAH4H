@@ -130,7 +130,7 @@ export const admissionService = {
             // ✅ Fixed Code (Sends only YYYY-MM-DD)
             period_start: admission.admissionDate,
             reason_code: admission.reasonForAdmission,
-            participant_individual_id: admission.participant_individual_id || admission.physicianId || 1,
+            participant_individual_id: admission.participant_individual_id || admission.physicianId || null,
             location_id: null,
             location_ids: admission.location_ids,
             // Save standardized location string

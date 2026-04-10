@@ -19,6 +19,38 @@ from admission.models import Encounter, Procedure, ProcedurePerformer
 from patients.models import Patient
 from accounts.models import Practitioner, Location
 
+
+def _patient_basic_dict(patient: Patient) -> dict:
+    """Shared patient DTO used by multiple serializers."""
+    return {
+        "id": patient.id,
+        "patient_id": patient.patient_id,
+        "full_name": f"{patient.first_name} {patient.last_name}",
+        "first_name": patient.first_name,
+        "last_name": patient.last_name,
+        "gender": patient.gender,
+        "age": patient.age,
+        "birthdate": patient.birthdate,
+        "civil_status": patient.civil_status,
+        "religion": patient.religion,
+        "blood_type": patient.blood_type,
+        "mobile_number": patient.mobile_number,
+        "philhealth_id": patient.philhealth_id,
+        "address": {
+            "line": patient.address_line,
+            "city": patient.address_city,
+            "district": patient.address_district,
+            "state": patient.address_state,
+            "postal_code": patient.address_postal_code,
+            "country": patient.address_country,
+        },
+        "emergency_contact": {
+            "name": f"{patient.contact_first_name or ''} {patient.contact_last_name or ''}".strip(),
+            "mobile": patient.contact_mobile_number,
+            "relationship": patient.contact_relationship,
+        },
+    }
+
 # ============================================================================
 # ENCOUNTER SERIALIZERS
 # ============================================================================
@@ -64,35 +96,7 @@ class EncounterSerializer(serializers.ModelSerializer):
         if not obj.subject_id:
             return None
         try:
-            patient = Patient.objects.get(id=obj.subject_id)
-            return {
-                "id": patient.id,
-                "patient_id": patient.patient_id,
-                "full_name": f"{patient.first_name} {patient.last_name}",
-                "first_name": patient.first_name,
-                "last_name": patient.last_name,
-                "gender": patient.gender,
-                "age": patient.age,
-                "birthdate": patient.birthdate,
-                "civil_status": patient.civil_status,
-                "religion": patient.religion,
-                "blood_type": patient.blood_type,
-                "mobile_number": patient.mobile_number,
-                "philhealth_id": patient.philhealth_id,
-                "address": {
-                    "line": patient.address_line,
-                    "city": patient.address_city,
-                    "district": patient.address_district,
-                    "state": patient.address_state,
-                    "postal_code": patient.address_postal_code,
-                    "country": patient.address_country,
-                },
-                "emergency_contact": {
-                    "name": f"{patient.contact_first_name or ''} {patient.contact_last_name or ''}".strip(),
-                    "mobile": patient.contact_mobile_number,
-                    "relationship": patient.contact_relationship,
-                }
-            }
+            return _patient_basic_dict(Patient.objects.get(id=obj.subject_id))
         except Patient.DoesNotExist:
             return None
 
@@ -340,16 +344,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
         if not obj.subject_id:
             return None
         try:
-            patient = Patient.objects.get(id=obj.subject_id)
-            return {
-                "id": patient.id,
-                "patient_id": patient.patient_id,
-                "full_name": f"{patient.first_name} {patient.last_name}",
-                "first_name": patient.first_name,
-                "last_name": patient.last_name,
-                "gender": patient.gender,
-                "birthdate": patient.birthdate,
-            }
+            return _patient_basic_dict(Patient.objects.get(id=obj.subject_id))
         except Patient.DoesNotExist:
             return None
 

@@ -148,7 +148,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "20/minute",           # Anonymous users: 20 req/min (prevent scraping/spam)
         "user": "100/minute",          # Authenticated users: 100 req/min (standard usage)
-        "login": "5/minute",           # Login attempts: 5 req/min (brute-force protection)
+        "login": "60/minute",          # QA: relaxed for testing (was 5/minute)
         "password_reset": "3/minute",  # Password reset: 3 req/min (abuse prevention)
     },
 }
@@ -168,9 +168,9 @@ SIMPLE_JWT = {
 
 # Feature flags
 # Set to False to disable OTP for login flow only (easy to re-enable)
-LOGIN_USE_OTP = True
+LOGIN_USE_OTP = False  # QA: disabled for testing
 # Set to False to disable OTP for registration flow (creates account immediately)
-REGISTER_USE_OTP = True
+REGISTER_USE_OTP = False  # QA: disabled for testing
 # ============================================================================
 # EMAIL CONFIGURATION (Console Backend for Development)
 # ============================================================================

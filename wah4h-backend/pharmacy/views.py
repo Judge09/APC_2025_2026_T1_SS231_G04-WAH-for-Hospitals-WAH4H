@@ -2,21 +2,28 @@ import logging
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-logger = logging.getLogger(__name__)
 from .models import Inventory, Medication, MedicationRequest, MedicationAdministration
 from .serializers import (
-    InventorySerializer, 
-    MedicationSerializer, 
-    MedicationRequestSerializer, 
-    MedicationRequestSerializer, 
-    MedicationAdministrationSerializer
+    InventorySerializer,
+    InventoryListSerializer,
+    MedicationSerializer,
+    MedicationRequestSerializer,
+    MedicationRequestListSerializer,
+    MedicationAdministrationSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+
+logger = logging.getLogger(__name__)
+
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Inventory.objects.all()
     serializer_class = InventorySerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return InventoryListSerializer
+        return InventorySerializer
 
 class MedicationViewSet(viewsets.ModelViewSet):
     queryset = Medication.objects.all()
@@ -28,6 +35,11 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'encounter_id']
 
+    def get_serializer_class(self):
+        if self.action in ('list', 'by_encounter'):
+            return MedicationRequestListSerializer
+        return MedicationRequestSerializer
+
     @action(detail=False, methods=['get'], url_path='by-encounter')
     def by_encounter(self, request):
         encounter_id = request.query_params.get('encounter_id')
@@ -35,7 +47,7 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
             return Response({"error": "encounter_id parameter is required"}, status=400)
             
         requests = self.queryset.filter(encounter_id=encounter_id)
-        serializer = self.get_serializer(requests, many=True)
+        serializer = self.get_serializer(requests, many=True, context=self._get_prefetch_context(requests))
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
