@@ -64,6 +64,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'wah4h-backend-apc'
+          app-name: 'wah4h-backend'
           slot-name: 'Production'
           package: app.zip
