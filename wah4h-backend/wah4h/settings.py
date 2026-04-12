@@ -5,10 +5,22 @@ Django settings for wah4h project.
 from pathlib import Path
 from datetime import timedelta
 import os
+import socket
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
+
+
+def _resolve_ipv4(hostname):
+    """Return IPv4 address for hostname, falling back to original if not found."""
+    try:
+        results = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+        if results:
+            return results[0][4][0]
+    except socket.gaierror:
+        pass
+    return hostname
 
 # SECURITY
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-fallback-change-in-production')
@@ -79,13 +91,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "wah4h.wsgi.application"
 
 # Database
+_db_host = os.getenv("DATABASE_HOST", "localhost")
+# Force IPv4 to avoid Azure IPv6 connectivity issues with Supabase
+_db_host = _resolve_ipv4(_db_host)
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("DATABASE_NAME", "wah4h_db"),
         "USER": os.getenv("DATABASE_USER", "postgres"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", ""),
-        "HOST": os.getenv("DATABASE_HOST", "localhost"),
+        "HOST": _db_host,
         "PORT": os.getenv("DATABASE_PORT", "5432"),
         "OPTIONS": {
             "sslmode": "require",
