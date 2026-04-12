@@ -1,0 +1,21 @@
+services:
+  # Django + Gunicorn backend
+  backend:
+    build:
+      context: ../wah4h-backend
+      dockerfile: Dockerfile
+    env_file: ../wah4h-backend/.env
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  # React frontend (nginx) — serves UI and proxies /api/ to backend
+  frontend:
+    build:
+      context: ../Frontend/wah4hospitals-clinic-hub-79-main
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
