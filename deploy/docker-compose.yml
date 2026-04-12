@@ -8,6 +8,12 @@ services:
     expose:
       - "8000"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/accounts/login/')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # React frontend (nginx) — serves UI and proxies /api/ to backend
   frontend:
@@ -17,5 +23,6 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
