@@ -40,7 +40,7 @@ def _check_modules():
         "pharmacy": ("pharmacy", "MedicationRequest"),
         "laboratory": ("laboratory", "DiagnosticReport"),
         "monitoring": ("monitoring", "Observation"),
-        "billing": ("billing", "BillingAccount"),
+        "billing": ("billing", "Account"),
         "discharge": ("discharge", "Discharge"),
     }
 
