@@ -31,15 +31,14 @@ jobs:
           source antenv/bin/activate
           pip install -r requirements.txt
 
+      - name: Create deployment package
+        run: cd wah4h-backend && zip -r ../app.zip . -x '.env' 'db.sqlite3' 'antenv/*'
+
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            wah4h-backend/
-            !wah4h-backend/antenv/
-            !wah4h-backend/db.sqlite3
-            !wah4h-backend/.env
+          path: app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -67,4 +66,4 @@ jobs:
         with:
           app-name: 'wah4h-backend'
           slot-name: 'Production'
-          package: wah4h-backend
+          package: app.zip
