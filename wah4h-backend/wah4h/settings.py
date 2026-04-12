@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "laboratory", # added here
     "billing", # added billing
     "core",
+    "healthcheck",
 
     # Third-party
     "rest_framework",

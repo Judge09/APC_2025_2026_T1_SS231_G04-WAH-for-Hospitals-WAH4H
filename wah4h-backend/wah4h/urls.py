@@ -13,6 +13,7 @@ API Structure:
 - /api/monitoring/       - Clinical observations and charge items
 - /api/billing/          - Billing accounts, invoices, claims, and payments
 - /api/discharge/        - Discharge workflow and procedures
+- /api/health/           - System health check (DB + modules)
 - /admin/                - Django Admin interface
 """
 
@@ -58,4 +59,7 @@ urlpatterns = [
 
     # Discharge Module
     path('api/discharge/', include('discharge.urls')),
+
+    # Health Check
+    path('api/health/', include('healthcheck.urls')),
 ]
