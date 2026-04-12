@@ -86,7 +86,7 @@ DATABASES = {
         "USER": os.getenv("DATABASE_USER", "postgres"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", ""),
         "HOST": os.getenv("DATABASE_HOST", "localhost"),
-        "PORT": os.getenv("DATABASE_PORT", "6543"),
+        "PORT": os.getenv("DATABASE_PORT", "5432"),
         "OPTIONS": {
             "sslmode": "require",
             "connect_timeout": "10",
