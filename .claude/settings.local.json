@@ -28,7 +28,9 @@
       "Bash(grep -r \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|DEBUG\\\\|WIP\" /c/Users/Lloyd/Documents/GitHub/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H --include=\"*.py\" --include=\"*.tsx\" --include=\"*.ts\" ! -path \"*/venv/*\" ! -path \"*/node_modules/*\" ! -path \"*/.git/*\")",
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(grep -E \"^d|\\\\.json$|\\\\.yml$|\\\\.yaml$|\\\\.env|requirements|package\")",
+      "Bash(python3 -c \"import django; print\\(django.__version__\\)\")"
     ]
   }
 }
