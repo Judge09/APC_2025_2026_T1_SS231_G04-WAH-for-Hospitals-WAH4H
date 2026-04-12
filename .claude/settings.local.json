@@ -30,7 +30,10 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(grep -E \"^d|\\\\.json$|\\\\.yml$|\\\\.yaml$|\\\\.env|requirements|package\")",
-      "Bash(python3 -c \"import django; print\\(django.__version__\\)\")"
+      "Bash(python3 -c \"import django; print\\(django.__version__\\)\")",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(python3 -c \"import sys,re; html=sys.stdin.read\\(\\); err=re.search\\(r'<pre[^>]*>\\(.*?\\)</pre>', html, re.DOTALL\\); print\\(err.group\\(1\\)[:600] if err else 'no pre tag found'\\)\")"
     ]
   }
 }
