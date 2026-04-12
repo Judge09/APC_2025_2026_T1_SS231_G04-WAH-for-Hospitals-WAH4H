@@ -25,7 +25,10 @@
       "Bash(xargs grep:*)",
       "Bash(grep -r \"^\\\\s*#\\\\s*[a-z]\" /c/Users/Lloyd/Documents/GitHub/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend --include=\"*.py\" ! -path \"*/migrations/*\" ! -path \"*/venv/*\")",
       "Bash(grep -r \"^\\\\s*#\\\\s*if\\\\|^\\\\s*#\\\\s*else\\\\|^\\\\s*#\\\\s*print\\\\|^\\\\s*#\\\\s*return\\\\|^\\\\s*#\\\\s*def\\\\|^\\\\s*#\\\\s*class\" /c/Users/Lloyd/Documents/GitHub/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend --include=\"*.py\" ! -path \"*/migrations/*\" ! -path \"*/venv/*\")",
-      "Bash(grep -r \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|DEBUG\\\\|WIP\" /c/Users/Lloyd/Documents/GitHub/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H --include=\"*.py\" --include=\"*.tsx\" --include=\"*.ts\" ! -path \"*/venv/*\" ! -path \"*/node_modules/*\" ! -path \"*/.git/*\")"
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|DEBUG\\\\|WIP\" /c/Users/Lloyd/Documents/GitHub/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H --include=\"*.py\" --include=\"*.tsx\" --include=\"*.ts\" ! -path \"*/venv/*\" ! -path \"*/node_modules/*\" ! -path \"*/.git/*\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
     ]
   }
 }
