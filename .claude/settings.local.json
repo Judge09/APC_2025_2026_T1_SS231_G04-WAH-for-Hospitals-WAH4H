@@ -35,7 +35,9 @@
       "Bash(pip install:*)",
       "Bash(python3 -c \"import sys,re; html=sys.stdin.read\\(\\); err=re.search\\(r'<pre[^>]*>\\(.*?\\)</pre>', html, re.DOTALL\\); print\\(err.group\\(1\\)[:600] if err else 'no pre tag found'\\)\")",
       "Bash(find /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend -name \"tests.py\" -exec wc -l {} +)",
-      "Bash(python3 -c ':*)"
+      "Bash(python3 -c ':*)",
+      "Bash(grep -h \"path\\\\|viewset\" /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/*/urls.py)",
+      "Bash(grep -h \"class.*ViewSet\\\\|class.*APIView\\\\|class.*generics\" /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/*/views.py)"
     ]
   }
 }

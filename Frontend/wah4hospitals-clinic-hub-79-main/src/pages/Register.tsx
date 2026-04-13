@@ -561,7 +561,9 @@ const Register = () => {
     });
 
     if (result.ok) {
-      setShowOTPModal(true);
+      // TODO: Re-enable OTP modal when email verification is ready
+      // setShowOTPModal(true);
+      navigate('/dashboard');
       return;
     }
 
