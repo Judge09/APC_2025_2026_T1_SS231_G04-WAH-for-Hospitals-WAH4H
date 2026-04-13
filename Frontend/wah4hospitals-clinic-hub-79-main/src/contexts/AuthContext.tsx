@@ -537,7 +537,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      await axiosInstance.post('/api/accounts/register/initiate/', {
+      const res = await axiosInstance.post('/api/accounts/register/initiate/', {
         identifier: data.identifier,
         first_name: data.firstName,
         middle_name: data.middleName || '',
@@ -551,6 +551,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         confirm_password: data.confirmPassword,
         role: data.role,
       });
+
+      // If backend returned tokens (OTP disabled), perform auto-login client-side
+      const tokens = res?.data?.data?.tokens;
+      const rawUser = res?.data?.data?.user;
+
+      if (tokens && rawUser) {
+        localStorage.setItem('accessToken', tokens.access);
+        localStorage.setItem('refreshToken', tokens.refresh);
+
+        const userObj: User = {
+          id: String(rawUser.id),
+          email: rawUser.email,
+          firstName: rawUser.first_name || rawUser.firstName || '',
+          lastName: rawUser.last_name || rawUser.lastName || '',
+          role: rawUser.role as UserRole,
+        };
+
+        setUser(userObj);
+        try {
+          localStorage.setItem('currentUser', JSON.stringify(userObj));
+          localStorage.setItem('userRole', String(userObj.role));
+        } catch (err) {
+          console.warn('Failed to persist currentUser to localStorage', err);
+        }
+
+        toast({
+          title: 'Login successful',
+          description: `Welcome, ${userObj.firstName} ${userObj.lastName}!`,
+        });
+
+        return { ok: true, otpDisabled: true };
+      }
 
       toast({
         title: 'OTP Sent',
