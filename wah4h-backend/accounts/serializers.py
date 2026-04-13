@@ -171,7 +171,7 @@ class VerifyAccountSerializer(serializers.Serializer):
         
         # Step 2: Create User (ACTIVE - OTP already verified)
         username = generate_username(email)
-        user = User.objects.create(
+        user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
