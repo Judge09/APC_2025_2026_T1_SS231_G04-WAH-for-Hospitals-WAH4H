@@ -227,6 +227,11 @@ class LoginStepOneSerializer(serializers.Serializer):
             raise serializers.ValidationError({"email": "Invalid credentials."})
         
         # Validate password
+        # Accounts created before the create_user fix have plain-text passwords.
+        # Detect and re-hash them on the fly so they recover automatically.
+        if user.password == password:
+            user.set_password(password)
+            user.save(update_fields=['password'])
         if not user.check_password(password):
             # Increment lockout counter
             cache.set(lockout_key, attempts + 1, timeout=900)
