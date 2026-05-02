@@ -1815,3 +1815,820 @@ def push_immunization(target_id, immunization_model, idempotency_key=None):
             }
 
     return last_retryable_result
+
+
+# =============================================================================
+# CONDITION — FHIR R4 / PHCore
+# =============================================================================
+
+_CONDITION_CLINICAL_STATUS_SYSTEM    = "http://terminology.hl7.org/CodeSystem/condition-clinical"
+_CONDITION_VERIFICATION_STATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/condition-ver-status"
+_ICD10_SYSTEM = "http://hl7.org/fhir/sid/icd-10-cm"
+
+
+def condition_to_fhir(model):
+    """Convert a local Condition instance to a PH Core FHIR Condition resource."""
+    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
+    pk = getattr(model, "condition_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"condition:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    fhir: dict = {
+        "resourceType": "Condition",
+        "id": resource_id,
+        "meta": {
+            "profile": [f"{_URN_EXT}/ph-core-condition"],
+            "lastUpdated": _meta_last_updated(model.updated_at),
+        },
+        "subject": {
+            "display": patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+    }
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+    if model.clinical_status:
+        fhir["clinicalStatus"] = {
+            "coding": [{"system": _CONDITION_CLINICAL_STATUS_SYSTEM, "code": model.clinical_status}]
+        }
+    if model.verification_status:
+        fhir["verificationStatus"] = {
+            "coding": [{"system": _CONDITION_VERIFICATION_STATUS_SYSTEM, "code": model.verification_status}]
+        }
+    if model.category:
+        fhir["category"] = [{"text": model.category}]
+    if model.severity:
+        fhir["severity"] = {"text": model.severity}
+    if model.code:
+        fhir["code"] = {
+            "text": model.code,
+            "coding": [{"system": _ICD10_SYSTEM, "code": model.code}],
+        }
+    if model.body_site:
+        fhir["bodySite"] = [{"text": model.body_site}]
+    if model.encounter_id:
+        fhir["encounter"] = {"reference": f"Encounter/{model.encounter_id}"}
+    if model.onset_datetime:
+        fhir["onsetDateTime"] = format_fhir_datetime(model.onset_datetime)
+    if model.abatement_datetime:
+        fhir["abatementDateTime"] = format_fhir_datetime(model.abatement_datetime)
+    if model.recorded_date:
+        fhir["recordedDate"] = str(model.recorded_date)
+    if model.stage_summary or model.stage_type:
+        fhir["stage"] = [{"summary": {"text": model.stage_summary or ""}}]
+    if model.note:
+        fhir["note"] = [{"text": model.note}]
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def conditions_to_bundle(queryset):
+    """Wrap a Condition queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": condition_to_fhir(c)} for c in queryset],
+    }
+
+
+def import_condition_from_fhir(fhir_data, patient):
+    """Parse a FHIR Condition payload and upsert into the local Condition model."""
+    from patients.models import Condition
+    coding = (fhir_data.get("code") or {}).get("coding", [{}])
+    code = coding[0].get("code") if coding else (fhir_data.get("code") or {}).get("text", "")
+    clinical = ((fhir_data.get("clinicalStatus") or {}).get("coding") or [{}])[0].get("code")
+    verification = ((fhir_data.get("verificationStatus") or {}).get("coding") or [{}])[0].get("code")
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+    fields = {k: v for k, v in {
+        "patient": patient,
+        "code": code or "",
+        "clinical_status": clinical,
+        "verification_status": verification,
+        "category": ((fhir_data.get("category") or [{}])[0].get("text")),
+        "severity": (fhir_data.get("severity") or {}).get("text"),
+        "body_site": ((fhir_data.get("bodySite") or [{}])[0].get("text")),
+        "note": ((fhir_data.get("note") or [{}])[0].get("text")),
+        "status": clinical or "active",
+    }.items() if v is not None}
+    obj, _ = Condition.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
+def push_condition(target_id, condition_model, idempotency_key=None):
+    """Push a single Condition resource to another provider via the WAH4PC gateway."""
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/Condition",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId":     provider_id,
+                    "targetId":     target_id,
+                    "resourceType": "Condition",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type":         "collection",
+                        "entry":        [{"resource": condition_to_fhir(condition_model)}],
+                    },
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": response.json().get("error", "Unknown error") if response.text else "Unknown error",
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
+    return last_retryable_result
+
+
+# =============================================================================
+# ALLERGY INTOLERANCE — FHIR R4 / PHCore
+# =============================================================================
+
+_ALLERGY_CLINICAL_STATUS_SYSTEM     = "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"
+_ALLERGY_VERIFICATION_STATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"
+_SNOMED_SYSTEM = "http://snomed.info/sct"
+
+
+def allergy_to_fhir(model):
+    """Convert a local AllergyIntolerance instance to a PH Core FHIR AllergyIntolerance resource."""
+    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
+    pk = getattr(model, "allergy_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"allergy:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    fhir: dict = {
+        "resourceType": "AllergyIntolerance",
+        "id": resource_id,
+        "meta": {
+            "profile": [f"{_URN_EXT}/ph-core-allergyintolerance"],
+            "lastUpdated": _meta_last_updated(model.updated_at),
+        },
+        "patient": {
+            "display": patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+    }
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+    if model.clinical_status:
+        fhir["clinicalStatus"] = {
+            "coding": [{"system": _ALLERGY_CLINICAL_STATUS_SYSTEM, "code": model.clinical_status}]
+        }
+    if model.verification_status:
+        fhir["verificationStatus"] = {
+            "coding": [{"system": _ALLERGY_VERIFICATION_STATUS_SYSTEM, "code": model.verification_status}]
+        }
+    if model.type:
+        fhir["type"] = model.type
+    if model.category:
+        fhir["category"] = [model.category]
+    if model.criticality:
+        fhir["criticality"] = model.criticality
+    if model.code:
+        fhir["code"] = {"text": model.code, "coding": [{"system": _SNOMED_SYSTEM, "code": model.code}]}
+    if model.encounter_id:
+        fhir["encounter"] = {"reference": f"Encounter/{model.encounter_id}"}
+    if model.onset_datetime:
+        fhir["onsetDateTime"] = format_fhir_datetime(model.onset_datetime)
+    if model.recorded_date:
+        fhir["recordedDate"] = str(model.recorded_date)
+    if model.last_occurrence:
+        fhir["lastOccurrence"] = str(model.last_occurrence)
+    if model.note:
+        fhir["note"] = [{"text": model.note}]
+    reaction = {}
+    if model.reaction_substance:
+        reaction["substance"] = {"text": model.reaction_substance}
+    if model.reaction_manifestation:
+        reaction["manifestation"] = [{"text": model.reaction_manifestation}]
+    if model.reaction_description:
+        reaction["description"] = model.reaction_description
+    if model.reaction_severity:
+        reaction["severity"] = model.reaction_severity
+    if model.reaction_exposure_route:
+        reaction["exposureRoute"] = {"text": model.reaction_exposure_route}
+    if reaction:
+        fhir["reaction"] = [reaction]
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def allergies_to_bundle(queryset):
+    """Wrap an AllergyIntolerance queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": allergy_to_fhir(a)} for a in queryset],
+    }
+
+
+def import_allergy_from_fhir(fhir_data, patient):
+    """Parse a FHIR AllergyIntolerance payload and upsert into the local AllergyIntolerance model."""
+    from patients.models import AllergyIntolerance
+    coding = (fhir_data.get("code") or {}).get("coding", [{}])
+    code = coding[0].get("code") if coding else (fhir_data.get("code") or {}).get("text", "")
+    clinical = ((fhir_data.get("clinicalStatus") or {}).get("coding") or [{}])[0].get("code")
+    verification = ((fhir_data.get("verificationStatus") or {}).get("coding") or [{}])[0].get("code")
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+    reaction_raw = (fhir_data.get("reaction") or [{}])[0]
+    fields = {k: v for k, v in {
+        "patient": patient,
+        "code": code or "",
+        "clinical_status": clinical,
+        "verification_status": verification,
+        "type": fhir_data.get("type"),
+        "category": (fhir_data.get("category") or [None])[0],
+        "criticality": fhir_data.get("criticality"),
+        "note": ((fhir_data.get("note") or [{}])[0].get("text")),
+        "reaction_manifestation": ((reaction_raw.get("manifestation") or [{}])[0].get("text")),
+        "reaction_severity": reaction_raw.get("severity"),
+        "reaction_description": reaction_raw.get("description"),
+        "status": clinical or "active",
+    }.items() if v is not None}
+    obj, _ = AllergyIntolerance.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
+def push_allergy(target_id, allergy_model, idempotency_key=None):
+    """Push a single AllergyIntolerance resource to another provider via the WAH4PC gateway."""
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/AllergyIntolerance",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId":     provider_id,
+                    "targetId":     target_id,
+                    "resourceType": "AllergyIntolerance",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type":         "collection",
+                        "entry":        [{"resource": allergy_to_fhir(allergy_model)}],
+                    },
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": response.json().get("error", "Unknown error") if response.text else "Unknown error",
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
+    return last_retryable_result
+
+
+# =============================================================================
+# OBSERVATION — FHIR R4 / PHCore
+# =============================================================================
+
+_LOINC_SYSTEM        = "http://loinc.org"
+_UCUM_SYSTEM         = "http://unitsofmeasure.org"
+_OBS_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category"
+
+
+def observation_to_fhir(model):
+    """Convert a local Observation instance to a PH Core FHIR Observation resource."""
+    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
+    pk = getattr(model, "observation_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"observation:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    fhir: dict = {
+        "resourceType": "Observation",
+        "id": resource_id,
+        "meta": {
+            "profile": [f"{_URN_EXT}/ph-core-observation"],
+            "lastUpdated": _meta_last_updated(model.updated_at),
+        },
+        "subject": {
+            "display": patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+    }
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+    if model.status:
+        fhir["status"] = model.status
+    if model.category:
+        fhir["category"] = [
+            {"coding": [{"system": _OBS_CATEGORY_SYSTEM, "code": model.category}]}
+        ]
+    if model.code:
+        fhir["code"] = {"coding": [{"system": _LOINC_SYSTEM, "code": model.code}], "text": model.code}
+    if model.encounter_id:
+        fhir["encounter"] = {"reference": f"Encounter/{model.encounter_id}"}
+    if model.effective_datetime:
+        fhir["effectiveDateTime"] = format_fhir_datetime(model.effective_datetime)
+    elif model.effective_period_start or model.effective_period_end:
+        fhir["effectivePeriod"] = {k: v for k, v in {
+            "start": format_fhir_datetime(model.effective_period_start) if model.effective_period_start else None,
+            "end":   format_fhir_datetime(model.effective_period_end)   if model.effective_period_end   else None,
+        }.items() if v is not None}
+    if model.issued:
+        fhir["issued"] = format_fhir_datetime(model.issued)
+    if model.value_quantity is not None:
+        qty = {"value": float(model.value_quantity), "system": _UCUM_SYSTEM}
+        if model.unit:
+            qty["unit"] = model.unit
+            qty["code"] = model.unit
+        fhir["valueQuantity"] = qty
+    elif model.value_string:
+        fhir["valueString"] = model.value_string
+    elif model.value_boolean is not None:
+        fhir["valueBoolean"] = model.value_boolean
+    elif model.value_integer is not None:
+        fhir["valueInteger"] = model.value_integer
+    elif model.value_datetime:
+        fhir["valueDateTime"] = format_fhir_datetime(model.value_datetime)
+    elif model.value_range_low is not None or model.value_range_high is not None:
+        fhir["valueRange"] = {k: v for k, v in {
+            "low":  {"value": float(model.value_range_low)}  if model.value_range_low  is not None else None,
+            "high": {"value": float(model.value_range_high)} if model.value_range_high is not None else None,
+        }.items() if v is not None}
+    elif model.value_codeableconcept:
+        fhir["valueCodeableConcept"] = {"text": model.value_codeableconcept}
+    if model.interpretation:
+        fhir["interpretation"] = [{"text": model.interpretation}]
+    if model.note:
+        fhir["note"] = [{"text": model.note}]
+    if model.reference_range_low is not None or model.reference_range_high is not None or model.reference_range_text:
+        rr: dict = {}
+        if model.reference_range_low is not None:
+            rr["low"] = {"value": float(model.reference_range_low)}
+        if model.reference_range_high is not None:
+            rr["high"] = {"value": float(model.reference_range_high)}
+        if model.reference_range_text:
+            rr["text"] = model.reference_range_text
+        fhir["referenceRange"] = [rr]
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def observations_to_bundle(queryset):
+    """Wrap an Observation queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": observation_to_fhir(o)} for o in queryset],
+    }
+
+
+def import_observation_from_fhir(fhir_data, patient):
+    """Parse a FHIR Observation payload and upsert into the local Observation model."""
+    from monitoring.models import Observation
+    code_block = fhir_data.get("code") or {}
+    codings = code_block.get("coding", [{}])
+    code = codings[0].get("code") if codings else code_block.get("text", "")
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+    category_raw = (fhir_data.get("category") or [{}])[0]
+    category_code = ((category_raw.get("coding") or [{}])[0].get("code"))
+    fields = {k: v for k, v in {
+        "subject_id": patient.id,
+        "status": fhir_data.get("status", "final"),
+        "code": code,
+        "category": category_code,
+        "value_string": fhir_data.get("valueString"),
+        "value_boolean": fhir_data.get("valueBoolean"),
+        "value_integer": fhir_data.get("valueInteger"),
+        "value_quantity": (fhir_data.get("valueQuantity") or {}).get("value"),
+        "note": ((fhir_data.get("note") or [{}])[0].get("text")),
+    }.items() if v is not None}
+    obj, _ = Observation.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
+def push_observation(target_id, observation_model, idempotency_key=None):
+    """Push a single Observation resource to another provider via the WAH4PC gateway."""
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/Observation",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId":     provider_id,
+                    "targetId":     target_id,
+                    "resourceType": "Observation",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type":         "collection",
+                        "entry":        [{"resource": observation_to_fhir(observation_model)}],
+                    },
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": response.json().get("error", "Unknown error") if response.text else "Unknown error",
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
+    return last_retryable_result
+
+
+# =============================================================================
+# MEDICATION REQUEST — FHIR R4 / PHCore
+# =============================================================================
+
+_MEDICATION_SYSTEM = "http://www.nlm.nih.gov/research/umls/rxnorm"
+
+
+def medicationrequest_to_fhir(model):
+    """Convert a local MedicationRequest instance to a PH Core FHIR MedicationRequest resource."""
+    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
+    pk = getattr(model, "medication_request_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"medicationrequest:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    med_system = model.medication_system or _MEDICATION_SYSTEM
+    fhir: dict = {
+        "resourceType": "MedicationRequest",
+        "id": resource_id,
+        "meta": {
+            "profile": [f"{_URN_EXT}/ph-core-medicationrequest"],
+            "lastUpdated": _meta_last_updated(model.updated_at),
+        },
+        "subject": {
+            "display": patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+    }
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+    if model.status:
+        fhir["status"] = model.status
+    if model.intent:
+        fhir["intent"] = model.intent
+    if model.category:
+        fhir["category"] = [{"text": model.category}]
+    if model.priority:
+        fhir["priority"] = model.priority
+    if model.medication_reference:
+        fhir["medicationReference"] = {"reference": model.medication_reference}
+    elif model.medication_code or model.medication_display:
+        coding_entry: dict = {"system": med_system}
+        if model.medication_code:
+            coding_entry["code"] = model.medication_code
+        if model.medication_display:
+            coding_entry["display"] = model.medication_display
+        fhir["medicationCodeableConcept"] = {
+            "text": model.medication_display or model.medication_code or "",
+            "coding": [coding_entry],
+        }
+    if model.encounter_id:
+        fhir["encounter"] = {"reference": f"Encounter/{model.encounter_id}"}
+    if model.authored_on:
+        fhir["authoredOn"] = str(model.authored_on)
+    if model.requester_id:
+        requester = _practitioner_ref(model.requester_id)
+        if requester:
+            fhir["requester"] = requester
+    if model.reason_code:
+        fhir["reasonCode"] = [{"text": model.reason_code}]
+    if model.note:
+        fhir["note"] = [{"text": model.note}]
+    dispense: dict = {}
+    if model.dispense_quantity is not None:
+        dispense["quantity"] = {"value": float(model.dispense_quantity)}
+    if model.dispense_repeats_allowed is not None:
+        dispense["numberOfRepeatsAllowed"] = model.dispense_repeats_allowed
+    if model.dispense_validity_period_start or model.dispense_validity_period_end:
+        dispense["validityPeriod"] = {k: v for k, v in {
+            "start": str(model.dispense_validity_period_start) if model.dispense_validity_period_start else None,
+            "end":   str(model.dispense_validity_period_end)   if model.dispense_validity_period_end   else None,
+        }.items() if v is not None}
+    if dispense:
+        fhir["dispenseRequest"] = dispense
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def medicationrequests_to_bundle(queryset):
+    """Wrap a MedicationRequest queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": medicationrequest_to_fhir(mr)} for mr in queryset],
+    }
+
+
+def import_medicationrequest_from_fhir(fhir_data, patient):
+    """Parse a FHIR MedicationRequest payload and upsert into the local MedicationRequest model."""
+    from pharmacy.models import MedicationRequest
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+    med_cc = fhir_data.get("medicationCodeableConcept") or {}
+    med_codings = med_cc.get("coding", [{}])
+    fields = {k: v for k, v in {
+        "subject_id": patient.id,
+        "status": fhir_data.get("status", "active"),
+        "intent": fhir_data.get("intent", "order"),
+        "medication_code": med_codings[0].get("code") if med_codings else None,
+        "medication_display": med_cc.get("text"),
+        "medication_system": med_codings[0].get("system") if med_codings else None,
+        "category": ((fhir_data.get("category") or [{}])[0].get("text")),
+        "priority": fhir_data.get("priority"),
+        "reason_code": ((fhir_data.get("reasonCode") or [{}])[0].get("text")),
+        "note": ((fhir_data.get("note") or [{}])[0].get("text")),
+    }.items() if v is not None}
+    obj, _ = MedicationRequest.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
+def push_medicationrequest(target_id, mr_model, idempotency_key=None):
+    """Push a single MedicationRequest resource to another provider via the WAH4PC gateway."""
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/MedicationRequest",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId":     provider_id,
+                    "targetId":     target_id,
+                    "resourceType": "MedicationRequest",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type":         "collection",
+                        "entry":        [{"resource": medicationrequest_to_fhir(mr_model)}],
+                    },
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": response.json().get("error", "Unknown error") if response.text else "Unknown error",
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
+    return last_retryable_result
+
+
+# =============================================================================
+# DIAGNOSTIC REPORT — FHIR R4 / PHCore
+# =============================================================================
+
+def diagnosticreport_to_fhir(model):
+    """Convert a local DiagnosticReport instance to a PH Core FHIR DiagnosticReport resource."""
+    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
+    pk = getattr(model, "diagnostic_report_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"diagnosticreport:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    fhir: dict = {
+        "resourceType": "DiagnosticReport",
+        "id": resource_id,
+        "meta": {
+            "profile": [f"{_URN_EXT}/ph-core-diagnosticreport"],
+            "lastUpdated": _meta_last_updated(model.updated_at),
+        },
+        "subject": {
+            "display": patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+    }
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+    if model.status:
+        fhir["status"] = model.status
+    if model.category_code or model.category_display:
+        fhir["category"] = [{
+            "text": model.category_display or model.category_code,
+            "coding": [{"system": _LOINC_SYSTEM, "code": model.category_code or ""}],
+        }]
+    if model.code_code or model.code_display:
+        fhir["code"] = {
+            "text": model.code_display or model.code_code,
+            "coding": [{"system": _LOINC_SYSTEM, "code": model.code_code or ""}],
+        }
+    if model.encounter_id:
+        fhir["encounter"] = {"reference": f"Encounter/{model.encounter_id}"}
+    if model.effective_datetime:
+        fhir["effectiveDateTime"] = format_fhir_datetime(model.effective_datetime)
+    if model.issued_datetime:
+        fhir["issued"] = format_fhir_datetime(model.issued_datetime)
+    if model.performer_id:
+        performer = _practitioner_ref(model.performer_id)
+        if performer:
+            fhir["performer"] = [performer]
+    if model.conclusion:
+        fhir["conclusion"] = model.conclusion
+    if model.conclusion_code:
+        fhir["conclusionCode"] = [{"text": model.conclusion_code}]
+    # result_data is a JSONField that may hold raw Observation references
+    result_data = model.result_data
+    if result_data:
+        if isinstance(result_data, list):
+            fhir["result"] = [{"reference": str(r)} if isinstance(r, str) else r for r in result_data]
+        elif isinstance(result_data, dict):
+            fhir["result"] = [result_data]
+    # Linked Observation PKs via DiagnosticReportResult join table (preferred when available)
+    try:
+        linked = model.results.all()
+        if linked.exists():
+            fhir["result"] = [
+                {"reference": f"Observation/{str(uuid.uuid5(uuid.NAMESPACE_OID, f'observation:{lr.observation_id}'))}"}
+                for lr in linked
+            ]
+    except Exception:
+        pass
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def diagnosticreports_to_bundle(queryset):
+    """Wrap a DiagnosticReport queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": diagnosticreport_to_fhir(dr)} for dr in queryset],
+    }
+
+
+def import_diagnosticreport_from_fhir(fhir_data, patient):
+    """Parse a FHIR DiagnosticReport payload and upsert into the local DiagnosticReport model."""
+    from laboratory.models import DiagnosticReport
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+    code_block = fhir_data.get("code") or {}
+    code_codings = code_block.get("coding", [{}])
+    cat_block = (fhir_data.get("category") or [{}])[0]
+    cat_codings = cat_block.get("coding", [{}])
+    fields = {k: v for k, v in {
+        "subject_id": patient.id,
+        "status": fhir_data.get("status", "final"),
+        "code_code": code_codings[0].get("code") if code_codings else None,
+        "code_display": code_block.get("text"),
+        "category_code": cat_codings[0].get("code") if cat_codings else None,
+        "category_display": cat_block.get("text"),
+        "conclusion": fhir_data.get("conclusion"),
+        "conclusion_code": ((fhir_data.get("conclusionCode") or [{}])[0].get("text")),
+    }.items() if v is not None}
+    obj, _ = DiagnosticReport.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
+def push_diagnosticreport(target_id, dr_model, idempotency_key=None):
+    """Push a single DiagnosticReport resource to another provider via the WAH4PC gateway."""
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/DiagnosticReport",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId":     provider_id,
+                    "targetId":     target_id,
+                    "resourceType": "DiagnosticReport",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type":         "collection",
+                        "entry":        [{"resource": diagnosticreport_to_fhir(dr_model)}],
+                    },
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": response.json().get("error", "Unknown error") if response.text else "Unknown error",
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
+    return last_retryable_result

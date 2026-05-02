@@ -28,6 +28,11 @@ from patients.wah4pc import (
     request_patient, fhir_to_dict, push_patient, patient_to_fhir, get_providers,
     immunization_to_fhir, immunizations_to_bundle,
     procedures_to_bundle, encounters_to_bundle,
+    condition_to_fhir, conditions_to_bundle, import_condition_from_fhir, push_condition,
+    allergy_to_fhir, allergies_to_bundle, import_allergy_from_fhir, push_allergy,
+    observations_to_bundle, import_observation_from_fhir, push_observation,
+    medicationrequests_to_bundle, import_medicationrequest_from_fhir, push_medicationrequest,
+    diagnosticreports_to_bundle, import_diagnosticreport_from_fhir, push_diagnosticreport,
 )
 from patients.models import Patient, WAH4PCTransaction
 
@@ -449,6 +454,61 @@ class PatientViewSet(viewsets.ViewSet):
         ).order_by('-period_start', '-created_at')
         return Response(encounters_to_bundle(qs), status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'], url_path='conditions/fhir')
+    def get_conditions_fhir(self, request, pk=None):
+        """Return all Conditions for a patient as a FHIR Bundle (collection)."""
+        try:
+            patient_id = int(pk)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid patient ID'}, status=status.HTTP_400_BAD_REQUEST)
+        from patients.models import Condition as ConditionModel
+        qs = ConditionModel.objects.filter(patient_id=patient_id).order_by('-created_at')
+        return Response(conditions_to_bundle(qs), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='allergies/fhir')
+    def get_allergies_fhir(self, request, pk=None):
+        """Return all AllergyIntolerances for a patient as a FHIR Bundle (collection)."""
+        try:
+            patient_id = int(pk)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid patient ID'}, status=status.HTTP_400_BAD_REQUEST)
+        from patients.models import AllergyIntolerance as AllergyModel
+        qs = AllergyModel.objects.filter(patient_id=patient_id).order_by('-created_at')
+        return Response(allergies_to_bundle(qs), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='observations')
+    def get_observations(self, request, pk=None):
+        """Return all Observations for a patient as a FHIR Bundle (collection)."""
+        try:
+            patient_id = int(pk)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid patient ID'}, status=status.HTTP_400_BAD_REQUEST)
+        from monitoring.models import Observation as ObservationModel
+        qs = ObservationModel.objects.filter(subject_id=patient_id).order_by('-effective_datetime', '-created_at')
+        return Response(observations_to_bundle(qs), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='medication-requests')
+    def get_medication_requests(self, request, pk=None):
+        """Return all MedicationRequests for a patient as a FHIR Bundle (collection)."""
+        try:
+            patient_id = int(pk)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid patient ID'}, status=status.HTTP_400_BAD_REQUEST)
+        from pharmacy.models import MedicationRequest as MedicationRequestModel
+        qs = MedicationRequestModel.objects.filter(subject_id=patient_id).order_by('-authored_on', '-created_at')
+        return Response(medicationrequests_to_bundle(qs), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='diagnostic-reports')
+    def get_diagnostic_reports(self, request, pk=None):
+        """Return all DiagnosticReports for a patient as a FHIR Bundle (collection)."""
+        try:
+            patient_id = int(pk)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid patient ID'}, status=status.HTTP_400_BAD_REQUEST)
+        from laboratory.models import DiagnosticReport as DiagnosticReportModel
+        qs = DiagnosticReportModel.objects.filter(subject_id=patient_id).order_by('-issued_datetime', '-created_at')
+        return Response(diagnosticreports_to_bundle(qs), status=status.HTTP_200_OK)
+
     def destroy(self, request, pk=None):
         """
         Soft delete a patient (set status to inactive).
@@ -556,6 +616,30 @@ class ConditionViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @action(detail=True, methods=['post'], url_path='push')
+    def push_to_gateway(self, request, pk=None):
+        """Push this Condition to another provider via the WAH4PC gateway."""
+        condition = self.get_object()
+        target_id = request.data.get('targetProviderId')
+        if not target_id:
+            return Response({'error': 'targetProviderId required'}, status=status.HTTP_400_BAD_REQUEST)
+        result = push_condition(target_id, condition)
+        if 'error' in result:
+            return Response({'error': result['error']}, status=result.get('status_code', 502))
+        txn_id = result.get('transactionId') or result.get('id')
+        if txn_id:
+            WAH4PCTransaction.objects.get_or_create(
+                transaction_id=txn_id,
+                defaults={
+                    'type': 'send',
+                    'status': result.get('status', 'PENDING'),
+                    'related_patient': condition.patient,
+                    'target_provider_id': target_id,
+                    'idempotency_key': result.get('idempotency_key'),
+                },
+            )
+        return Response(result, status=status.HTTP_202_ACCEPTED)
+
 
 # ============================================================================
 # ALLERGY VIEWSET (FORTRESS PATTERN)
@@ -631,6 +715,30 @@ class AllergyViewSet(viewsets.ModelViewSet):
             output_serializer.data,
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=['post'], url_path='push')
+    def push_to_gateway(self, request, pk=None):
+        """Push this AllergyIntolerance to another provider via the WAH4PC gateway."""
+        allergy = self.get_object()
+        target_id = request.data.get('targetProviderId')
+        if not target_id:
+            return Response({'error': 'targetProviderId required'}, status=status.HTTP_400_BAD_REQUEST)
+        result = push_allergy(target_id, allergy)
+        if 'error' in result:
+            return Response({'error': result['error']}, status=result.get('status_code', 502))
+        txn_id = result.get('transactionId') or result.get('id')
+        if txn_id:
+            WAH4PCTransaction.objects.get_or_create(
+                transaction_id=txn_id,
+                defaults={
+                    'type': 'send',
+                    'status': result.get('status', 'PENDING'),
+                    'related_patient': allergy.patient,
+                    'target_provider_id': target_id,
+                    'idempotency_key': result.get('idempotency_key'),
+                },
+            )
+        return Response(result, status=status.HTTP_202_ACCEPTED)
 
 
 # ============================================================================
@@ -973,13 +1081,40 @@ def webhook_receive_push(request):
     raw_payload = dict(request.data)
 
     # ------------------------------------------------------------------
-    # Non-Patient resource types: accept, log, store — never reject.
-    # The gateway does not need us to understand the payload to succeed.
+    # Non-Patient resource types: parse and upsert, then audit-log.
+    # Always return 200 — the gateway must get a success acknowledgement.
     # ------------------------------------------------------------------
     if resource_type != 'Patient':
+        related_patient = None
+        try:
+            subject_ref = (data.get('subject') or data.get('patient') or {}).get('reference', '')
+            # Extract UUID from "Patient/<uuid>" and reverse-map to local Patient
+            if subject_ref.startswith('Patient/'):
+                remote_fhir_id = subject_ref.split('/', 1)[1]
+                for p in Patient.objects.all().only('id', 'first_name', 'last_name'):
+                    import uuid as _uuid
+                    if str(_uuid.uuid5(_uuid.NAMESPACE_OID, f'patient:{p.id}')) == remote_fhir_id:
+                        related_patient = p
+                        break
+
+            if related_patient:
+                if resource_type == 'Condition':
+                    import_condition_from_fhir(data, related_patient)
+                elif resource_type == 'AllergyIntolerance':
+                    import_allergy_from_fhir(data, related_patient)
+                elif resource_type == 'Observation':
+                    import_observation_from_fhir(data, related_patient)
+                elif resource_type == 'MedicationRequest':
+                    import_medicationrequest_from_fhir(data, related_patient)
+                elif resource_type == 'DiagnosticReport':
+                    import_diagnosticreport_from_fhir(data, related_patient)
+        except Exception:
+            logger.exception('[WAH4PC] Failed to upsert %s (txn=%s) — storing raw payload.', resource_type, txn_id)
+
         logger.info(
-            '[WAH4PC] Received unsolicited %s push (txn=%s, sender=%s) — stored for review.',
+            '[WAH4PC] Received %s push (txn=%s, sender=%s, patient=%s).',
             resource_type, txn_id, sender_id,
+            related_patient.id if related_patient else 'unknown',
         )
         WAH4PCTransaction.objects.create(
             transaction_id=txn_id,
@@ -987,9 +1122,10 @@ def webhook_receive_push(request):
             status='COMPLETED',
             sender_id=sender_id,
             raw_payload=raw_payload,
+            related_patient=related_patient,
         )
         return Response(
-            {'status': 'accepted', 'note': f'{resource_type} resource stored for review'},
+            {'status': 'accepted', 'resourceType': resource_type},
             status=status.HTTP_200_OK,
         )
 
@@ -1072,12 +1208,11 @@ def webhook_process_query(request):
     # Detect which resource type was requested: explicit param wins, then infer from return URL.
     requested_resource = request.data.get('resourceType', '')
     if not requested_resource:
-        if return_url and 'Encounter' in return_url:
-            requested_resource = 'Encounter'
-        elif return_url and 'Procedure' in return_url:
-            requested_resource = 'Procedure'
-        elif return_url and 'Immunization' in return_url:
-            requested_resource = 'Immunization'
+        for _rt in ('Encounter', 'Procedure', 'Immunization', 'Condition',
+                    'AllergyIntolerance', 'Observation', 'MedicationRequest', 'DiagnosticReport'):
+            if return_url and _rt in return_url:
+                requested_resource = _rt
+                break
         else:
             requested_resource = 'Patient'
 
@@ -1159,6 +1294,41 @@ def webhook_process_query(request):
                     patient=patient
                 ).select_related('patient').order_by('-occurrence_datetime', '-created_at')
                 response_data = immunizations_to_bundle(imm_qs)
+                response_status = 'SUCCESS'
+            elif requested_resource == 'Condition':
+                from patients.models import Condition as ConditionModel
+                cond_qs = ConditionModel.objects.filter(
+                    patient=patient
+                ).order_by('-created_at')
+                response_data = conditions_to_bundle(cond_qs)
+                response_status = 'SUCCESS'
+            elif requested_resource == 'AllergyIntolerance':
+                from patients.models import AllergyIntolerance as AllergyModel
+                allergy_qs = AllergyModel.objects.filter(
+                    patient=patient
+                ).order_by('-created_at')
+                response_data = allergies_to_bundle(allergy_qs)
+                response_status = 'SUCCESS'
+            elif requested_resource == 'Observation':
+                from monitoring.models import Observation as ObservationModel
+                obs_qs = ObservationModel.objects.filter(
+                    subject_id=patient.id
+                ).order_by('-effective_datetime', '-created_at')
+                response_data = observations_to_bundle(obs_qs)
+                response_status = 'SUCCESS'
+            elif requested_resource == 'MedicationRequest':
+                from pharmacy.models import MedicationRequest as MedicationRequestModel
+                mr_qs = MedicationRequestModel.objects.filter(
+                    subject_id=patient.id
+                ).order_by('-authored_on', '-created_at')
+                response_data = medicationrequests_to_bundle(mr_qs)
+                response_status = 'SUCCESS'
+            elif requested_resource == 'DiagnosticReport':
+                from laboratory.models import DiagnosticReport as DiagnosticReportModel
+                dr_qs = DiagnosticReportModel.objects.filter(
+                    subject_id=patient.id
+                ).order_by('-issued_datetime', '-created_at')
+                response_data = diagnosticreports_to_bundle(dr_qs)
                 response_status = 'SUCCESS'
             else:
                 response_data = patient_to_fhir(patient)
