@@ -22,6 +22,7 @@ class Patient(TimeStampedModel):
     birthdate = models.DateField(null=True, blank=True)
     civil_status = models.CharField(max_length=255, null=True, blank=True)
     nationality = models.CharField(max_length=255, null=True, blank=True)
+    race = models.CharField(max_length=255, null=True, blank=True)
     religion = models.CharField(max_length=255, null=True, blank=True)
 
     # Health identifiers
@@ -45,6 +46,7 @@ class Patient(TimeStampedModel):
 
     # Contact information
     mobile_number = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, null=True, blank=True)
 
     # Address fields
     address_line = models.CharField(max_length=255, null=True, blank=True)

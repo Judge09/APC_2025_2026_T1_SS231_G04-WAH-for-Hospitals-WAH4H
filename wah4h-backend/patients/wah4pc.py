@@ -447,8 +447,8 @@ def patient_to_fhir(patient):
                 },
             })
 
-    # 1b. Race  (DB field: `race` when present, falls back to `nationality`)
-    race = getattr(patient, "race", None) or patient.nationality
+    # 1b. Race  (falls back to nationality when race is not separately recorded)
+    race = patient.race or patient.nationality
     if race:
         extensions.append({
             "url": f"{_URN_EXT}/race",
@@ -583,7 +583,7 @@ def patient_to_fhir(patient):
             "use":    "mobile",
             "rank":   1,
         })
-    email = getattr(patient, "email", None)
+    email = patient.email
     if email:
         telecom.append({
             "system": "email",
@@ -996,7 +996,9 @@ def fhir_to_dict(fhir):
         "birthdate":             fhir.get("birthDate"),
         "philhealth_id":         ph_id,
         "mobile_number":         phone,
+        "email":                 next((t["value"] for t in telecoms if t.get("system") == "email"), None),
         "nationality":           nationality,
+        "race":                  _display(race_val),
         "religion":              _display(religion_val),
         "occupation":            _display(occupation_val),
         "education":             _display(education_val),
