@@ -29,12 +29,25 @@ _CS_BASE  = _URN_CS
 # code + system — no display — so we store just the code here.
 # ---------------------------------------------------------------------------
 _HL7_MARITAL_STATUS: dict[str, str] = {
+    # Single-letter HL7 codes (stored directly in DB after first normalisation)
     "S": "S",
     "M": "M",
     "D": "D",
     "W": "W",
     "L": "L",
     "A": "A",
+    # Display-value aliases — .upper() is applied before the lookup so these
+    # cover both title-case ("Single") and all-caps ("SINGLE") DB entries.
+    "SINGLE":             "S",
+    "MARRIED":            "M",
+    "DIVORCED":           "D",
+    "WIDOWED":            "W",
+    "LEGALLY SEPARATED":  "L",
+    "SEPARATED":          "L",
+    "ANNULLED":           "A",
+    "LIVE-IN":            "T",  # HL7 T = Domestic partner (closest mapping)
+    "LIVE IN":            "T",
+    "COHABITING":         "T",
 }
 
 # ---------------------------------------------------------------------------
@@ -350,7 +363,7 @@ def request_patient(target_id, philhealth_id, idempotency_key=None):
                     "requesterId": provider_id,
                     "targetId": target_id,
                     "identifiers": [
-                        {"system": "http://philhealth.gov.ph", "value": philhealth_id}
+                        {"system": "http://philhealth.gov.ph/fhir/Identifier/philhealth-id", "value": philhealth_id}
                     ],
                 },
                 timeout=30,
@@ -1013,13 +1026,80 @@ def fhir_to_dict(fhir):
 # ---------------------------------------------------------------------------
 # Immunization Maps
 # ---------------------------------------------------------------------------
+# CVX codes → display names.  Keys are the values stored in vaccine_code.
+# Standard CVX codes: https://www2a.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx
+# Non-standard codes ("COVID-19", "JC") kept for backward compatibility.
 _VACCINE_CODE_MAP = {
-    "08":       "Hepatitis B",
+    # --- DOH EPI Schedule (Expanded Program on Immunization) ---
+    "19":  "BCG (Bacillus Calmette-Guérin)",
+    "08":  "Hepatitis B",
+    "02":  "Oral Polio Vaccine (OPV)",
+    "10":  "Inactivated Polio Vaccine (IPV)",
+    "146": "Pentavalent (DTP-HepB-Hib)",
+    "110": "DTaP-Hib (Quadrivalent)",
+    "20":  "DTP (Diphtheria-Tetanus-Pertussis)",
+    "28":  "DT (Diphtheria-Tetanus, pediatric)",
+    "09":  "Td (Tetanus-Diphtheria, adult)",
+    "35":  "Tetanus Toxoid (TT)",
+    "03":  "MMR (Measles-Mumps-Rubella)",
+    "04":  "Measles-Rubella (MR)",
+    "05":  "Measles",
+    "94":  "Measles-Containing Vaccine",
+    "133": "PCV13 (Pneumococcal Conjugate Vaccine, 13-valent)",
+    "33":  "PPV23 (Pneumococcal Polysaccharide Vaccine, 23-valent)",
+    "100": "Pneumococcal Conjugate NOS",
+    "119": "Rotavirus (monovalent, RV1)",
+    "116": "Rotavirus (pentavalent, RV5)",
+    "62":  "HPV (Bivalent, Cervarix)",
+    "137": "HPV (9-valent, Gardasil 9)",
+    "165": "HPV (4-valent, Gardasil)",
+    "88":  "Influenza (seasonal, injectable)",
+    "141": "Influenza (seasonal, high-dose)",
+    "21":  "Varicella (Chickenpox)",
+    "52":  "Hepatitis A (pediatric)",
+    "83":  "Hepatitis A + Hepatitis B (combination)",
+    "25":  "Typhoid (Vi polysaccharide, injectable)",
+    "101": "Typhoid (oral, Ty21a)",
+    "56":  "Dengue (Dengvaxia, CYD-TDV)",
+    "18":  "Rabies",
+    "39":  "Japanese Encephalitis (inactivated)",
+    "38":  "Japanese Encephalitis (live)",
+    "37":  "Yellow Fever",
+    "136": "Meningococcal ACWY",
+    "114": "Meningococcal B",
+    "26":  "Cholera (oral)",
+    # --- COVID-19 ---
+    "207": "COVID-19 mRNA (Moderna Spikevax)",
+    "208": "COVID-19 mRNA (Pfizer-BioNTech Comirnaty)",
+    "210": "COVID-19 Viral Vector (AstraZeneca Vaxzevria)",
+    "212": "COVID-19 Viral Vector (Janssen / J&J)",
+    "217": "COVID-19 mRNA (Moderna Bivalent Booster)",
+    "218": "COVID-19 mRNA (Pfizer Bivalent Booster)",
+    "211": "COVID-19 Inactivated (Sinovac CoronaVac)",
+    "510": "COVID-19 Inactivated (Sinopharm BIBP)",
+    "511": "COVID-19 Protein Subunit (Novavax Nuvaxovid)",
+    # --- Legacy / non-standard codes kept for backward compatibility ---
     "COVID-19": "COVID-19 mRNA",
     "JC":       "Japanese Encephalitis",
 }
-_SITE_CODE_MAP  = {"LA": "Left Arm",  "RA": "Right Arm", "LL": "Left Leg"}
-_ROUTE_CODE_MAP = {"IM": "Intramuscular", "PO": "Oral", "IDINJ": "Intradermal"}
+_SITE_CODE_MAP = {
+    "LA":  "Left Arm",
+    "RA":  "Right Arm",
+    "LL":  "Left Leg",
+    "RL":  "Right Leg",
+    "LT":  "Left Thigh",
+    "RT":  "Right Thigh",
+    "LVL": "Left Vastus Lateralis",
+    "RVL": "Right Vastus Lateralis",
+}
+_ROUTE_CODE_MAP = {
+    "IM":    "Intramuscular",
+    "PO":    "Oral",
+    "IDINJ": "Intradermal",
+    "SQ":    "Subcutaneous",
+    "NASINH": "Nasal Inhalation",
+    "IV":    "Intravenous",
+}
 
 
 def immunization_to_fhir(model):
@@ -1300,6 +1380,22 @@ def procedure_to_fhir(model):
     if location_display:
         fhir["location"] = {"display": location_display}
 
+    # bodySite (SNOMED)
+    if model.body_site_code or model.body_site_display:
+        fhir["bodySite"] = [{
+            "text": model.body_site_display or model.body_site_code,
+            "coding": [{
+                "system":  "http://snomed.info/sct",
+                "code":    model.body_site_code   or "",
+                "display": model.body_site_display or model.body_site_code or "",
+            }],
+        }]
+
+    # complication — free text (mirrors outcome pattern)
+    complication_text = model.complication_display or model.complication_code
+    if complication_text:
+        fhir["complication"] = [{"text": complication_text}]
+
     # recorder
     if recorder:
         fhir["recorder"] = recorder
@@ -1433,6 +1529,26 @@ def encounter_to_fhir(model):
     # participant
     if participant_fhir:
         fhir["participant"] = [participant_fhir]
+
+    # serviceType — free text
+    if model.service_type:
+        fhir["serviceType"] = {"text": model.service_type}
+
+    # diagnosis — condition reference, use, and rank
+    if model.diagnosis_condition_id:
+        diag: dict = {
+            "condition": {
+                "reference": f"Condition/{model.diagnosis_condition_id}",
+            }
+        }
+        if model.diagnosis_use:
+            diag["use"] = {"text": model.diagnosis_use}
+        if model.diagnosis_rank:
+            try:
+                diag["rank"] = int(model.diagnosis_rank)
+            except (ValueError, TypeError):
+                pass
+        fhir["diagnosis"] = [diag]
 
     return fhir
 
