@@ -227,8 +227,35 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
             <Card>
               <CardHeader><CardTitle>Respiratory & Oxygen</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                {renderInput('Oxygen Saturation (%)', 'oxygenSaturation')}
-                {renderInput('Respiratory Pattern', 'respiratoryPattern')}
+                <div>
+                  <Label>Oxygen Saturation (%)</Label>
+                  <Input
+                    type="text"
+                    value={formData.oxygenSaturation}
+                    onChange={(e) => updateFormData('oxygenSaturation', e.target.value)}
+                    readOnly={isReadOnly}
+                  />
+                </div>
+                <div>
+                  <Label>Respiratory Pattern</Label>
+                  <Select
+                    value={formData.respiratoryPattern}
+                    onValueChange={(v) => updateFormData('respiratoryPattern', v)}
+                    disabled={isReadOnly}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select pattern" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="shallow">Shallow</SelectItem>
+                      <SelectItem value="labored">Labored</SelectItem>
+                      <SelectItem value="rapid">Rapid (Tachypnea)</SelectItem>
+                      <SelectItem value="slow">Slow (Bradypnea)</SelectItem>
+                      <SelectItem value="cheyne-stokes">Cheyne-Stokes</SelectItem>
+                      <SelectItem value="kussmaul">Kussmaul</SelectItem>
+                      <SelectItem value="apneic">Apneic Episodes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -262,15 +289,79 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                {renderInput('Site Condition', 'ivLineStatus.siteCondition')}
+                <div>
+                  <Label>IV Site Condition</Label>
+                  <Select
+                    value={formData.ivLineStatus.siteCondition}
+                    onValueChange={(v) => updateFormData('ivLineStatus.siteCondition', v)}
+                    disabled={isReadOnly}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="clean">Clean / Intact</SelectItem>
+                      <SelectItem value="redness">Redness / Erythema</SelectItem>
+                      <SelectItem value="swelling">Swelling / Edema</SelectItem>
+                      <SelectItem value="infiltrated">Infiltrated</SelectItem>
+                      <SelectItem value="phlebitis">Phlebitis</SelectItem>
+                      <SelectItem value="infected">Signs of Infection</SelectItem>
+                      <SelectItem value="dislodged">Dislodged</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Medication & Diet */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {renderInput('Medication Intake', 'medicationIntake', 'text', 3)}
-            {renderInput('Dietary Intake', 'dietaryIntake', 'text', 3)}
+            <Card>
+              <CardHeader><CardTitle>Medication Intake</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Compliance</Label>
+                  <Select
+                    value={formData.medicationIntake}
+                    onValueChange={(v) => updateFormData('medicationIntake', v)}
+                    disabled={isReadOnly}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="taken">Taken — All medications administered</SelectItem>
+                      <SelectItem value="partial">Partial — Some medications taken</SelectItem>
+                      <SelectItem value="refused">Refused by patient</SelectItem>
+                      <SelectItem value="held">Held — Per physician order</SelectItem>
+                      <SelectItem value="npo">NPO — Nothing by mouth</SelectItem>
+                      <SelectItem value="not_due">Not yet due</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Dietary Intake</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Intake Amount</Label>
+                  <Select
+                    value={formData.dietaryIntake}
+                    onValueChange={(v) => updateFormData('dietaryIntake', v)}
+                    disabled={isReadOnly}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select intake level" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="100%">100% — Full meal consumed</SelectItem>
+                      <SelectItem value="75%">75% — Most of meal consumed</SelectItem>
+                      <SelectItem value="50%">50% — Half of meal consumed</SelectItem>
+                      <SelectItem value="25%">25% — Quarter of meal consumed</SelectItem>
+                      <SelectItem value="0%">0% — Meal refused / not consumed</SelectItem>
+                      <SelectItem value="npo">NPO — Nothing by mouth</SelectItem>
+                      <SelectItem value="tube_feeding">Tube Feeding (NGT/OGT)</SelectItem>
+                      <SelectItem value="tpn">TPN — Total Parenteral Nutrition</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Notes & Staff */}

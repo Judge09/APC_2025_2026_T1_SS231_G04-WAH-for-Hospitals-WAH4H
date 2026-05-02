@@ -18,8 +18,13 @@ import {
   BLOOD_TYPE_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   PWD_TYPE_OPTIONS,
+  NATIONALITY_OPTIONS,
+  RACE_OPTIONS,
   RELIGION_OPTIONS,
   CONTACT_RELATIONSHIP_OPTIONS,
+  EDUCATION_OPTIONS,
+  OCCUPATION_OPTIONS,
+  INDIGENOUS_GROUP_OPTIONS,
 } from '../../constants/patientConstants';
 import addressData from '../../data/addressData.json';
 
@@ -198,11 +203,11 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <FormField
+              <SelectField
                 label="Nationality"
                 error={errors.nationality}
                 {...register('nationality')}
-                placeholder="e.g., Filipino"
+                options={[{ value: '', label: 'Select Nationality' }, ...NATIONALITY_OPTIONS]}
               />
               <SelectField
                 label="Civil Status"
@@ -219,11 +224,11 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
                 {...register('religion')}
                 options={[{ value: '', label: 'Select Religion' }, ...RELIGION_OPTIONS]}
               />
-              <FormField
-                label="Race"
+              <SelectField
+                label="Race / Ethnolinguistic Group"
                 error={errors.race}
                 {...register('race')}
-                placeholder="e.g., Tagalog"
+                options={[{ value: '', label: 'Select Race / Group' }, ...RACE_OPTIONS]}
               />
             </div>
           </div>
@@ -394,17 +399,17 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <FormField
+              <SelectField
                 label="Occupation"
                 error={errors.occupation}
                 {...register('occupation')}
-                placeholder="e.g., Teacher, Engineer"
+                options={[{ value: '', label: 'Select Occupation' }, ...OCCUPATION_OPTIONS]}
               />
-              <FormField
-                label="Education"
+              <SelectField
+                label="Educational Attainment"
                 error={errors.education}
                 {...register('education')}
-                placeholder="e.g., Bachelor's Degree"
+                options={[{ value: '', label: 'Select Education Level' }, ...EDUCATION_OPTIONS]}
               />
             </div>
           </div>
@@ -448,11 +453,11 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
                 label="Indigenous Person"
                 {...register('indigenous_flag')}
               />
-              <FormField
+              <SelectField
                 label="Indigenous Group"
                 error={errors.indigenous_group}
                 {...register('indigenous_group')}
-                placeholder="e.g., Ilocano, Bicolano"
+                options={[{ value: '', label: 'Select Indigenous Group' }, ...INDIGENOUS_GROUP_OPTIONS]}
               />
               <CheckboxField
                 label="Consent to Data Processing"

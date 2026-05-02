@@ -271,11 +271,41 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">Service Type</label>
                   <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={formData.serviceType} onChange={e => setFormData({ ...formData, serviceType: e.target.value })}>
-                    <option value="Internal Medicine">Internal Medicine</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Surgery">Surgery</option>
-                    <option value="Pediatrics">Pediatrics</option>
-                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="">Select service type...</option>
+                    <optgroup label="Medicine">
+                      <option value="Internal Medicine">Internal Medicine</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Pulmonology">Pulmonology</option>
+                      <option value="Gastroenterology">Gastroenterology</option>
+                      <option value="Nephrology">Nephrology</option>
+                      <option value="Endocrinology">Endocrinology</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Infectious Disease">Infectious Disease</option>
+                      <option value="Hematology">Hematology</option>
+                      <option value="Rheumatology">Rheumatology</option>
+                    </optgroup>
+                    <optgroup label="Surgery">
+                      <option value="General Surgery">General Surgery</option>
+                      <option value="Orthopedic Surgery">Orthopedic Surgery</option>
+                      <option value="Neurosurgery">Neurosurgery</option>
+                      <option value="Thoracic Surgery">Thoracic Surgery</option>
+                      <option value="Vascular Surgery">Vascular Surgery</option>
+                      <option value="Urology">Urology</option>
+                    </optgroup>
+                    <optgroup label="Specialty">
+                      <option value="Pediatrics">Pediatrics</option>
+                      <option value="Obstetrics and Gynecology">Obstetrics & Gynecology (OB-GYN)</option>
+                      <option value="Psychiatry">Psychiatry / Mental Health</option>
+                      <option value="Ophthalmology">Ophthalmology</option>
+                      <option value="ENT">Ear, Nose & Throat (ENT)</option>
+                      <option value="Dermatology">Dermatology</option>
+                      <option value="Oncology">Oncology</option>
+                      <option value="Rehabilitation Medicine">Rehabilitation Medicine</option>
+                    </optgroup>
+                    <optgroup label="Emergency">
+                      <option value="Emergency Medicine">Emergency Medicine</option>
+                      <option value="Intensive Care">Intensive Care (ICU/CCU)</option>
+                    </optgroup>
                   </select>
                 </div>
 
@@ -341,12 +371,18 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Admit Source</label>
+                  <label className="text-sm font-semibold text-slate-700">Admit Source <span className="text-xs text-slate-400">(FHIR admit-source)</span></label>
                   <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={formData.admitSource} onChange={e => setFormData({ ...formData, admitSource: e.target.value })}>
-                    <option value="Physician Referral">Physician Referral</option>
-                    <option value="Emergency Room">Emergency Room</option>
-                    <option value="Clinic Referral">Clinic Referral</option>
-                    <option value="Transfer">Transfer from Hospital</option>
+                    <option value="">Select admit source...</option>
+                    <option value="Physician Referral">Physician / GP Referral (mp)</option>
+                    <option value="Emergency Room">Emergency Room / Walk-in (emd)</option>
+                    <option value="Clinic Referral">Outpatient / Clinic Referral (outp)</option>
+                    <option value="Transfer">Transfer from Another Hospital (hosp)</option>
+                    <option value="Transfer from Nursing Home">Transfer from Nursing Home (nursing)</option>
+                    <option value="Born in Hospital">Born in Hospital (born)</option>
+                    <option value="Psychiatric Referral">Psychiatric Facility Referral (psych)</option>
+                    <option value="Rehabilitation Referral">Rehabilitation Facility Referral (rehab)</option>
+                    <option value="Self-Referral">Self-Referral / Direct Admission (other)</option>
                   </select>
                 </div>
 

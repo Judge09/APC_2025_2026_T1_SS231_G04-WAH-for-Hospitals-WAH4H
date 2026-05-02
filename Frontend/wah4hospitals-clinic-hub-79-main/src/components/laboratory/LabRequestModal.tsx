@@ -29,6 +29,7 @@ interface LabRequestModalProps {
 
 export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [admissions, setAdmissions] = useState<Admission[]>([]);
+    const [practitioners, setPractitioners] = useState<any[]>([]);
     const [loadingAdmissions, setLoadingAdmissions] = useState(false);
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -42,6 +43,7 @@ export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClos
     useEffect(() => {
         if (isOpen) {
             fetchAdmissions();
+            fetchPractitioners();
         }
     }, [isOpen]);
 
@@ -56,6 +58,15 @@ export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClos
             console.error('Error fetching admissions:', error);
         } finally {
             setLoadingAdmissions(false);
+        }
+    };
+
+    const fetchPractitioners = async () => {
+        try {
+            const data = await admissionService.getPractitioners('doctor');
+            if (Array.isArray(data)) setPractitioners(data);
+        } catch (error) {
+            console.error('Error fetching practitioners:', error);
         }
     };
 
@@ -182,14 +193,19 @@ export const LabRequestModal: React.FC<LabRequestModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Requesting Doctor ID</label>
-                        <Input
-                            type="number"
+                        <label className="block text-sm font-medium mb-1">Requesting Doctor</label>
+                        <select
+                            className="w-full rounded-md border border-gray-300 px-3 py-2"
                             value={formData.requesting_doctor}
                             onChange={e => setFormData({ ...formData, requesting_doctor: e.target.value })}
-                            placeholder="1 (Default)"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Enter doctor user ID (defaults to 1 for MVP)</p>
+                        >
+                            <option value="">Select requesting doctor...</option>
+                            {practitioners.map(p => (
+                                <option key={p.practitioner_id} value={p.practitioner_id}>
+                                    {p.first_name} {p.last_name} — {p.identifier}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

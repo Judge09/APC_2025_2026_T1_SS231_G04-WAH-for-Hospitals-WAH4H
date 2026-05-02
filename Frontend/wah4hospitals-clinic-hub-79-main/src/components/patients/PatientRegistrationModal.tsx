@@ -31,8 +31,12 @@ import {
   BLOOD_TYPE_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   PWD_TYPE_OPTIONS,
+  NATIONALITY_OPTIONS,
   RELIGION_OPTIONS,
   CONTACT_RELATIONSHIP_OPTIONS,
+  EDUCATION_OPTIONS,
+  OCCUPATION_OPTIONS,
+  INDIGENOUS_GROUP_OPTIONS,
   REGISTRATION_STEPS,
 } from '../../constants/patientConstants';
 import addressData from '../../data/addressData.json';
@@ -418,22 +422,22 @@ const Step1Form = ({ form }: { form: any }) => {
         />
         {indigenousFlag && (
           <div className="mt-2">
-            <FormField
+            <SelectField
               label="Indigenous Group"
               error={errors.indigenous_group}
               {...register('indigenous_group')}
-              placeholder="e.g., Ilocano, Bicolano"
+              options={[{ value: '', label: 'Select Indigenous Group' }, ...INDIGENOUS_GROUP_OPTIONS]}
             />
           </div>
         )}
       </div>
       {/* Additional info (moved from Step 4) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
+        <SelectField
           label="Nationality"
           error={errors.nationality}
           {...register('nationality')}
-          placeholder="e.g., Filipino"
+          options={[{ value: '', label: 'Select Nationality' }, ...NATIONALITY_OPTIONS]}
         />
         <SelectField
           label="Religion"
@@ -444,17 +448,17 @@ const Step1Form = ({ form }: { form: any }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
+        <SelectField
           label="Occupation"
           error={errors.occupation}
           {...register('occupation')}
-          placeholder="e.g., Teacher, Engineer"
+          options={[{ value: '', label: 'Select Occupation' }, ...OCCUPATION_OPTIONS]}
         />
-        <FormField
-          label="Education"
+        <SelectField
+          label="Educational Attainment"
           error={errors.education}
           {...register('education')}
-          placeholder="e.g., Bachelor's Degree"
+          options={[{ value: '', label: 'Select Education Level' }, ...EDUCATION_OPTIONS]}
         />
       </div>
 

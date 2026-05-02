@@ -8,6 +8,7 @@ import { LabRequest, TestParameterFormData, LabResultFormData, LabInterpretation
 import { getTestParameters, calculateInterpretation } from './labTestParameters'; // Keeping for generic fallback
 import { labPanelsArray } from '@/config/labParameters';
 import { LabPanelForm } from '../LabParameterField';
+import { admissionService } from '../../services/admissionService';
 
 interface LabResultEncodingModalProps {
     isOpen: boolean;
@@ -21,6 +22,7 @@ export const LabResultEncodingModal: React.FC<LabResultEncodingModalProps> = ({ 
     const [medTech, setMedTech] = useState('');
     const [prcNumber, setPrcNumber] = useState('');
     const [overallRemarks, setOverallRemarks] = useState('');
+    const [medTechPractitioners, setMedTechPractitioners] = useState<any[]>([]);
 
     // Form Data State for Configured Panels (CBC, CMP, Lipid, etc.)
     // Matches ResultFormState structure (flat dictionary)
@@ -28,6 +30,20 @@ export const LabResultEncodingModal: React.FC<LabResultEncodingModalProps> = ({ 
 
     // Interpretation logic removed as per requirements (no automatic flagging)
 
+
+    // Load medical technologists once
+    useEffect(() => {
+        admissionService.getPractitioners('medtech').then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                setMedTechPractitioners(data);
+            } else {
+                // Fallback: fetch all practitioners if no medtech role exists
+                admissionService.getPractitioners('doctor').then(all => {
+                    if (Array.isArray(all)) setMedTechPractitioners(all);
+                });
+            }
+        }).catch(() => {});
+    }, []);
 
     // Load predefined parameters and local draft when modal opens
     useEffect(() => {
@@ -220,13 +236,33 @@ export const LabResultEncodingModal: React.FC<LabResultEncodingModalProps> = ({ 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Medical Technologist *</label>
-                                <Input
-                                    required
-                                    value={medTech}
-                                    onChange={e => setMedTech(e.target.value)}
-                                    placeholder="Name of MedTech"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
-                                />
+                                {medTechPractitioners.length > 0 ? (
+                                    <select
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                                        value={medTech}
+                                        onChange={e => {
+                                            const selected = medTechPractitioners.find(p => `${p.first_name} ${p.last_name}` === e.target.value);
+                                            setMedTech(e.target.value);
+                                            if (selected) setPrcNumber(selected.identifier || '');
+                                        }}
+                                    >
+                                        <option value="">Select medical technologist...</option>
+                                        {medTechPractitioners.map(p => (
+                                            <option key={p.practitioner_id} value={`${p.first_name} ${p.last_name}`}>
+                                                {p.first_name} {p.last_name} — {p.identifier}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <Input
+                                        required
+                                        value={medTech}
+                                        onChange={e => setMedTech(e.target.value)}
+                                        placeholder="Name of MedTech"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                                    />
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">PRC Number *</label>

@@ -90,6 +90,99 @@ export const NATIONALITY_OPTIONS = [
   { value: 'Chinese', label: 'Chinese' },
   { value: 'Japanese', label: 'Japanese' },
   { value: 'Korean', label: 'Korean' },
+  { value: 'Indian', label: 'Indian' },
+  { value: 'British', label: 'British' },
+  { value: 'Australian', label: 'Australian' },
+  { value: 'Canadian', label: 'Canadian' },
+  { value: 'Other', label: 'Other' },
+];
+
+// ============================================================================
+// RACE / ETHNOLINGUISTIC OPTIONS (PHCore R4 — Philippine ethnic groups)
+// ============================================================================
+export const RACE_OPTIONS = [
+  { value: 'Tagalog', label: 'Tagalog' },
+  { value: 'Cebuano', label: 'Cebuano / Bisaya' },
+  { value: 'Ilocano', label: 'Ilocano' },
+  { value: 'Hiligaynon', label: 'Hiligaynon / Ilonggo' },
+  { value: 'Bikol', label: 'Bikol' },
+  { value: 'Waray', label: 'Waray' },
+  { value: 'Kapampangan', label: 'Kapampangan' },
+  { value: 'Pangasinense', label: 'Pangasinense' },
+  { value: 'Maranao', label: 'Maranao' },
+  { value: 'Maguindanao', label: 'Maguindanao' },
+  { value: 'Tausug', label: 'Tausug' },
+  { value: 'Igorot', label: 'Igorot' },
+  { value: 'Lumad', label: 'Lumad' },
+  { value: 'Aeta', label: 'Aeta / Agta / Negrito' },
+  { value: 'Mangyan', label: 'Mangyan' },
+  { value: 'T\'boli', label: "T'boli" },
+  { value: 'Bajau', label: 'Bajau' },
+  { value: 'Chinese-Filipino', label: 'Chinese-Filipino' },
+  { value: 'Mixed', label: 'Mixed' },
+  { value: 'Other', label: 'Other' },
+];
+
+// ============================================================================
+// INDIGENOUS GROUP OPTIONS (Philippine ethnolinguistic groups)
+// ============================================================================
+export const INDIGENOUS_GROUP_OPTIONS = [
+  { value: 'Aeta/Agta', label: 'Aeta / Agta / Negrito' },
+  { value: 'Igorot', label: 'Igorot (Cordillera)' },
+  { value: 'Kalinga', label: 'Kalinga' },
+  { value: 'Bontoc', label: 'Bontoc' },
+  { value: 'Ifugao', label: 'Ifugao' },
+  { value: 'Benguet', label: 'Benguet / Kankanaey' },
+  { value: 'Mangyan', label: 'Mangyan (Mindoro)' },
+  { value: 'Palawan', label: 'Palawan (Tagbanwa/Batak)' },
+  { value: 'Lumad', label: 'Lumad (Mindanao)' },
+  { value: 'Maranao', label: 'Maranao' },
+  { value: 'Maguindanao', label: 'Maguindanao' },
+  { value: 'Tausug', label: 'Tausug' },
+  { value: 'T\'boli', label: "T'boli" },
+  { value: 'Bajau', label: 'Bajau / Sama' },
+  { value: 'Blaan', label: "B'laan" },
+  { value: 'Subanon', label: 'Subanon' },
+  { value: 'Other', label: 'Other' },
+];
+
+// ============================================================================
+// EDUCATION OPTIONS (PSCED — Philippine Standard Classification of Education)
+// ============================================================================
+export const EDUCATION_OPTIONS = [
+  { value: 'No formal education', label: 'No Formal Education' },
+  { value: 'Elementary (incomplete)', label: 'Elementary — Incomplete' },
+  { value: 'Elementary (complete)', label: 'Elementary — Complete' },
+  { value: 'Junior High School (incomplete)', label: 'Junior High School — Incomplete' },
+  { value: 'Junior High School (complete)', label: 'Junior High School — Complete' },
+  { value: 'Senior High School', label: 'Senior High School (K-12)' },
+  { value: 'Vocational/Technical', label: 'Vocational / Technical / TESDA' },
+  { value: 'College (incomplete)', label: 'College — Incomplete' },
+  { value: 'College (complete)', label: "College — Complete (Bachelor's Degree)" },
+  { value: 'Post-Graduate (Master)', label: "Post-Graduate — Master's Degree" },
+  { value: 'Post-Graduate (Doctorate)', label: 'Post-Graduate — Doctorate' },
+];
+
+// ============================================================================
+// OCCUPATION OPTIONS (PSOC — Philippine Standard Occupational Classification)
+// ============================================================================
+export const OCCUPATION_OPTIONS = [
+  { value: 'Healthcare Professional', label: 'Healthcare Professional' },
+  { value: 'Engineer/Architect', label: 'Engineer / Architect' },
+  { value: 'Teacher/Educator', label: 'Teacher / Educator' },
+  { value: 'Farmer/Fisherman', label: 'Farmer / Fisherman' },
+  { value: 'Laborer/Worker', label: 'Laborer / Worker' },
+  { value: 'Sales/Service Worker', label: 'Sales / Service Worker' },
+  { value: 'Technician', label: 'Technician' },
+  { value: 'Driver/Transport', label: 'Driver / Transport Worker' },
+  { value: 'Office/Clerical Worker', label: 'Office / Clerical Worker' },
+  { value: 'Business Owner', label: 'Business Owner / Entrepreneur' },
+  { value: 'Government Employee', label: 'Government Employee' },
+  { value: 'OFW', label: 'Overseas Filipino Worker (OFW)' },
+  { value: 'Student', label: 'Student' },
+  { value: 'Unemployed', label: 'Unemployed' },
+  { value: 'Retired', label: 'Retired' },
+  { value: 'Homemaker', label: 'Homemaker' },
   { value: 'Other', label: 'Other' },
 ];
 
