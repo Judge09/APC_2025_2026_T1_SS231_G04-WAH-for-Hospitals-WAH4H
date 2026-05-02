@@ -40,7 +40,9 @@
       "Bash(grep -h \"class.*ViewSet\\\\|class.*APIView\\\\|class.*generics\" /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/*/views.py)",
       "Bash(git stash *)",
       "Bash(git checkout *)",
-      "Bash(diffstat)"
+      "Bash(diffstat)",
+      "Bash(npm run *)",
+      "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"from accounts.views import HospitalSettingsAPIView, AdminUserListAPIView, AdminUserDetailAPIView, AdminRoleModuleConfigAPIView, FHIROrganizationAPIView, IsAdminRole; print\\('All admin views import OK'\\)\")"
     ]
   }
 }

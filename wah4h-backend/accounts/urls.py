@@ -25,7 +25,12 @@ from .views import (
     ChangePasswordVerifyAPIView,
     EmailCheckAPIView,
     OrganizationListAPIView,
-    PractitionerListAPIView
+    PractitionerListAPIView,
+    HospitalSettingsAPIView,
+    AdminUserListAPIView,
+    AdminUserDetailAPIView,
+    AdminRoleModuleConfigAPIView,
+    FHIROrganizationAPIView,
 )
 
 urlpatterns = [
@@ -104,5 +109,20 @@ urlpatterns = [
 
     path('practitioners/', PractitionerListAPIView.as_view(), name='practitioner-list'),
     path('check-email/', EmailCheckAPIView.as_view(), name='check-email'),
+
+    # ========================================================================
+    # ADMIN ENDPOINTS
+    # ========================================================================
+    path('admin/hospital/', HospitalSettingsAPIView.as_view(), name='admin-hospital-settings'),
+    path('admin/users/', AdminUserListAPIView.as_view(), name='admin-user-list'),
+    path('admin/users/<int:pk>/', AdminUserDetailAPIView.as_view(), name='admin-user-detail'),
+    path('admin/role-modules/', AdminRoleModuleConfigAPIView.as_view(), name='admin-role-modules-list'),
+    path('admin/role-modules/<str:role>/', AdminRoleModuleConfigAPIView.as_view(), name='admin-role-modules-update'),
+
+    # ========================================================================
+    # FHIR ORGANIZATION RESOURCE
+    # ========================================================================
+    path('fhir/Organization/', FHIROrganizationAPIView.as_view(), name='fhir-organization'),
+    path('fhir/Organization/<int:pk>/', FHIROrganizationAPIView.as_view(), name='fhir-organization-detail'),
 ]
 

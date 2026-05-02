@@ -24,6 +24,7 @@ import AdmissionPage from "./pages/Admission";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import AccountSettings from "./pages/AccountSettings";
+import AdminPage from "./pages/AdminPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
@@ -43,7 +44,8 @@ import {
   Receipt,
   Bed,
   Pill,
-  TestTube
+  TestTube,
+  ShieldCheck
 } from 'lucide-react';
 
 const queryClient = new QueryClient();
@@ -60,7 +62,8 @@ const tabs = [
   { id: 'compliance', name: 'Compliance', icon: <Shield className="w-4 h-4" /> },
   { id: 'statistics', name: 'Statistics', icon: <BarChart3 className="w-4 h-4" /> },
   { id: 'billing', name: 'Billing', icon: <Receipt className="w-4 h-4" /> },
-  { id: 'settings', name: 'Settings', icon: <SettingsIcon className="w-4 h-4" /> }
+  { id: 'settings', name: 'Settings', icon: <SettingsIcon className="w-4 h-4" /> },
+  { id: 'admin', name: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> },
 ];
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,6 +102,8 @@ const AppContent = () => {
       setActiveTab('billing');
     } else if (path === '/settings' || path === '/control-panel') {
       setActiveTab('settings');
+    } else if (path === '/admin') {
+      setActiveTab('admin');
     }
   }, [location.pathname]);
 
@@ -128,6 +133,8 @@ const AppContent = () => {
         return <Billing />;
       case 'settings':
         return <Settings />;
+      case 'admin':
+        return <AdminPage />;
       default:
         return <ModernDashboard />;
     }
@@ -174,6 +181,7 @@ const App = () => (
                 <Route path="/billing" element={<AppContent />} />
                 <Route path="/settings" element={<AppContent />} />
                 <Route path="/control-panel" element={<AppContent />} />
+                <Route path="/admin" element={<AppContent />} />
                 <Route path="/account-settings" element={
                   <ProtectedRoute>
                     <AccountSettings />

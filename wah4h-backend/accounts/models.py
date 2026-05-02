@@ -11,6 +11,8 @@ class Organization(FHIRResourceModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     alias = models.CharField(max_length=255, null=True, blank=True)
     telecom = models.CharField(max_length=50, null=True, blank=True)
+    logo_url = models.URLField(max_length=500, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     endpoint = models.ForeignKey('accounts.Endpoint', on_delete=models.PROTECT, db_column='endpoint_id', null=True, blank=True, related_name='organizations')
     part_of_organization = models.ForeignKey(
         'accounts.Organization',
@@ -219,7 +221,15 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     password = models.CharField(max_length=255, db_column='password_hash')  # Django expects 'password' field
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255, null=True, blank=True)
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('doctor', 'Doctor'),
+        ('nurse', 'Nurse'),
+        ('lab_technician', 'Lab Technician'),
+        ('pharmacist', 'Pharmacist'),
+        ('billing_clerk', 'Billing Clerk'),
+    ]
+    role = models.CharField(max_length=255, null=True, blank=True, choices=ROLE_CHOICES)
     status = models.CharField(max_length=100)
     # Kept as Integer to match Excel, though Practitioner is PK
     user_id = models.IntegerField(null=True, blank=True) # original field name = "id" in excel
@@ -286,3 +296,53 @@ class HealthcareService(FHIRResourceModel):
     availability_exceptions = models.CharField(max_length=255, null=True, blank=True)
     class Meta:
         db_table = 'healthcare_service'
+
+
+import json as _json
+
+class RoleModuleConfig(models.Model):
+    """
+    Stores admin-configurable module access per role.
+    One row per role; modules stored as a JSON list.
+    Seeded with defaults on first access via get_for_role().
+    """
+    ROLE_CHOICES = [
+        ('doctor', 'Doctor'),
+        ('nurse', 'Nurse'),
+        ('lab_technician', 'Lab Technician'),
+        ('pharmacist', 'Pharmacist'),
+        ('billing_clerk', 'Billing Clerk'),
+    ]
+
+    DEFAULT_MODULES = {
+        'doctor': ['dashboard', 'patients', 'admission', 'laboratory', 'monitoring', 'discharge', 'settings'],
+        'nurse': ['dashboard', 'patients', 'admission', 'monitoring', 'laboratory', 'pharmacy', 'inventory', 'settings'],
+        'lab_technician': ['dashboard', 'laboratory', 'monitoring', 'patients', 'compliance', 'settings'],
+        'pharmacist': ['dashboard', 'pharmacy', 'inventory', 'patients', 'compliance', 'settings'],
+        'billing_clerk': ['dashboard', 'billing', 'patients', 'settings'],
+    }
+
+    role = models.CharField(max_length=50, unique=True, choices=ROLE_CHOICES)
+    modules = models.JSONField(default=list)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'role_module_config'
+
+    @classmethod
+    def get_for_role(cls, role):
+        obj, _ = cls.objects.get_or_create(
+            role=role,
+            defaults={'modules': cls.DEFAULT_MODULES.get(role, [])}
+        )
+        return obj
+
+    @classmethod
+    def get_all_configs(cls):
+        result = {}
+        for role, _ in cls.ROLE_CHOICES:
+            result[role] = cls.get_for_role(role).modules
+        return result
+
+    def __str__(self):
+        return f"RoleModuleConfig({self.role})"

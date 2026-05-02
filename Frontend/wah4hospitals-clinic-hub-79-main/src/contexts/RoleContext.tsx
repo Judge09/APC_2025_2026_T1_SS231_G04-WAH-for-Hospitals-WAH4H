@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
  * Source: wah4h-backend/accounts/models.py
  */
 export type UserRole =
+  | 'admin'           // Admin - Hospital system administrator
   | 'doctor'          // Doctor - Clinical care and medical decisions
   | 'nurse'           // Nurse - Patient care and monitoring
   | 'lab_technician'  // Lab Technician - Laboratory tests and results
@@ -16,6 +17,7 @@ export type UserRole =
  * Role hierarchy levels for permission management
  */
 export enum RoleLevel {
+  ADMIN = 4,        // System administrator
   CLINICAL = 3,     // Clinical staff (doctors, nurses)
   TECHNICAL = 2,    // Technical staff (lab, pharmacy)
   SUPPORT = 1,      // Support staff (billing)
@@ -42,6 +44,7 @@ export const useRole = () => {
  * Role hierarchy mapping for permission levels
  */
 const roleHierarchy: Record<UserRole, RoleLevel> = {
+  admin: RoleLevel.ADMIN,
   doctor: RoleLevel.CLINICAL,
   nurse: RoleLevel.CLINICAL,
   lab_technician: RoleLevel.TECHNICAL,
@@ -70,6 +73,23 @@ const roleHierarchy: Record<UserRole, RoleLevel> = {
  * Settings: User preferences and system configuration
  */
 const roleAccessConfig: Record<UserRole, string[]> = {
+  // ========== ADMIN: Full system access + admin panel ==========
+  admin: [
+    'dashboard',
+    'patients',
+    'admission',
+    'pharmacy',
+    'laboratory',
+    'monitoring',
+    'discharge',
+    'inventory',
+    'compliance',
+    'statistics',
+    'billing',
+    'settings',
+    'admin',
+  ],
+
   // ========== DOCTOR: Clinical care and medical decisions ==========
   // Doctors need access to patient care, diagnostics, treatment, and discharge
   doctor: [
@@ -135,6 +155,35 @@ const roleAccessConfig: Record<UserRole, string[]> = {
  */
 const modificationPermissions: Record<UserRole, string[]> = {
 
+  admin: [
+    'hospital-settings',
+    'user-management',
+    'role-module-config',
+    'patient-records',
+    'diagnoses',
+    'treatments',
+    'prescriptions',
+    'lab-orders',
+    'discharge-summary',
+    'medical-notes',
+    'vital-signs',
+    'nursing-notes',
+    'medication-administration',
+    'patient-care-logs',
+    'inventory-usage',
+    'lab-results',
+    'specimen-tracking',
+    'test-reports',
+    'medication-dispensing',
+    'pharmacy-inventory',
+    'prescription-verification',
+    'drug-interactions',
+    'invoices',
+    'payments',
+    'insurance-claims',
+    'billing-records',
+  ],
+
   doctor: [
     'patient-records',
     'diagnoses',
@@ -183,7 +232,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
   const [currentRole, setCurrentRoleState] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole | null;
-    return (savedRole || (user?.role as UserRole) || 'billing_clerk');
+    return (savedRole || (user?.role as UserRole) || 'doctor');
   });
 
   const [availableTabs, setAvailableTabs] = useState<string[]>([]);
@@ -197,8 +246,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       localStorage.setItem('userRole', userRole);
       setRoleLevel(roleHierarchy[userRole] || RoleLevel.SUPPORT);
     } else {
-      // Reset to minimal access when no authenticated user
-      setCurrentRoleState('billing_clerk');
+      setCurrentRoleState('doctor');
       setRoleLevel(RoleLevel.SUPPORT);
     }
   }, [user]);

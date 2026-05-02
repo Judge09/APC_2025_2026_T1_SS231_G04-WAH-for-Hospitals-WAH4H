@@ -21,7 +21,7 @@ Response Format:
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from django.conf import settings
@@ -33,7 +33,7 @@ from .serializers import PractitionerSerializer
 
 from .emails import send_otp_email
 
-from .models import Organization, Practitioner
+from .models import Organization, Practitioner, RoleModuleConfig
 from .serializers import (
     OrganizationSerializer,
     PractitionerSignupSerializer,
@@ -45,6 +45,9 @@ from .serializers import (
     ChangePasswordSerializer,
     ChangePasswordInitiateSerializer,
     ChangePasswordVerifySerializer,
+    HospitalSettingsSerializer,
+    AdminUserSerializer,
+    RoleModuleConfigSerializer,
     generate_otp
 )
 
@@ -841,3 +844,242 @@ class PractitionerListAPIView(generics.ListAPIView):
             # In our model, User has a O2O to Practitioner with primary_key=True
             queryset = queryset.filter(user__role__iexact=role)
         return queryset
+
+
+# ============================================================================
+# ADMIN PERMISSION
+# ============================================================================
+
+class IsAdminRole(BasePermission):
+    """Allow access only to users with role='admin'."""
+    message = 'Only admin users can perform this action.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == 'admin'
+        )
+
+
+# ============================================================================
+# ADMIN: HOSPITAL SETTINGS
+# ============================================================================
+
+class HospitalSettingsAPIView(APIView):
+    """
+    GET  /api/accounts/admin/hospital/
+    PUT  /api/accounts/admin/hospital/
+
+    Retrieve or update the primary organization (hospital) profile.
+    Admin-only. Returns FHIR R4 Organization-compatible payload.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get_organization(self):
+        return Organization.objects.filter(active=True).order_by('organization_id').first()
+
+    def get(self, request):
+        org = self._get_organization()
+        if not org:
+            return error_response('No organization found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = HospitalSettingsSerializer(org)
+        return success_response('Hospital settings retrieved.', data=serializer.data)
+
+    def put(self, request):
+        org = self._get_organization()
+        if not org:
+            return error_response('No organization found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = HospitalSettingsSerializer(org, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Hospital settings updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+# ============================================================================
+# ADMIN: USER MANAGEMENT
+# ============================================================================
+
+class AdminUserListAPIView(APIView):
+    """
+    GET  /api/accounts/admin/users/          - list all users
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        User = get_user_model()
+        role_filter = request.query_params.get('role')
+        users = User.objects.select_related('practitioner').all()
+        if role_filter:
+            users = users.filter(role=role_filter)
+        serializer = AdminUserSerializer(users, many=True)
+        return success_response('Users retrieved.', data=serializer.data)
+
+
+class AdminUserDetailAPIView(APIView):
+    """
+    GET   /api/accounts/admin/users/<pk>/    - retrieve user
+    PATCH /api/accounts/admin/users/<pk>/    - update role / status / is_active
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get_user(self, pk):
+        User = get_user_model()
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        user = self._get_user(pk)
+        if not user:
+            return error_response('User not found.', http_status=status.HTTP_404_NOT_FOUND)
+        return success_response('User retrieved.', data=AdminUserSerializer(user).data)
+
+    def patch(self, request, pk):
+        user = self._get_user(pk)
+        if not user:
+            return error_response('User not found.', http_status=status.HTTP_404_NOT_FOUND)
+        # Prevent removing the last admin
+        if user.role == 'admin' and request.data.get('role') != 'admin':
+            User = get_user_model()
+            admin_count = User.objects.filter(role='admin').count()
+            if admin_count <= 1:
+                return error_response(
+                    'Cannot remove the last admin account.',
+                    http_status=status.HTTP_400_BAD_REQUEST
+                )
+        serializer = AdminUserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('User updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+# ============================================================================
+# ADMIN: ROLE MODULE CONFIGURATION
+# ============================================================================
+
+class AdminRoleModuleConfigAPIView(APIView):
+    """
+    GET  /api/accounts/admin/role-modules/         - get all role configs
+    PUT  /api/accounts/admin/role-modules/<role>/  - update modules for a role
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        configs = RoleModuleConfig.get_all_configs()
+        return success_response('Role module configs retrieved.', data=configs)
+
+    def put(self, request, role):
+        allowed_roles = [r[0] for r in RoleModuleConfig.ROLE_CHOICES]
+        if role not in allowed_roles:
+            return error_response(f'Role must be one of: {", ".join(allowed_roles)}',
+                                  http_status=status.HTTP_400_BAD_REQUEST)
+        config = RoleModuleConfig.get_for_role(role)
+        serializer = RoleModuleConfigSerializer(config, data={'role': role, 'modules': request.data.get('modules', [])})
+        if serializer.is_valid():
+            serializer.save()
+            return success_response(f'Modules for {role} updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+# ============================================================================
+# ADMIN: FHIR ORGANIZATION RESOURCE
+# ============================================================================
+
+class FHIROrganizationAPIView(APIView):
+    """
+    GET /api/accounts/fhir/Organization/<pk>
+    Returns a FHIR R4-compliant Organization resource for the hospital.
+    Admin-only for write; authenticated users can read.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        if pk:
+            try:
+                org = Organization.objects.get(pk=pk)
+            except Organization.DoesNotExist:
+                return error_response('Organization not found.', http_status=status.HTTP_404_NOT_FOUND)
+        else:
+            org = Organization.objects.filter(active=True).order_by('organization_id').first()
+            if not org:
+                return error_response('No organization found.', http_status=status.HTTP_404_NOT_FOUND)
+
+        fhir_resource = _build_fhir_organization(org)
+        return Response(fhir_resource, status=status.HTTP_200_OK,
+                        content_type='application/fhir+json')
+
+
+def _build_fhir_organization(org):
+    """Build a FHIR R4 Organization resource dict from an Organization model instance."""
+    resource = {
+        'resourceType': 'Organization',
+        'id': str(org.organization_id),
+        'meta': {
+            'profile': ['http://hl7.org/fhir/StructureDefinition/Organization'],
+        },
+        'active': org.active if org.active is not None else True,
+        'name': org.name or '',
+    }
+
+    if org.nhfr_code:
+        resource['identifier'] = [{
+            'system': 'https://nhfr.doh.gov.ph/facility',
+            'value': org.nhfr_code,
+        }]
+
+    if org.type_code:
+        resource['type'] = [{
+            'coding': [{
+                'system': 'http://terminology.hl7.org/CodeSystem/organization-type',
+                'code': org.type_code,
+                'display': org.type_code.capitalize(),
+            }]
+        }]
+
+    if org.alias:
+        resource['alias'] = [org.alias]
+
+    telecom_list = []
+    if org.telecom:
+        telecom_list.append({'system': 'phone', 'value': org.telecom})
+    if telecom_list:
+        resource['telecom'] = telecom_list
+
+    address_parts = [org.address_line, org.address_city, org.address_district,
+                     org.address_state, org.address_country]
+    if any(address_parts):
+        resource['address'] = [{
+            'use': 'work',
+            'line': [org.address_line] if org.address_line else [],
+            'city': org.address_city or '',
+            'district': org.address_district or '',
+            'state': org.address_state or '',
+            'country': org.address_country or '',
+            'postalCode': org.address_postal_code or '',
+        }]
+
+    contact_name = ' '.join(filter(None, [org.contact_first_name, org.contact_last_name]))
+    if contact_name or org.contact_telecom:
+        contact = {}
+        if org.contact_purpose:
+            contact['purpose'] = {
+                'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/contactentity-type',
+                             'code': org.contact_purpose}]
+            }
+        if contact_name:
+            contact['name'] = {'text': contact_name}
+        if org.contact_telecom:
+            contact['telecom'] = [{'system': 'phone', 'value': org.contact_telecom}]
+        resource['contact'] = [contact]
+
+    if org.logo_url:
+        resource['extension'] = [{
+            'url': 'https://wah4h.local/fhir/StructureDefinition/organization-logo',
+            'valueUrl': org.logo_url,
+        }]
+
+    return resource

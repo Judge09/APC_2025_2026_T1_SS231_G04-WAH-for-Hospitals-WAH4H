@@ -18,7 +18,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 import secrets
 import string
 
-from .models import Organization, Practitioner, PractitionerRole
+from .models import Organization, Practitioner, PractitionerRole, RoleModuleConfig
 
 User = get_user_model()
 
@@ -27,6 +27,110 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = ['organization_id', 'name']
+
+
+# ============================================================================
+# ADMIN SERIALIZERS
+# ============================================================================
+
+class HospitalSettingsSerializer(serializers.ModelSerializer):
+    """Full Organization serializer for admin hospital profile editing."""
+    fhir_resource_type = serializers.SerializerMethodField()
+    fhir_identifier = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Organization
+        fields = [
+            'organization_id',
+            'name',
+            'alias',
+            'nhfr_code',
+            'type_code',
+            'active',
+            'telecom',
+            'logo_url',
+            'description',
+            'address_line',
+            'address_city',
+            'address_district',
+            'address_state',
+            'address_country',
+            'address_postal_code',
+            'contact_purpose',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_telecom',
+            'contact_address_line',
+            'contact_address_city',
+            'contact_address_state',
+            'contact_address_country',
+            'contact_postal_code',
+            'fhir_resource_type',
+            'fhir_identifier',
+        ]
+        read_only_fields = ['organization_id', 'fhir_resource_type', 'fhir_identifier']
+
+    def get_fhir_resource_type(self, obj):
+        return 'Organization'
+
+    def get_fhir_identifier(self, obj):
+        if obj.nhfr_code:
+            return {
+                'system': 'https://nhfr.doh.gov.ph/facility',
+                'value': obj.nhfr_code,
+            }
+        return None
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """User serializer for admin user management."""
+    practitioner_id = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'practitioner_id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'full_name',
+            'role',
+            'status',
+            'is_active',
+        ]
+        read_only_fields = ['practitioner_id', 'username', 'email', 'full_name']
+
+    def get_practitioner_id(self, obj):
+        return obj.pk
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+    def validate_role(self, value):
+        allowed = [r[0] for r in User.ROLE_CHOICES]
+        if value not in allowed:
+            raise serializers.ValidationError(f"Role must be one of: {', '.join(allowed)}")
+        return value
+
+
+class RoleModuleConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleModuleConfig
+        fields = ['role', 'modules', 'updated_at']
+        read_only_fields = ['updated_at']
+
+    def validate_modules(self, value):
+        allowed = [
+            'dashboard', 'patients', 'admission', 'pharmacy', 'laboratory',
+            'monitoring', 'discharge', 'inventory', 'compliance', 'statistics',
+            'billing', 'settings',
+        ]
+        invalid = [m for m in value if m not in allowed]
+        if invalid:
+            raise serializers.ValidationError(f"Unknown modules: {invalid}. Allowed: {allowed}")
+        return value
 
 
 class PractitionerSerializer(serializers.ModelSerializer):
