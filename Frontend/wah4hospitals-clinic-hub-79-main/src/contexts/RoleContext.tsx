@@ -93,59 +93,58 @@ const roleAccessConfig: Record<UserRole, string[]> = {
   // ========== DOCTOR: Clinical care and medical decisions ==========
   // Doctors need access to patient care, diagnostics, treatment, and discharge
   doctor: [
-    'dashboard',      // View patient statistics and alerts
-    'patients',       // Access patient medical records
-    'admission',      // Admit patients and create care plans
-    'laboratory',     // Order and review lab tests
-    'monitoring',     // Monitor patient vital signs and progress
-    'discharge',      // Discharge patients and create discharge summaries
-    'discharge',      // Discharge patients and create discharge summaries
-    'settings',       // Personal settings
+    'dashboard',
+    'patients',
+    'admission',
+    'laboratory',
+    'monitoring',
+    'discharge',
+    'settings',
+    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   // ========== NURSE: Patient care coordination and monitoring ==========
   // Nurses handle direct patient care, medication administration, and monitoring
   nurse: [
-    'dashboard',      // View patient assignments and alerts
-    'patients',       // Access patient records for care delivery
-    'admission',      // Assist with patient intake and documentation
-    'monitoring',     // Record vital signs and patient observations
-    'laboratory',     // View lab results for patient care
-    'pharmacy',       // View medication orders for administration
-    'inventory',      // Manage medical supplies and equipment
-    'settings',       // Personal settings
+    'dashboard',
+    'patients',
+    'admission',
+    'monitoring',
+    'laboratory',
+    'pharmacy',
+    'inventory',
+    'settings',
+    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   // ========== LAB TECHNICIAN: Laboratory operations ==========
   // Lab technicians perform tests, manage specimens, and report results
   lab_technician: [
-    'dashboard',      // View pending lab orders
-    'laboratory',     // Process lab tests and enter results
-    'monitoring',     // View patient status for test prioritization
-    'patients',       // Limited access to verify patient information
-    'compliance',     // Quality control and regulatory compliance
-    'settings',       // Personal settings
+    'dashboard',
+    'laboratory',
+    'monitoring',
+    'patients',
+    'compliance',
+    'settings',
+    'admin',          // TEMPORARY: remove after initial setup
   ],
 
-  // ========== PHARMACIST: Medication management ==========
-  // Pharmacists dispense medications, check interactions, and manage inventory
   pharmacist: [
-    'dashboard',      // View medication orders and alerts
-    'pharmacy',       // Dispense medications and verify prescriptions
-    'inventory',      // Manage pharmaceutical inventory
-    'patients',       // Access patient allergies and medication history
-    'compliance',     // Drug regulatory compliance
-    'settings',       // Personal settings
+    'dashboard',
+    'pharmacy',
+    'inventory',
+    'patients',
+    'compliance',
+    'settings',
+    'admin',          // TEMPORARY: remove after initial setup
   ],
 
-  // ========== BILLING CLERK: Financial operations ==========
-  // Billing clerks handle invoicing, payments, and insurance claims
   billing_clerk: [
-    'dashboard',      // View billing summaries and pending claims
-    'billing',        // Create and manage invoices
-    'billing',        // Create and manage invoices
-    'patients',       // Access patient information for billing
-    'settings',       // Personal settings
+    'dashboard',
+    'billing',
+    'patients',
+    'settings',
+    'admin',          // TEMPORARY: remove after initial setup
   ],
 };
 
