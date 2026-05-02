@@ -50,6 +50,8 @@ export const MARITAL_STATUS_OPTIONS = [
   { value: 'D', label: 'Divorced' },
   { value: 'W', label: 'Widowed' },
   { value: 'L', label: 'Legally Separated' },
+  { value: 'A', label: 'Annulled' },
+  { value: 'T', label: 'Domestic Partner / Live-in' },
 ];
 
 export const MARITAL_STATUS_MAP: Record<string, string> = {
@@ -58,6 +60,8 @@ export const MARITAL_STATUS_MAP: Record<string, string> = {
   D: 'Divorced',
   W: 'Widowed',
   L: 'Legally Separated',
+  A: 'Annulled',
+  T: 'Domestic Partner / Live-in',
 };
 
 // ============================================================================

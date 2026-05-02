@@ -2185,37 +2185,49 @@ def observation_to_fhir(model):
         }.items() if v is not None}
     if model.issued:
         fhir["issued"] = format_fhir_datetime(model.issued)
+    def _try_float(v):
+        try:
+            return float(v) if v not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+
     if model.value_quantity is not None:
         qty = {"value": float(model.value_quantity), "system": _UCUM_SYSTEM}
-        if model.unit:
-            qty["unit"] = model.unit
-            qty["code"] = model.unit
+        # Observation model has no `unit` column; UCUM unit stored in value_codeableconcept
+        # or left blank — only add unit fields when a value is available via that channel.
         fhir["valueQuantity"] = qty
     elif model.value_string:
         fhir["valueString"] = model.value_string
     elif model.value_boolean is not None:
         fhir["valueBoolean"] = model.value_boolean
-    elif model.value_integer is not None:
+    elif model.value_integer not in (None, ""):
         fhir["valueInteger"] = model.value_integer
     elif model.value_datetime:
         fhir["valueDateTime"] = format_fhir_datetime(model.value_datetime)
-    elif model.value_range_low is not None or model.value_range_high is not None:
-        fhir["valueRange"] = {k: v for k, v in {
-            "low":  {"value": float(model.value_range_low)}  if model.value_range_low  is not None else None,
-            "high": {"value": float(model.value_range_high)} if model.value_range_high is not None else None,
-        }.items() if v is not None}
+    elif model.value_range_low not in (None, "") or model.value_range_high not in (None, ""):
+        range_entry: dict = {}
+        low = _try_float(model.value_range_low)
+        high = _try_float(model.value_range_high)
+        if low is not None:
+            range_entry["low"] = {"value": low}
+        if high is not None:
+            range_entry["high"] = {"value": high}
+        if range_entry:
+            fhir["valueRange"] = range_entry
     elif model.value_codeableconcept:
         fhir["valueCodeableConcept"] = {"text": model.value_codeableconcept}
     if model.interpretation:
         fhir["interpretation"] = [{"text": model.interpretation}]
     if model.note:
         fhir["note"] = [{"text": model.note}]
-    if model.reference_range_low is not None or model.reference_range_high is not None or model.reference_range_text:
+    rr_low = _try_float(model.reference_range_low)
+    rr_high = _try_float(model.reference_range_high)
+    if rr_low is not None or rr_high is not None or model.reference_range_text:
         rr: dict = {}
-        if model.reference_range_low is not None:
-            rr["low"] = {"value": float(model.reference_range_low)}
-        if model.reference_range_high is not None:
-            rr["high"] = {"value": float(model.reference_range_high)}
+        if rr_low is not None:
+            rr["low"] = {"value": rr_low}
+        if rr_high is not None:
+            rr["high"] = {"value": rr_high}
         if model.reference_range_text:
             rr["text"] = model.reference_range_text
         fhir["referenceRange"] = [rr]

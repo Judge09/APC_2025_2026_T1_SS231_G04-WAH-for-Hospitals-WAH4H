@@ -162,3 +162,128 @@ export const FUNDING_SOURCE_OPTIONS = [
   { value: 'private', label: 'Private' },
   { value: 'public', label: 'Public/Government' },
 ];
+
+// ============================================================================
+// OBSERVATION CONSTANTS (FHIR R4)
+// ============================================================================
+
+export const OBSERVATION_STATUS_OPTIONS = [
+  { value: 'registered', label: 'Registered' },
+  { value: 'preliminary', label: 'Preliminary' },
+  { value: 'final', label: 'Final' },
+  { value: 'amended', label: 'Amended' },
+  { value: 'corrected', label: 'Corrected' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'entered-in-error', label: 'Entered in Error' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
+export const OBSERVATION_CATEGORY_OPTIONS = [
+  { value: 'vital-signs', label: 'Vital Signs' },
+  { value: 'laboratory', label: 'Laboratory' },
+  { value: 'imaging', label: 'Imaging' },
+  { value: 'procedure', label: 'Procedure' },
+  { value: 'survey', label: 'Survey' },
+  { value: 'exam', label: 'Physical Exam' },
+  { value: 'therapy', label: 'Therapy' },
+  { value: 'activity', label: 'Activity' },
+  { value: 'social-history', label: 'Social History' },
+];
+
+export const OBSERVATION_INTERPRETATION_OPTIONS = [
+  { value: 'N', label: 'Normal' },
+  { value: 'H', label: 'High' },
+  { value: 'L', label: 'Low' },
+  { value: 'HH', label: 'Critical High' },
+  { value: 'LL', label: 'Critical Low' },
+  { value: 'A', label: 'Abnormal' },
+  { value: 'POS', label: 'Positive' },
+  { value: 'NEG', label: 'Negative' },
+  { value: 'IND', label: 'Indeterminate' },
+  { value: 'R', label: 'Resistant' },
+  { value: 'S', label: 'Susceptible' },
+];
+
+// ============================================================================
+// MEDICATION REQUEST CONSTANTS (FHIR R4)
+// ============================================================================
+
+export const MEDICATION_REQUEST_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'on-hold', label: 'On Hold' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'entered-in-error', label: 'Entered in Error' },
+  { value: 'stopped', label: 'Stopped' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
+export const MEDICATION_REQUEST_INTENT_OPTIONS = [
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'plan', label: 'Plan' },
+  { value: 'order', label: 'Order' },
+  { value: 'original-order', label: 'Original Order' },
+  { value: 'reflex-order', label: 'Reflex Order' },
+  { value: 'filler-order', label: 'Filler Order' },
+  { value: 'instance-order', label: 'Instance Order' },
+  { value: 'option', label: 'Option' },
+];
+
+export const MEDICATION_REQUEST_PRIORITY_OPTIONS = [
+  { value: 'routine', label: 'Routine' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'asap', label: 'ASAP' },
+  { value: 'stat', label: 'STAT (Immediate)' },
+];
+
+export const MEDICATION_REQUEST_CATEGORY_OPTIONS = [
+  { value: 'inpatient', label: 'Inpatient' },
+  { value: 'outpatient', label: 'Outpatient' },
+  { value: 'community', label: 'Community' },
+  { value: 'discharge', label: 'Discharge' },
+];
+
+export const MEDICATION_ROUTE_OPTIONS = [
+  { value: 'PO', label: 'Oral (PO)' },
+  { value: 'IV', label: 'Intravenous (IV)' },
+  { value: 'IM', label: 'Intramuscular (IM)' },
+  { value: 'SC', label: 'Subcutaneous (SC)' },
+  { value: 'SL', label: 'Sublingual (SL)' },
+  { value: 'TOP', label: 'Topical' },
+  { value: 'INH', label: 'Inhalation' },
+  { value: 'RECT', label: 'Rectal' },
+  { value: 'NASAL', label: 'Nasal' },
+  { value: 'OPHTH', label: 'Ophthalmic' },
+  { value: 'OTIC', label: 'Otic (Ear)' },
+];
+
+// ============================================================================
+// DIAGNOSTIC REPORT CONSTANTS (FHIR R4)
+// ============================================================================
+
+export const DIAGNOSTIC_REPORT_STATUS_OPTIONS = [
+  { value: 'registered', label: 'Registered' },
+  { value: 'partial', label: 'Partial' },
+  { value: 'preliminary', label: 'Preliminary' },
+  { value: 'final', label: 'Final' },
+  { value: 'amended', label: 'Amended' },
+  { value: 'corrected', label: 'Corrected' },
+  { value: 'appended', label: 'Appended' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'entered-in-error', label: 'Entered in Error' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
+export const DIAGNOSTIC_REPORT_CATEGORY_OPTIONS = [
+  { value: 'LAB', label: 'Laboratory' },
+  { value: 'RAD', label: 'Radiology / Imaging' },
+  { value: 'PAT', label: 'Pathology' },
+  { value: 'MB', label: 'Microbiology' },
+  { value: 'CG', label: 'Cytogenetics' },
+  { value: 'CH', label: 'Chemistry' },
+  { value: 'HM', label: 'Hematology' },
+  { value: 'IMM', label: 'Immunology / Serology' },
+  { value: 'PHR', label: 'Pharmacy' },
+  { value: 'OT', label: 'Other' },
+];
