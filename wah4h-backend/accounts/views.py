@@ -1005,8 +1005,7 @@ class FHIROrganizationAPIView(APIView):
                 return error_response('No organization found.', http_status=status.HTTP_404_NOT_FOUND)
 
         fhir_resource = _build_fhir_organization(org)
-        return Response(fhir_resource, status=status.HTTP_200_OK,
-                        content_type='application/fhir+json')
+        return Response(fhir_resource, status=status.HTTP_200_OK)
 
 
 def _build_fhir_organization(org):

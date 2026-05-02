@@ -48,7 +48,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function authHeaders() {
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem('accessToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -525,7 +525,7 @@ const FHIROrgTab: React.FC = () => {
       setLoading(true);
       try {
         const { data } = await axios.get(`${ACCOUNTS_API}/fhir/Organization/`, {
-          headers: { ...authHeaders(), Accept: 'application/fhir+json' },
+          headers: authHeaders(),
         });
         setResource(data);
       } catch {
