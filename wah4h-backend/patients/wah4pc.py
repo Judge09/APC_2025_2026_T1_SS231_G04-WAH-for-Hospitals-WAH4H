@@ -2644,3 +2644,257 @@ def push_diagnosticreport(target_id, dr_model, idempotency_key=None):
         except requests.RequestException as e:
             return {"error": f"Network error: {str(e)}", "status_code": 500, "idempotency_key": idempotency_key}
     return last_retryable_result
+
+
+# =============================================================================
+# ORGANIZATION — FHIR R4 / PHCore R4
+# =============================================================================
+# PHCore profile: urn://example.com/ph-core/fhir/StructureDefinition/ph-core-organization
+# NHFR identifier system: https://nhfr.doh.gov.ph/facility
+# Facility-type CodeSystem: urn://example.com/ph-core/fhir/CodeSystem/facility-type
+# =============================================================================
+
+_NHFR_SYSTEM      = "https://nhfr.doh.gov.ph/facility"
+_ORG_ID_SYSTEM    = f"{_URN_EXT}/organization-id"
+_FACILITY_TYPE_CS = f"{_URN_CS}/facility-type"
+_ORG_TYPE_HL7     = "http://terminology.hl7.org/CodeSystem/organization-type"
+_CONTACT_TYPE_CS  = "http://terminology.hl7.org/CodeSystem/contactentity-type"
+
+
+def organization_to_fhir(org) -> dict:
+    """Convert a local Organization instance to a PHCore R4-compliant FHIR resource."""
+    pk = getattr(org, "organization_id", None) or getattr(org, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Organization",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-organization"],
+            "lastUpdated": _meta_last_updated(getattr(org, "updated_at", None)),
+        },
+        "active": org.active if org.active is not None else True,
+    }
+
+    # 1. Identifiers — NHFR (official) + internal fallback
+    identifiers = []
+    if org.nhfr_code:
+        identifiers.append({
+            "use":  "official",
+            "type": {
+                "coding": [{
+                    "system":  "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code":    "FI",
+                    "display": "Facility ID",
+                }]
+            },
+            "system": _NHFR_SYSTEM,
+            "value":  org.nhfr_code,
+        })
+    if pk is not None:
+        identifiers.append({
+            "use":    "secondary",
+            "system": _ORG_ID_SYSTEM,
+            "value":  str(pk),
+        })
+    if identifiers:
+        fhir["identifier"] = identifiers
+
+    # 2. Name + alias
+    if org.name:
+        fhir["name"] = org.name
+    if org.alias:
+        fhir["alias"] = [org.alias]
+
+    # 3. Type — PHCore facility-type + HL7 fallback
+    if org.type_code:
+        hl7_code = "prov" if org.type_code in ("hospital", "clinic", "health-center") else org.type_code
+        fhir["type"] = [{
+            "coding": [
+                {
+                    "system":  _FACILITY_TYPE_CS,
+                    "code":    org.type_code,
+                    "display": org.type_code.replace("-", " ").title(),
+                },
+                {
+                    "system":  _ORG_TYPE_HL7,
+                    "code":    hl7_code,
+                    "display": org.type_code.replace("-", " ").title(),
+                },
+            ],
+            "text": org.type_code.replace("-", " ").title(),
+        }]
+
+    # 4. Telecom
+    if org.telecom:
+        fhir["telecom"] = [{"system": "phone", "value": org.telecom, "use": "work"}]
+
+    # 5. Address with PSGC extensions
+    if org.address_line or org.address_city:
+        city_display = (
+            _PSGC_CITY.get(org.address_city, org.address_city)
+            if org.address_city else None
+        )
+        addr_extensions = []
+        if org.address_state:
+            region_code = _PSGC_REGION_CODE.get(org.address_state)
+            if region_code:
+                addr_extensions.append({
+                    "url": f"{_URN_EXT}/region",
+                    "valueCoding": {
+                        "system":  f"{_URN_CS}/PSGC",
+                        "code":    region_code,
+                        "display": _PSGC_REGION.get(org.address_state, org.address_state),
+                    },
+                })
+        if org.address_city:
+            city_9 = _PSGC_CITY_9.get(org.address_city)
+            if city_9:
+                addr_extensions.append({
+                    "url": f"{_URN_EXT}/city-municipality",
+                    "valueCoding": {
+                        "system":  f"{_URN_CS}/PSGC",
+                        "code":    city_9,
+                        "display": city_display or org.address_city,
+                    },
+                })
+        addr = _clean({
+            "use":        "work",
+            "type":       "physical",
+            "line":       [org.address_line] if org.address_line else [],
+            "city":       city_display or org.address_city,
+            "district":   org.address_district,
+            "state":      org.address_state,
+            "country":    org.address_country or "PH",
+            "postalCode": org.address_postal_code,
+        })
+        if "line" not in addr:
+            addr["line"] = []
+        if addr_extensions:
+            addr["extension"] = addr_extensions
+        fhir["address"] = [addr]
+
+    # 6. Contact person (full FHIR Organization.contact[])
+    contact_first = getattr(org, "contact_first_name", None)
+    contact_last  = getattr(org, "contact_last_name", None)
+    contact_tel   = getattr(org, "contact_telecom", None)
+    if contact_first or contact_last or contact_tel:
+        contact: dict = {}
+        if getattr(org, "contact_purpose", None):
+            contact["purpose"] = {
+                "coding": [{
+                    "system":  _CONTACT_TYPE_CS,
+                    "code":    org.contact_purpose,
+                    "display": org.contact_purpose,
+                }]
+            }
+        name_obj: dict = {}
+        if contact_last:
+            name_obj["family"] = contact_last
+        if contact_first:
+            name_obj["given"] = contact_first.split()
+        if name_obj:
+            contact["name"] = name_obj
+        if contact_tel:
+            contact["telecom"] = [{"system": "phone", "value": contact_tel, "use": "work"}]
+        c_addr = _clean({
+            "line":       [org.contact_address_line] if getattr(org, "contact_address_line", None) else None,
+            "city":       getattr(org, "contact_address_city", None),
+            "state":      getattr(org, "contact_address_state", None),
+            "country":    getattr(org, "contact_address_country", None),
+            "postalCode": getattr(org, "contact_postal_code", None),
+        })
+        if c_addr:
+            contact["address"] = c_addr
+        fhir["contact"] = [contact]
+
+    # 7. partOf — parent organization reference
+    parent_id = getattr(org, "part_of_organization_id", None)
+    if parent_id:
+        fhir["partOf"] = {
+            "reference": f"Organization/{str(uuid.uuid5(uuid.NAMESPACE_OID, f'organization:{parent_id}'))}"
+        }
+
+    # 8. Endpoint reference
+    endpoint_id = getattr(org, "endpoint_id", None)
+    if endpoint_id:
+        fhir["endpoint"] = [{"reference": f"Endpoint/{endpoint_id}"}]
+
+    # 9. PHCore extensions — logo, description
+    extensions = []
+    if getattr(org, "logo_url", None):
+        extensions.append({
+            "url":      f"{_URN_EXT}/organization-logo",
+            "valueUrl": org.logo_url,
+        })
+    if getattr(org, "description", None):
+        extensions.append({
+            "url":         f"{_URN_EXT}/organization-description",
+            "valueString": org.description,
+        })
+    if extensions:
+        fhir["extension"] = extensions
+
+    return {k: v for k, v in fhir.items() if v is not None and v != ""}
+
+
+def import_organization_from_fhir(fhir_data: dict):
+    """Parse a PHCore R4 Organization resource and upsert into the local Organization model.
+
+    Keyed on NHFR identifier (system: https://nhfr.doh.gov.ph/facility).
+    Raises ValueError when NHFR identifier is absent.
+    """
+    from accounts.models import Organization
+
+    nhfr_code = None
+    for ident in fhir_data.get("identifier", []):
+        if ident.get("system") == _NHFR_SYSTEM:
+            nhfr_code = ident.get("value")
+            break
+    if not nhfr_code:
+        raise ValueError("Cannot import Organization without an NHFR identifier.")
+
+    type_code = None
+    for t in fhir_data.get("type", []):
+        for coding in t.get("coding", []):
+            if coding.get("system") == _FACILITY_TYPE_CS:
+                type_code = coding.get("code")
+                break
+        if not type_code:
+            type_code = ((t.get("coding") or [{}])[0]).get("code")
+
+    addr       = (fhir_data.get("address") or [{}])[0]
+    addr_lines = addr.get("line") or []
+    contact_r  = (fhir_data.get("contact") or [{}])[0]
+    c_purpose  = ((contact_r.get("purpose") or {}).get("coding") or [{}])[0].get("code")
+    c_name     = contact_r.get("name") or {}
+    c_addr     = contact_r.get("address") or {}
+
+    fields = {k: v for k, v in {
+        "name":                    fhir_data.get("name"),
+        "alias":                   (fhir_data.get("alias") or [None])[0],
+        "type_code":               type_code,
+        "active":                  fhir_data.get("active", True),
+        "telecom":                 ((fhir_data.get("telecom") or [{}])[0]).get("value"),
+        "address_line":            addr_lines[0] if addr_lines else None,
+        "address_city":            addr.get("city"),
+        "address_district":        addr.get("district"),
+        "address_state":           addr.get("state"),
+        "address_country":         addr.get("country"),
+        "address_postal_code":     addr.get("postalCode"),
+        "contact_purpose":         c_purpose,
+        "contact_first_name":      " ".join(c_name.get("given") or []) or None,
+        "contact_last_name":       c_name.get("family"),
+        "contact_telecom":         ((contact_r.get("telecom") or [{}])[0]).get("value"),
+        "contact_address_line":    (c_addr.get("line") or [None])[0],
+        "contact_address_city":    c_addr.get("city"),
+        "contact_address_state":   c_addr.get("state"),
+        "contact_address_country": c_addr.get("country"),
+        "contact_postal_code":     c_addr.get("postalCode"),
+    }.items() if v is not None}
+
+    org, _ = Organization.objects.update_or_create(nhfr_code=nhfr_code, defaults=fields)
+    return org
