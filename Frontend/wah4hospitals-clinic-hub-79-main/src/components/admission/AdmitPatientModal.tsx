@@ -310,20 +310,26 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Priority Level <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Priority Level <span className="text-red-500">*</span>
+                    <span className="ml-1 text-xs font-normal text-slate-400">(FHIR request-priority)</span>
+                  </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[
-                      { id: 'routine', label: 'Routine (R)', desc: 'Standard admission' },
-                      { id: 'urgent', label: 'Urgent (UR)', desc: 'Needs prompt attention' },
-                      { id: 'asap', label: 'ASAP (A)', desc: 'As soon as possible' },
-                      { id: 'emergency', label: 'Emergency (EM)', desc: 'Life-threatening' }
+                      { id: 'routine',  label: 'Routine',    code: 'R',  desc: 'Standard, non-urgent admission' },
+                      { id: 'urgent',   label: 'Urgent',     code: 'UR', desc: 'Needs prompt attention' },
+                      { id: 'asap',     label: 'ASAP',       code: 'A',  desc: 'As soon as possible' },
+                      { id: 'stat',     label: 'STAT',       code: 'S',  desc: 'Life-threatening / Immediate' }
                     ].map((p) => (
                       <div
                         key={p.id}
-                        onClick={() => setFormData({ ...formData, priority: p.id === 'asap' ? 'urgent' : p.id as any })}
-                        className={`p-3 rounded-lg border cursor-pointer text-left transition-all ${formData.priority === (p.id === 'asap' ? 'urgent' : p.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                        onClick={() => setFormData({ ...formData, priority: p.id as any })}
+                        className={`p-3 rounded-lg border cursor-pointer text-left transition-all ${formData.priority === p.id ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}
                       >
-                        <div className={`font-bold ${formData.priority === (p.id === 'asap' ? 'urgent' : p.id) ? 'text-blue-700' : 'text-slate-700'}`}>{p.label}</div>
+                        <div className={`font-bold flex items-center gap-2 ${formData.priority === p.id ? 'text-blue-700' : 'text-slate-700'}`}>
+                          {p.label}
+                          <span className="text-xs font-mono px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{p.id}</span>
+                        </div>
                         <div className="text-xs text-slate-400 mt-1">{p.desc}</div>
                       </div>
                     ))}
@@ -371,18 +377,22 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Admit Source <span className="text-xs text-slate-400">(FHIR admit-source)</span></label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Admit Source
+                    <span className="ml-1 text-xs font-normal text-slate-400">(FHIR encounter-admit-source)</span>
+                  </label>
                   <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={formData.admitSource} onChange={e => setFormData({ ...formData, admitSource: e.target.value })}>
                     <option value="">Select admit source...</option>
-                    <option value="Physician Referral">Physician / GP Referral (mp)</option>
-                    <option value="Emergency Room">Emergency Room / Walk-in (emd)</option>
-                    <option value="Clinic Referral">Outpatient / Clinic Referral (outp)</option>
-                    <option value="Transfer">Transfer from Another Hospital (hosp)</option>
-                    <option value="Transfer from Nursing Home">Transfer from Nursing Home (nursing)</option>
-                    <option value="Born in Hospital">Born in Hospital (born)</option>
-                    <option value="Psychiatric Referral">Psychiatric Facility Referral (psych)</option>
-                    <option value="Rehabilitation Referral">Rehabilitation Facility Referral (rehab)</option>
-                    <option value="Self-Referral">Self-Referral / Direct Admission (other)</option>
+                    <option value="mp">Physician / Medical Practitioner Referral (mp)</option>
+                    <option value="gp">General Practitioner (GP) Referral (gp)</option>
+                    <option value="emd">From Emergency / Accident Department (emd)</option>
+                    <option value="outp">From Outpatient / Clinic (outp)</option>
+                    <option value="hosp-trans">Transfer from Another Hospital (hosp-trans)</option>
+                    <option value="nursing">Transfer from Nursing Home (nursing)</option>
+                    <option value="psych">From Psychiatric Hospital / Facility (psych)</option>
+                    <option value="rehab">From Rehabilitation Facility (rehab)</option>
+                    <option value="born">Born in Hospital (born)</option>
+                    <option value="other">Self-Referral / Direct Admission (other)</option>
                   </select>
                 </div>
 
@@ -445,48 +455,94 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
               <div className="space-y-4">
                 <h3 className="font-bold text-slate-800 text-lg border-b border-slate-100 pb-2">Hospitalization Details</h3>
 
+                {/* Diet Preference — FHIR hospitalization.dietPreference (SNOMED CT) */}
                 <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Diet Preference</label>
+                    <label className="text-sm font-semibold text-slate-700 mb-1 block">
+                      Diet Preference
+                      <span className="ml-1 text-xs font-normal text-slate-400">(SNOMED CT)</span>
+                    </label>
                     <div className="space-y-2">
-                      {['No restrictions', 'Low-sodium', 'Halal', 'Diabetic', 'Vegetarian', 'Other'].map(opt => (
-                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.dietPreference.includes(opt)} onChange={e => {
-                            if (e.target.checked) setFormData({ ...formData, dietPreference: [...formData.dietPreference, opt] });
-                            else setFormData({ ...formData, dietPreference: formData.dietPreference.filter(x => x !== opt) });
+                      {[
+                        { code: 'regular',        label: 'Regular Diet'                },
+                        { code: 'low-sodium',      label: 'Low Sodium / Reduced Salt'   },
+                        { code: 'diabetic',        label: 'Diabetic Diet'               },
+                        { code: 'low-fat',         label: 'Low Fat / Cardiac Diet'      },
+                        { code: 'high-protein',    label: 'High Protein'                },
+                        { code: 'soft-diet',       label: 'Soft / Mechanical Soft Diet' },
+                        { code: 'liquid',          label: 'Liquid / Clear Liquids'      },
+                        { code: 'vegetarian',      label: 'Vegetarian'                  },
+                        { code: 'halal',           label: 'Halal'                       },
+                        { code: 'kosher',          label: 'Kosher'                      },
+                        { code: 'renal',           label: 'Renal Diet (Low K/P)'        },
+                        { code: 'gluten-free',     label: 'Gluten Free'                 },
+                        { code: 'no-restrictions', label: 'No Dietary Restrictions'     },
+                      ].map(opt => (
+                        <label key={opt.code} className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={formData.dietPreference.includes(opt.code)} onChange={e => {
+                            if (e.target.checked) setFormData({ ...formData, dietPreference: [...formData.dietPreference, opt.code] });
+                            else setFormData({ ...formData, dietPreference: formData.dietPreference.filter(x => x !== opt.code) });
                           }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                          <span className="text-sm text-slate-600">{opt}</span>
+                          <span className="text-sm text-slate-600">{opt.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
+                  {/* Special Arrangements — FHIR v2-0009 */}
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Special Arrangements</label>
+                    <label className="text-sm font-semibold text-slate-700 mb-1 block">
+                      Special Arrangements
+                      <span className="ml-1 text-xs font-normal text-slate-400">(FHIR v2-0009)</span>
+                    </label>
                     <div className="space-y-2">
-                      {['Wheelchair', 'Oxygen', 'IV Pole', 'Translator', 'Monitors', 'Suction'].map(opt => (
-                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={formData.specialArrangements.includes(opt)} onChange={e => {
-                            if (e.target.checked) setFormData({ ...formData, specialArrangements: [...formData.specialArrangements, opt] });
-                            else setFormData({ ...formData, specialArrangements: formData.specialArrangements.filter(x => x !== opt) });
+                      {[
+                        { code: 'wheel',    label: 'Wheelchair'               },
+                        { code: 'addbed',   label: 'Additional Bed Needed'    },
+                        { code: 'int',      label: 'Interpreter / Translator' },
+                        { code: 'att',      label: 'Attendant / Companion'    },
+                        { code: 'dog',      label: 'Guide / Service Dog'      },
+                        { code: 'oxy',      label: 'Oxygen Supply'            },
+                        { code: 'iv',       label: 'IV Pole'                  },
+                        { code: 'monitors', label: 'Cardiac / Vital Monitors' },
+                        { code: 'suction',  label: 'Suction Equipment'        },
+                        { code: 'isolate',  label: 'Isolation Required'       },
+                      ].map(opt => (
+                        <label key={opt.code} className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={formData.specialArrangements.includes(opt.code)} onChange={e => {
+                            if (e.target.checked) setFormData({ ...formData, specialArrangements: [...formData.specialArrangements, opt.code] });
+                            else setFormData({ ...formData, specialArrangements: formData.specialArrangements.filter(x => x !== opt.code) });
                           }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                          <span className="text-sm text-slate-600">{opt}</span>
+                          <span className="text-sm text-slate-600">{opt.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 </div>
 
+                {/* Special Courtesy — FHIR v2-0340 */}
                 <div className="pt-2">
-                  <label className="text-sm font-semibold text-slate-700 mb-2 block">Special Courtesy</label>
+                  <label className="text-sm font-semibold text-slate-700 mb-1 block">
+                    Special Courtesy
+                    <span className="ml-1 text-xs font-normal text-slate-400">(FHIR v2-0340)</span>
+                  </label>
                   <div className="grid grid-cols-2 gap-4">
-                    {['VIP', 'Government Official', 'Professional Courtesy', 'Senior Citizen'].map(opt => (
-                      <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={formData.specialCourtesy?.includes(opt)} onChange={e => {
+                    {[
+                      { code: 'VIP',  label: 'VIP'                           },
+                      { code: 'ML',   label: 'Medical Legal Case'            },
+                      { code: 'EMP',  label: 'Employee / Hospital Staff'     },
+                      { code: 'SC',   label: 'Senior Citizen / PWD'          },
+                      { code: 'DIP',  label: 'Diplomat / Government Official'},
+                      { code: 'PC',   label: 'Professional Courtesy'         },
+                      { code: 'UC',   label: 'Usual Courtesies'              },
+                      { code: 'NO',   label: 'No Special Courtesy'           },
+                    ].map(opt => (
+                      <label key={opt.code} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={formData.specialCourtesy?.includes(opt.code)} onChange={e => {
                           const sc = formData.specialCourtesy || [];
-                          if (e.target.checked) setFormData({ ...formData, specialCourtesy: [...sc, opt] });
-                          else setFormData({ ...formData, specialCourtesy: sc.filter(x => x !== opt) });
+                          if (e.target.checked) setFormData({ ...formData, specialCourtesy: [...sc, opt.code] });
+                          else setFormData({ ...formData, specialCourtesy: sc.filter(x => x !== opt.code) });
                         }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="text-sm text-slate-600">{opt}</span>
+                        <span className="text-sm text-slate-600">{opt.label}</span>
                       </label>
                     ))}
                   </div>

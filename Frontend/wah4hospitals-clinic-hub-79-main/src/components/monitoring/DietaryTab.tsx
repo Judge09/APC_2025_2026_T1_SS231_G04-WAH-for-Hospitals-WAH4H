@@ -142,11 +142,12 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
             </div>
           </div>
 
-          {/* Diet Type */}
+          {/* Diet Type — SNOMED CT diet-type ValueSet */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Utensils className="w-4 h-4" />
               Diet Type
+              <span className="text-xs font-normal text-gray-400">(SNOMED CT)</span>
             </Label>
             <Select value={dietType} onValueChange={setDietType} disabled={isNPO}>
               <SelectTrigger className={isNPO ? 'opacity-50' : ''}>
@@ -154,11 +155,22 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Regular">Regular Diet</SelectItem>
-                <SelectItem value="Soft">Soft Diet</SelectItem>
-                <SelectItem value="Low Salt">Low Salt/Sodium</SelectItem>
+                <SelectItem value="Soft">Soft / Mechanical Soft Diet</SelectItem>
+                <SelectItem value="Low Salt">Low Salt / Reduced Sodium</SelectItem>
                 <SelectItem value="Diabetic">Diabetic Diet</SelectItem>
+                <SelectItem value="Low Fat">Low Fat / Cardiac Diet</SelectItem>
+                <SelectItem value="High Protein">High Protein</SelectItem>
                 <SelectItem value="Clear Liquids">Clear Liquids Only</SelectItem>
                 <SelectItem value="Full Liquids">Full Liquids</SelectItem>
+                <SelectItem value="Vegetarian">Vegetarian</SelectItem>
+                <SelectItem value="Vegan">Vegan</SelectItem>
+                <SelectItem value="Halal">Halal</SelectItem>
+                <SelectItem value="Kosher">Kosher</SelectItem>
+                <SelectItem value="Renal">Renal Diet (Low K/P/Na)</SelectItem>
+                <SelectItem value="Gluten Free">Gluten Free</SelectItem>
+                <SelectItem value="Lactose Free">Lactose Free</SelectItem>
+                <SelectItem value="Tube Feeding">Enteral / Tube Feeding</SelectItem>
+                <SelectItem value="TPN">Total Parenteral Nutrition (TPN)</SelectItem>
               </SelectContent>
             </Select>
             {isNPO && (
@@ -180,21 +192,27 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
             </div>
           )}
 
-          {/* Activity Level */}
+          {/* Activity Level — SNOMED CT physical-activity ValueSet */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Activity className="w-4 h-4" />
               Activity Level
+              <span className="text-xs font-normal text-gray-400">(SNOMED CT)</span>
             </Label>
             <Select value={activityLevel} onValueChange={setActivityLevel}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Bed Rest">Bed Rest - No Activity</SelectItem>
-                <SelectItem value="Bathroom Privileges">Bathroom Privileges Only</SelectItem>
-                <SelectItem value="Ambulatory">Ambulatory - With Assistance</SelectItem>
-                <SelectItem value="As Tolerated">As Tolerated - Independent</SelectItem>
+                <SelectItem value="Complete Bed Rest">Complete Bed Rest — No Activity</SelectItem>
+                <SelectItem value="Bed Rest">Bed Rest — May Turn in Bed</SelectItem>
+                <SelectItem value="Bathroom Privileges">Bathroom Privileges Only (BRP)</SelectItem>
+                <SelectItem value="Chair Rest">Chair Rest — Up to Chair/Commode</SelectItem>
+                <SelectItem value="Ambulatory with Assistance">Ambulatory — With Assistance</SelectItem>
+                <SelectItem value="Ambulatory">Ambulatory — Independent (Ward Only)</SelectItem>
+                <SelectItem value="As Tolerated">As Tolerated — Independent</SelectItem>
+                <SelectItem value="Full Activity">Full Activity — No Restrictions</SelectItem>
+                <SelectItem value="Exercise Program">Supervised Exercise / Rehab Program</SelectItem>
               </SelectContent>
             </Select>
           </div>

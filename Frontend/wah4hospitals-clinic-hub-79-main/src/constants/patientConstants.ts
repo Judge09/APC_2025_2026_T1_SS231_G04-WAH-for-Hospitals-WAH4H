@@ -152,42 +152,47 @@ export const INDIGENOUS_GROUP_OPTIONS = [
 
 // ============================================================================
 // EDUCATION OPTIONS (PSCED — Philippine Standard Classification of Education)
+// Values match _EDUCATION_CODE keys in wah4pc.py for FHIR PHCore coding
 // ============================================================================
 export const EDUCATION_OPTIONS = [
-  { value: 'No formal education', label: 'No Formal Education' },
-  { value: 'Elementary (incomplete)', label: 'Elementary — Incomplete' },
-  { value: 'Elementary (complete)', label: 'Elementary — Complete' },
-  { value: 'Junior High School (incomplete)', label: 'Junior High School — Incomplete' },
-  { value: 'Junior High School (complete)', label: 'Junior High School — Complete' },
-  { value: 'Senior High School', label: 'Senior High School (K-12)' },
-  { value: 'Vocational/Technical', label: 'Vocational / Technical / TESDA' },
-  { value: 'College (incomplete)', label: 'College — Incomplete' },
-  { value: 'College (complete)', label: "College — Complete (Bachelor's Degree)" },
-  { value: 'Post-Graduate (Master)', label: "Post-Graduate — Master's Degree" },
-  { value: 'Post-Graduate (Doctorate)', label: 'Post-Graduate — Doctorate' },
+  { value: 'No Formal Education',            label: 'No Formal Education' },
+  { value: 'Elementary (incomplete)',        label: 'Elementary — Incomplete' },
+  { value: 'Elementary (complete)',          label: 'Elementary — Complete' },
+  { value: 'Junior High School (incomplete)',label: 'Junior High School — Incomplete' },
+  { value: 'Junior High School (complete)',  label: 'Junior High School — Complete' },
+  { value: 'Senior High School',             label: 'Senior High School (K-12)' },
+  { value: 'Vocational/Technical',           label: 'Vocational / Technical / TESDA' },
+  { value: 'College (incomplete)',           label: 'College — Incomplete' },
+  { value: 'College (complete)',             label: "College — Complete (Bachelor's Degree)" },
+  { value: 'Post-Graduate (Master)',         label: "Post-Graduate — Master's Degree" },
+  { value: 'Post-Graduate (Doctorate)',      label: 'Post-Graduate — Doctorate' },
 ];
 
 // ============================================================================
 // OCCUPATION OPTIONS (PSOC — Philippine Standard Occupational Classification)
+// Values match _OCCUPATION_CODE keys in wah4pc.py; PSOC code shown in parens
 // ============================================================================
 export const OCCUPATION_OPTIONS = [
-  { value: 'Healthcare Professional', label: 'Healthcare Professional' },
-  { value: 'Engineer/Architect', label: 'Engineer / Architect' },
-  { value: 'Teacher/Educator', label: 'Teacher / Educator' },
-  { value: 'Farmer/Fisherman', label: 'Farmer / Fisherman' },
-  { value: 'Laborer/Worker', label: 'Laborer / Worker' },
-  { value: 'Sales/Service Worker', label: 'Sales / Service Worker' },
-  { value: 'Technician', label: 'Technician' },
-  { value: 'Driver/Transport', label: 'Driver / Transport Worker' },
-  { value: 'Office/Clerical Worker', label: 'Office / Clerical Worker' },
-  { value: 'Business Owner', label: 'Business Owner / Entrepreneur' },
-  { value: 'Government Employee', label: 'Government Employee' },
-  { value: 'OFW', label: 'Overseas Filipino Worker (OFW)' },
-  { value: 'Student', label: 'Student' },
-  { value: 'Unemployed', label: 'Unemployed' },
-  { value: 'Retired', label: 'Retired' },
-  { value: 'Homemaker', label: 'Homemaker' },
-  { value: 'Other', label: 'Other' },
+  { value: 'Healthcare Professional',  label: 'Healthcare Professional (PSOC 2)',       psoc: '2' },
+  { value: 'Engineer/Architect',       label: 'Engineer / Architect (PSOC 2)',           psoc: '2' },
+  { value: 'Teacher/Educator',         label: 'Teacher / Educator (PSOC 2)',             psoc: '2' },
+  { value: 'Lawyer/Legal Professional',label: 'Lawyer / Legal Professional (PSOC 2)',    psoc: '2' },
+  { value: 'Accountant/Finance',       label: 'Accountant / Finance Professional (PSOC 2)', psoc: '2' },
+  { value: 'Business Owner',           label: 'Business Owner / Manager (PSOC 1)',       psoc: '1' },
+  { value: 'Government Employee',      label: 'Government Employee (PSOC 2)',            psoc: '2' },
+  { value: 'Technician',               label: 'Technician / Associate Professional (PSOC 3)', psoc: '3' },
+  { value: 'Office/Clerical Worker',   label: 'Office / Clerical Worker (PSOC 4)',       psoc: '4' },
+  { value: 'Sales/Service Worker',     label: 'Sales / Service Worker (PSOC 5)',         psoc: '5' },
+  { value: 'Farmer/Fisherman',         label: 'Farmer / Fisherman (PSOC 6)',             psoc: '6' },
+  { value: 'Driver/Transport',         label: 'Driver / Transport Worker (PSOC 8)',      psoc: '8' },
+  { value: 'Laborer/Worker',           label: 'Laborer / Elementary Worker (PSOC 9)',    psoc: '9' },
+  { value: 'Military/Police',          label: 'Military / Police / Armed Forces (PSOC 0)', psoc: '0' },
+  { value: 'OFW',                      label: 'Overseas Filipino Worker (OFW)',          psoc: '2' },
+  { value: 'Student',                  label: 'Student',                                 psoc: ''  },
+  { value: 'Unemployed',               label: 'Unemployed',                              psoc: ''  },
+  { value: 'Retired',                  label: 'Retired',                                 psoc: ''  },
+  { value: 'Homemaker',                label: 'Homemaker',                               psoc: ''  },
+  { value: 'Other',                    label: 'Other',                                   psoc: ''  },
 ];
 
 // ============================================================================
@@ -210,16 +215,55 @@ export const RELIGION_OPTIONS = [
 
 // ============================================================================
 // CONTACT RELATIONSHIP OPTIONS
+// Values are display strings (used as FHIR Patient.contact.relationship display)
+// Aligned with HL7 v3-RoleCode / v2-0131 — see wah4pc.py patient_to_fhir
 // ============================================================================
 export const CONTACT_RELATIONSHIP_OPTIONS = [
-  { value: 'spouse', label: 'Spouse' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'child', label: 'Child' },
-  { value: 'sibling', label: 'Sibling' },
-  { value: 'relative', label: 'Relative' },
-  { value: 'friend', label: 'Friend' },
-  { value: 'guardian', label: 'Guardian' },
-  { value: 'other', label: 'Other' },
+  { value: 'Spouse',            label: 'Spouse',                    fhirCode: 'SPO'     },
+  { value: 'Parent',            label: 'Parent',                    fhirCode: 'PRN'     },
+  { value: 'Child',             label: 'Child',                     fhirCode: 'CHILD'   },
+  { value: 'Sibling',           label: 'Sibling',                   fhirCode: 'SIB'     },
+  { value: 'Relative',          label: 'Relative / Family Member',  fhirCode: 'FAMMEMB' },
+  { value: 'Friend',            label: 'Friend',                    fhirCode: 'FRND'    },
+  { value: 'Guardian',          label: 'Guardian',                  fhirCode: 'GUARD'   },
+  { value: 'Emergency Contact', label: 'Emergency Contact',         fhirCode: 'C'       },
+  { value: 'Employer',          label: 'Employer',                  fhirCode: 'E'       },
+  { value: 'Other',             label: 'Other',                     fhirCode: 'O'       },
+];
+
+// ============================================================================
+// COUNTRY OPTIONS (ISO 3166-1 alpha-2)
+// Used for patient address_country — FHIR requires ISO 3166-1 alpha-2 codes
+// ============================================================================
+export const COUNTRY_OPTIONS = [
+  { value: 'PH', label: 'Philippines' },
+  { value: 'US', label: 'United States' },
+  { value: 'CN', label: 'China' },
+  { value: 'JP', label: 'Japan' },
+  { value: 'KR', label: 'South Korea' },
+  { value: 'IN', label: 'India' },
+  { value: 'GB', label: 'United Kingdom' },
+  { value: 'AU', label: 'Australia' },
+  { value: 'CA', label: 'Canada' },
+  { value: 'DE', label: 'Germany' },
+  { value: 'FR', label: 'France' },
+  { value: 'IT', label: 'Italy' },
+  { value: 'ES', label: 'Spain' },
+  { value: 'SA', label: 'Saudi Arabia' },
+  { value: 'AE', label: 'United Arab Emirates' },
+  { value: 'SG', label: 'Singapore' },
+  { value: 'MY', label: 'Malaysia' },
+  { value: 'ID', label: 'Indonesia' },
+  { value: 'TH', label: 'Thailand' },
+  { value: 'VN', label: 'Vietnam' },
+  { value: 'TW', label: 'Taiwan' },
+  { value: 'HK', label: 'Hong Kong' },
+  { value: 'NZ', label: 'New Zealand' },
+  { value: 'BR', label: 'Brazil' },
+  { value: 'MX', label: 'Mexico' },
+  { value: 'ZA', label: 'South Africa' },
+  { value: 'NG', label: 'Nigeria' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 // ============================================================================

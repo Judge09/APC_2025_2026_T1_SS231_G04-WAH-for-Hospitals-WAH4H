@@ -37,6 +37,7 @@ import {
   EDUCATION_OPTIONS,
   OCCUPATION_OPTIONS,
   INDIGENOUS_GROUP_OPTIONS,
+  COUNTRY_OPTIONS,
   REGISTRATION_STEPS,
 } from '../../constants/patientConstants';
 import addressData from '../../data/addressData.json';
@@ -661,11 +662,11 @@ const Step2Form = ({ form }: { form: any }) => {
           })}
           placeholder="e.g., 1234"
         />
-        <FormField
+        <SelectField
           label="Country"
           error={errors.address_country}
           {...register('address_country')}
-          placeholder="e.g., Philippines"
+          options={[{ value: '', label: 'Select Country' }, ...COUNTRY_OPTIONS]}
         />
       </div>
     </div>

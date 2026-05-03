@@ -8,6 +8,11 @@ import { Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import pharmacyService from '@/services/pharmacyService';
 import { InventoryItem } from '@/types/pharmacy';
+import {
+  MEDICATION_FORM_OPTIONS,
+  MEDICATION_CATEGORY_OPTIONS,
+  UNIT_OF_MEASURE_OPTIONS,
+} from '@/constants/pharmacyConstants';
 
 interface EditInventoryModalProps {
   isOpen: boolean;
@@ -131,16 +136,20 @@ export const EditInventoryModal: React.FC<EditInventoryModalProps> = ({
           </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
+              <Label htmlFor="category">Category <span className="text-xs font-normal text-muted-foreground">(WHO ATC)</span></Label>
+              <select
                 id="category"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={formData.category}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, category: e.target.value }))
-                }
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="">Select category...</option>
+                {MEDICATION_CATEGORY_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}{opt.atc ? ` (ATC: ${opt.atc})` : ''}</option>
+                ))}
+              </select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="item_code">ATC Code</Label>
               <Input
@@ -153,21 +162,17 @@ export const EditInventoryModal: React.FC<EditInventoryModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="form">Form</Label>
+              <Label htmlFor="form">Dose Form <span className="text-xs font-normal text-muted-foreground">(SNOMED CT)</span></Label>
               <select
                 id="form"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={formData.form}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, form: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, form: e.target.value }))}
               >
-                <option value="Tablet">Tablet</option>
-                <option value="Capsule">Capsule</option>
-                <option value="Syrup">Syrup</option>
-                <option value="Injection">Injection</option>
-                <option value="Cream">Cream</option>
-                <option value="Drops">Drops</option>
+                <option value="">Select dose form...</option>
+                {MEDICATION_FORM_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
             </div>
 
@@ -183,14 +188,17 @@ export const EditInventoryModal: React.FC<EditInventoryModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="unit_of_measure">Unit of Measure</Label>
-              <Input
+              <Label htmlFor="unit_of_measure">Unit of Measure <span className="text-xs font-normal text-muted-foreground">(UCUM)</span></Label>
+              <select
                 id="unit_of_measure"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={formData.unit_of_measure}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, unit_of_measure: e.target.value }))
-                }
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, unit_of_measure: e.target.value }))}
+              >
+                {UNIT_OF_MEASURE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
 
           <div className="space-y-2">
