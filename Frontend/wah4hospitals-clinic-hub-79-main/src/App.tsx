@@ -64,6 +64,7 @@ const tabs = [
   { id: 'statistics', name: 'Statistics', icon: <BarChart3 className="w-4 h-4" /> },
   { id: 'appointment', name: 'Appointment', icon: <Calendar className="w-4 h-4" /> },
   { id: 'billing', name: 'Billing', icon: <Receipt className="w-4 h-4" /> },
+  { id: 'philhealth', name: 'PhilHealth', icon: <FileText className="w-4 h-4" /> },
   { id: 'settings', name: 'Settings', icon: <SettingsIcon className="w-4 h-4" /> },
   { id: 'admin', name: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> },
 ];
@@ -104,6 +105,8 @@ const AppContent = () => {
       setActiveTab('appointment');
     } else if (path === '/billing') {
       setActiveTab('billing');
+    } else if (path === '/philhealth') {
+      setActiveTab('philhealth');
     } else if (path === '/settings' || path === '/control-panel') {
       setActiveTab('settings');
     } else if (path === '/admin') {
@@ -137,6 +140,8 @@ const AppContent = () => {
         return <AppointmentPage />;
       case 'billing':
         return <Billing />;
+      case 'philhealth':
+        return <PhilHealthClaims />;
       case 'settings':
         return <Settings />;
       case 'admin':
@@ -186,6 +191,7 @@ const App = () => (
                 <Route path="/statistics" element={<AppContent />} />
                 <Route path="/appointment" element={<AppContent />} />
                 <Route path="/billing" element={<AppContent />} />
+                <Route path="/philhealth" element={<AppContent />} />
                 <Route path="/settings" element={<AppContent />} />
                 <Route path="/control-panel" element={<AppContent />} />
                 <Route path="/admin" element={<AppContent />} />

@@ -1,484 +1,389 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// src/pages/PhilHealthClaims.tsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { FileText, Plus, RefreshCw, Search, Shield, Trash2, Edit2, SendHorizonal } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Check, Clock, X, Search, Filter } from 'lucide-react';
-import { PrintButton } from '@/components/ui/PrintButton';
-import { ClaimDetailsModal } from '@/components/philhealth/ClaimDetailsModal';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
-import { SubmitClaimModal } from '@/components/philhealth/SubmitClaimModal';
-import { toast } from 'sonner';
+import { eclaimsService } from '@/services/eclaimsService';
+import type { EClaim, Coverage } from '@/types/eclaims';
+import { FileClaimModal } from '@/components/eclaims/FileClaimModal';
+import { ClaimDetailsModal } from '@/components/eclaims/ClaimDetailsModal';
+import { CoverageFormModal } from '@/components/eclaims/CoverageFormModal';
 
-const PhilHealthClaims = () => {
-  const [claims, setClaims] = useState([
-    {
-      id: 'PH-2024-001',
-      claimReferenceNumber: 'REF-2024-001',
-      patientName: 'Juan Dela Cruz',
-      claimType: 'Outpatient',
-      amount: '₱15,000',
-      status: 'approved',
-      dateSubmitted: '2024-05-15',
-      dateProcessed: '2024-05-20',
-      hospitalName: 'Metro General Hospital',
-      procedure: 'Consultation and Treatment',
-      icd10Code: 'J00',
-      rvsCode: '99201',
-      finalDiagnosis: 'Acute Nasopharyngitis',
-      admissionDate: '2024-05-15',
-      dischargeDate: '2024-05-15',
-      returnToHospitalRemarks: null,
-      resubmissionAttempts: 0,
-      documents: { cf1: true, cf2: true, soa: true }
-    },
-    {
-      id: 'PH-2024-002',
-      claimReferenceNumber: 'REF-2024-002',
-      patientName: 'Maria Santos',
-      claimType: 'Inpatient',
-      amount: '₱45,000',
-      status: 'pending',
-      dateSubmitted: '2024-05-18',
-      dateProcessed: null,
-      hospitalName: 'City Medical Center',
-      procedure: 'Surgery and Recovery',
-      icd10Code: 'K35',
-      rvsCode: '44970',
-      finalDiagnosis: 'Acute Appendicitis',
-      admissionDate: '2024-05-16',
-      dischargeDate: '2024-05-18',
-      returnToHospitalRemarks: null,
-      resubmissionAttempts: 0,
-      documents: { cf1: true, cf2: true, soa: true, clinicalAbstract: true }
-    },
-    {
-      id: 'PH-2024-003',
-      claimReferenceNumber: 'REF-2024-003',
-      patientName: 'Pedro Reyes',
-      claimType: 'Emergency',
-      amount: '₱8,500',
-      status: 'rejected',
-      dateSubmitted: '2024-05-10',
-      dateProcessed: '2024-05-16',
-      hospitalName: 'Emergency Care Clinic',
-      procedure: 'Emergency Treatment',
-      icd10Code: 'S01',
-      rvsCode: '12001',
-      finalDiagnosis: 'Open wound of head',
-      admissionDate: '2024-05-10',
-      dischargeDate: '2024-05-10',
-      returnToHospitalRemarks: 'Incomplete documents: Missing CF2',
-      resubmissionAttempts: 0,
-      documents: { cf1: true, cf2: false, soa: true }
-    },
-    // ... keeping other items would be too long, so I'll just use these 3 for the demo and filter out the rest or just append the new ones if I could, but I'm replacing the whole state init.
-    // I will keep the original list length but update the structure for all of them implicitly by just casting or I'll just use these 3 and maybe a few more to populate the list.
-    // Actually, to avoid losing all data, I'll just use these 3 as the "initial" state for this demo since the user didn't ask to keep exact 20 items, just to update the module.
-    // But to be safe, I'll add a few more to make it look populated.
-    {
-      id: 'PH-2024-004',
-      claimReferenceNumber: 'REF-2024-004',
-      patientName: 'Ana Rodriguez',
-      claimType: 'Maternity',
-      amount: '₱25,000',
-      status: 'approved',
-      dateSubmitted: '2024-05-12',
-      dateProcessed: '2024-05-19',
-      hospitalName: 'Women\'s Health Center',
-      procedure: 'Delivery and Postnatal Care',
-      icd10Code: 'O80',
-      rvsCode: '59400',
-      finalDiagnosis: 'Normal Delivery',
-      admissionDate: '2024-05-11',
-      dischargeDate: '2024-05-13',
-      returnToHospitalRemarks: null,
-      resubmissionAttempts: 0,
-      documents: { cf1: true, cf2: true, soa: true }
-    },
-    {
-      id: 'PH-2024-005',
-      claimReferenceNumber: 'REF-2024-005',
-      patientName: 'Carlos Mendoza',
-      claimType: 'Outpatient',
-      amount: '₱12,000',
-      status: 'pending',
-      dateSubmitted: '2024-05-20',
-      dateProcessed: null,
-      hospitalName: 'Specialist Medical Clinic',
-      procedure: 'Diagnostic Tests',
-      icd10Code: 'R07',
-      rvsCode: '71020',
-      finalDiagnosis: 'Chest Pain',
-      admissionDate: '2024-05-20',
-      dischargeDate: '2024-05-20',
-      returnToHospitalRemarks: null,
-      resubmissionAttempts: 0,
-      documents: { cf1: true, cf2: true }
-    }
-  ]);
+// ── helpers ───────────────────────────────────────────────────────────────────
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState({
-    status: [],
-    claimType: [],
-    amountRange: []
-  });
-  const [selectedClaim, setSelectedClaim] = useState(null);
-  const [isClaimDetailsOpen, setIsClaimDetailsOpen] = useState(false);
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+const fmt = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-  const handleSubmitClaim = (newClaim: any) => {
-    setClaims(prev => [newClaim, ...prev]);
+const fmtPHP = (v?: string | number | null) =>
+  v != null ? `₱${Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '—';
+
+const CLAIM_STATUS_STYLE: Record<string, string> = {
+  draft:              'bg-yellow-100 text-yellow-700',
+  active:             'bg-blue-100 text-blue-700',
+  cancelled:          'bg-red-100 text-red-700',
+  'entered-in-error': 'bg-gray-100 text-gray-500',
+};
+
+const COVERAGE_STATUS_STYLE: Record<string, string> = {
+  active:             'bg-green-100 text-green-700',
+  cancelled:          'bg-red-100 text-red-700',
+  draft:              'bg-yellow-100 text-yellow-700',
+  'entered-in-error': 'bg-gray-100 text-gray-500',
+};
+
+// ── stat card ─────────────────────────────────────────────────────────────────
+
+interface StatCardProps { label: string; value: number; color: string; icon: React.ReactNode }
+const StatCard: React.FC<StatCardProps> = ({ label, value, color, icon }) => (
+  <Card>
+    <CardContent className="p-5">
+      <div className="flex items-center gap-4">
+        <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
+        <div>
+          <p className="text-sm text-slate-500">{label}</p>
+          <p className="text-2xl font-bold text-slate-900">{value}</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// ── main page ─────────────────────────────────────────────────────────────────
+
+type ClaimTab = 'claims' | 'coverage';
+type ClaimFilter = 'all' | 'draft' | 'active' | 'cancelled';
+
+const PhilHealthClaims: React.FC = () => {
+  const [activeTab, setActiveTab]       = useState<ClaimTab>('claims');
+  const [claimFilter, setClaimFilter]   = useState<ClaimFilter>('all');
+  const [claimSearch, setClaimSearch]   = useState('');
+  const [covSearch, setCovSearch]       = useState('');
+
+  const [claims, setClaims]             = useState<EClaim[]>([]);
+  const [coverages, setCoverages]       = useState<Coverage[]>([]);
+  const [loading, setLoading]           = useState(true);
+
+  // modals
+  const [fileOpen, setFileOpen]         = useState(false);
+  const [detailsClaim, setDetailsClaim] = useState<EClaim | null>(null);
+  const [covFormOpen, setCovFormOpen]   = useState(false);
+  const [editCoverage, setEditCoverage] = useState<Coverage | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [c, v] = await Promise.all([
+      eclaimsService.getAll(),
+      eclaimsService.getCoverageAll(),
+    ]);
+    setClaims(c);
+    setCoverages(v);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleClaimUpdate = (updated: EClaim) =>
+    setClaims(prev => prev.map(c => c.identifier === updated.identifier ? updated : c));
+
+  const handleDeleteClaim = async (identifier: string) => {
+    if (!confirm('Delete this claim? This cannot be undone.')) return;
+    await eclaimsService.delete(identifier);
+    setClaims(prev => prev.filter(c => c.identifier !== identifier));
   };
 
-  const handleViewClaim = (claim: any) => {
-    setSelectedClaim(claim);
-    setIsClaimDetailsOpen(true);
+  const handleDeleteCoverage = async (identifier: string) => {
+    if (!confirm('Delete this coverage record?')) return;
+    await eclaimsService.deleteCoverage(identifier);
+    setCoverages(prev => prev.filter(c => c.identifier !== identifier));
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800"><Check className="w-3 h-3 mr-1" />Approved</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-100 text-red-800"><X className="w-3 h-3 mr-1" />Rejected</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+  const handleQuickSubmit = async (claim: EClaim) => {
+    try {
+      const updated = await eclaimsService.submit(claim.identifier);
+      handleClaimUpdate(updated);
+    } catch {
+      alert('Failed to submit claim.');
     }
   };
 
-  const handlePrintClaims = () => {
-  };
+  // ── filtered views ─────────────────────────────────────────────────────────
 
-  const handleFilterChange = (filterType: string, value: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filterType]: prev[filterType].includes(value)
-        ? prev[filterType].filter(item => item !== value)
-        : [...prev[filterType], value]
-    }));
-  };
-
-  const clearFilters = () => {
-    setActiveFilters({
-      status: [],
-      claimType: [],
-      amountRange: []
-    });
-  };
-
-  const getAmountValue = (amount: string) => {
-    return parseInt(amount.replace(/[₱,]/g, ''));
-  };
-
-  const filteredClaims = claims.filter(claim => {
-    const matchesSearch = claim.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.claimType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.hospitalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.procedure.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = activeFilters.status.length === 0 || activeFilters.status.includes(claim.status);
-    const matchesClaimType = activeFilters.claimType.length === 0 || activeFilters.claimType.includes(claim.claimType);
-
-    let matchesAmountRange = true;
-    if (activeFilters.amountRange.length > 0) {
-      const amount = getAmountValue(claim.amount);
-      matchesAmountRange = activeFilters.amountRange.some(range => {
-        switch (range) {
-          case 'Under ₱10,000':
-            return amount < 10000;
-          case '₱10,000 - ₱30,000':
-            return amount >= 10000 && amount <= 30000;
-          case 'Over ₱30,000':
-            return amount > 30000;
-          default:
-            return true;
-        }
-      });
-    }
-
-    return matchesSearch && matchesStatus && matchesClaimType && matchesAmountRange;
+  const filteredClaims = claims.filter(c => {
+    const matchStatus = claimFilter === 'all' || c.status === claimFilter;
+    const q = claimSearch.toLowerCase();
+    const matchSearch = !q ||
+      c.identifier.toLowerCase().includes(q) ||
+      (c.patient_summary?.full_name ?? '').toLowerCase().includes(q) ||
+      (c.type ?? '').toLowerCase().includes(q);
+    return matchStatus && matchSearch;
   });
 
-  const hasActiveFilters = Object.values(activeFilters).some(filter => filter.length > 0);
+  const filteredCoverages = coverages.filter(v => {
+    const q = covSearch.toLowerCase();
+    return !q ||
+      v.identifier.toLowerCase().includes(q) ||
+      (v.patient_summary?.full_name ?? '').toLowerCase().includes(q) ||
+      (v.subscriber_pin ?? '').toLowerCase().includes(q);
+  });
+
+  // ── stat counts ────────────────────────────────────────────────────────────
+
+  const totalClaims  = claims.length;
+  const draftClaims  = claims.filter(c => c.status === 'draft').length;
+  const activeClaims = claims.filter(c => c.status === 'active').length;
+  const voidedClaims = claims.filter(c => c.status === 'cancelled').length;
+
+  // ── render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
-      <div id="printable-content">
-        <div className="flex flex-wrap items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">PhilHealth Claims</h1>
-            <p className="text-gray-600">Manage and submit PhilHealth insurance claims</p>
-          </div>
-          <div className="flex flex-wrap items-center space-x-2 justify-center">
-            <PrintButton className="m-3" onPrint={handlePrintClaims} children="Print Claims Report" />
-            <Button className="m-3 bg-blue-600 hover:bg-blue-700" onClick={() => setIsSubmitModalOpen(true)}>
-              <Upload className="w-4 h-4 mr-2" />
-              Submit New Claim
-            </Button>
-          </div>
+
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">PhilHealth eClaims</h1>
+          <p className="text-slate-500 text-sm">FHIR R4-compliant PhilHealth claim management</p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Claims</p>
-                  <p className="text-2xl font-bold text-gray-900">{claims.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Check className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-gray-900">{claims.filter(c => c.status === 'approved').length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">{claims.filter(c => c.status === 'pending').length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <X className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Rejected</p>
-                  <p className="text-2xl font-bold text-gray-900">{claims.filter(c => c.status === 'rejected').length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { setEditCoverage(null); setCovFormOpen(true); }}>
+            <Shield className="w-4 h-4 mr-1.5" />
+            Add Coverage
+          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white" size="sm" onClick={() => setFileOpen(true)}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            File a Claim
+          </Button>
         </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center md: justify-between gap-4">
-              <CardTitle className="mb-2 md:mb-0">Recent Claims</CardTitle>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-                <div className="relative w-full sm:w-80">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search claims, patient, hospital, procedure..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full"
-                  />
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filter
-                      {hasActiveFilters && (
-                        <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">
-                          {Object.values(activeFilters).flat().length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.status.includes('approved')}
-                      onCheckedChange={() => handleFilterChange('status', 'approved')}
-                    >
-                      Approved
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.status.includes('pending')}
-                      onCheckedChange={() => handleFilterChange('status', 'pending')}
-                    >
-                      Pending
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.status.includes('rejected')}
-                      onCheckedChange={() => handleFilterChange('status', 'rejected')}
-                    >
-                      Rejected
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.claimType.includes('Outpatient')}
-                      onCheckedChange={() => handleFilterChange('claimType', 'Outpatient')}
-                    >
-                      Outpatient
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.claimType.includes('Inpatient')}
-                      onCheckedChange={() => handleFilterChange('claimType', 'Inpatient')}
-                    >
-                      Inpatient
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.claimType.includes('Emergency')}
-                      onCheckedChange={() => handleFilterChange('claimType', 'Emergency')}
-                    >
-                      Emergency
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.claimType.includes('Maternity')}
-                      onCheckedChange={() => handleFilterChange('claimType', 'Maternity')}
-                    >
-                      Maternity
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Filter by Amount</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.amountRange.includes('Under ₱10,000')}
-                      onCheckedChange={() => handleFilterChange('amountRange', 'Under ₱10,000')}
-                    >
-                      Under ₱10,000
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.amountRange.includes('₱10,000 - ₱30,000')}
-                      onCheckedChange={() => handleFilterChange('amountRange', '₱10,000 - ₱30,000')}
-                    >
-                      ₱10,000 - ₱30,000
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={activeFilters.amountRange.includes('Over ₱30,000')}
-                      onCheckedChange={() => handleFilterChange('amountRange', 'Over ₱30,000')}
-                    >
-                      Over ₱30,000
-                    </DropdownMenuCheckboxItem>
-                    {hasActiveFilters && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={clearFilters} className="text-red-600">
-                          <X className="w-4 h-4 mr-2" />
-                          Clear All Filters
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {hasActiveFilters && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {Object.entries(activeFilters).map(([filterType, values]) =>
-                  values.map(value => (
-                    <Badge key={`${filterType}-${value}`} variant="secondary" className="flex items-center gap-1">
-                      {value}
-                      <X
-                        className="w-3 h-3 cursor-pointer"
-                        onClick={() => handleFilterChange(filterType, value)}
-                      />
-                    </Badge>
-                  ))
-                )}
-              </div>
-            )}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Claim ID</th>
-                    <th className="text-left py-2">Patient</th>
-                    <th className="text-left py-2">Type</th>
-                    <th className="text-left py-2">Procedure</th>
-                    <th className="text-left py-2">Hospital</th>
-                    <th className="text-left py-2">Amount</th>
-                    <th className="text-left py-2">Status</th>
-                    <th className="text-left py-2">Submitted</th>
-                    <th className="text-left py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClaims.map((claim) => (
-                    <tr key={claim.id} className="border-b">
-                      <td className="py-3 font-medium">{claim.id}</td>
-                      <td className="py-3">{claim.patientName}</td>
-                      <td className="py-3">{claim.claimType}</td>
-                      <td className="py-3">{claim.procedure}</td>
-                      <td className="py-3">{claim.hospitalName}</td>
-                      <td className="py-3 font-medium">{claim.amount}</td>
-                      <td className="py-3">{getStatusBadge(claim.status)}</td>
-                      <td className="py-3">{claim.dateSubmitted}</td>
-                      <td className="py-3">
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewClaim(claim)}
-                          >
-                            <FileText className="w-3 h-3 mr-1" />
-                            View
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-3 h-3 mr-1" />
-                            Download
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredClaims.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No claims found matching your search criteria.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      <ClaimDetailsModal
-        isOpen={isClaimDetailsOpen}
-        onClose={() => setIsClaimDetailsOpen(false)}
-        claim={selectedClaim}
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Total Claims"  value={totalClaims}  color="bg-blue-100"   icon={<FileText className="w-5 h-5 text-blue-600" />} />
+        <StatCard label="Draft"         value={draftClaims}  color="bg-yellow-100" icon={<FileText className="w-5 h-5 text-yellow-600" />} />
+        <StatCard label="Submitted"     value={activeClaims} color="bg-green-100"  icon={<SendHorizonal className="w-5 h-5 text-green-600" />} />
+        <StatCard label="Voided"        value={voidedClaims} color="bg-red-100"    icon={<FileText className="w-5 h-5 text-red-600" />} />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {(['claims', 'coverage'] as ClaimTab[]).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${
+              activeTab === tab
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab === 'claims' ? `Claims (${totalClaims})` : `Coverage (${coverages.length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Claims tab */}
+      {activeTab === 'claims' && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Status pills */}
+            {(['all', 'draft', 'active', 'cancelled'] as ClaimFilter[]).map(f => (
+              <button
+                key={f}
+                onClick={() => setClaimFilter(f)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold capitalize transition-colors ${
+                  claimFilter === f
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {f === 'active' ? 'Submitted' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+            <div className="ml-auto relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search claims..."
+                value={claimSearch}
+                onChange={e => setClaimSearch(e.target.value)}
+                className="pl-10 w-64"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Claim #</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Patient</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Type</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Service Period</th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-600">Total</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClaims.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-slate-400">
+                      {loading ? 'Loading claims…' : 'No claims found.'}
+                    </td>
+                  </tr>
+                )}
+                {filteredClaims.map(claim => (
+                  <tr key={claim.identifier} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-700">{claim.identifier}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-900">
+                        {claim.patient_summary?.full_name ?? `Patient #${claim.subject_id}`}
+                      </div>
+                      {claim.patient_summary?.philhealth_id && (
+                        <div className="text-xs text-slate-400">{claim.patient_summary.philhealth_id}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 capitalize">{claim.type ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">
+                      {fmt(claim.billablePeriod_start)}
+                      {claim.billablePeriod_end && ` – ${fmt(claim.billablePeriod_end)}`}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-800">{fmtPHP(claim.total)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${CLAIM_STATUS_STYLE[claim.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                        {claim.status === 'active' ? 'Submitted' : claim.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5">
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setDetailsClaim(claim)}>
+                          <FileText className="w-3 h-3 mr-1" /> Details
+                        </Button>
+                        {claim.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => handleQuickSubmit(claim)}
+                          >
+                            <SendHorizonal className="w-3 h-3 mr-1" /> Submit
+                          </Button>
+                        )}
+                        {claim.status === 'draft' && (
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteClaim(claim.identifier)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Coverage tab */}
+      {activeTab === 'coverage' && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search coverage..."
+                value={covSearch}
+                onChange={e => setCovSearch(e.target.value)}
+                className="pl-10 w-64"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Patient</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">PhilHealth PIN</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Class / Type</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Period</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Network</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCoverages.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-slate-400">
+                      {loading ? 'Loading coverage…' : 'No coverage records found.'}
+                    </td>
+                  </tr>
+                )}
+                {filteredCoverages.map(cov => (
+                  <tr key={cov.identifier} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-900">
+                        {cov.patient_summary?.full_name ?? `Patient #${cov.beneficiary_id}`}
+                      </div>
+                      <div className="text-xs text-slate-400">{cov.patient_summary?.patient_id}</div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-700">{cov.subscriber_pin ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-600 text-xs">
+                      <div>{cov.class_name ?? '—'}</div>
+                      <div className="text-slate-400">{cov.type_display ?? cov.type_code ?? ''}</div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">
+                      {cov.period_start ? fmt(cov.period_start) : '—'}
+                      {cov.period_end && ` – ${fmt(cov.period_end)}`}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{cov.network ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${COVERAGE_STATUS_STYLE[cov.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                        {cov.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5">
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setEditCoverage(cov); setCovFormOpen(true); }}>
+                          <Edit2 className="w-3 h-3 mr-1" /> Edit
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteCoverage(cov.identifier)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      <FileClaimModal
+        isOpen={fileOpen}
+        onClose={() => setFileOpen(false)}
+        onSuccess={() => { setFileOpen(false); load(); }}
       />
 
-      <SubmitClaimModal
-        isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        onSubmit={handleSubmitClaim}
+      <ClaimDetailsModal
+        isOpen={!!detailsClaim}
+        onClose={() => setDetailsClaim(null)}
+        claim={detailsClaim}
+        onUpdate={c => { handleClaimUpdate(c); setDetailsClaim(c); }}
+      />
+
+      <CoverageFormModal
+        isOpen={covFormOpen}
+        onClose={() => { setCovFormOpen(false); setEditCoverage(null); }}
+        onSuccess={() => { setCovFormOpen(false); setEditCoverage(null); load(); }}
+        coverage={editCoverage}
       />
     </div>
   );

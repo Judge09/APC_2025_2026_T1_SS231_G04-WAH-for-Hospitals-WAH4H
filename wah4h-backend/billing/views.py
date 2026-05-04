@@ -1,14 +1,25 @@
 from rest_framework import viewsets, status
-from .models import Account, Claim, Invoice, PaymentReconciliation, PaymentNotice, InvoiceLineItem
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import (
+    Account, Claim, ClaimResponse, Coverage,
+    Invoice, PaymentReconciliation, PaymentNotice, InvoiceLineItem,
+)
 from django.db.models import Sum, Q, F
+from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from .serializers import (
-    AccountSerializer, 
-    ClaimSerializer, 
-    InvoiceSerializer, 
-    PaymentReconciliationSerializer, 
-    PaymentNoticeSerializer
+    AccountSerializer,
+    ClaimSerializer,
+    EClaimSerializer,
+    ClaimResponseSerializer,
+    CoverageSerializer,
+    InvoiceSerializer,
+    PaymentReconciliationSerializer,
+    PaymentNoticeSerializer,
 )
 
 class AccountViewSet(viewsets.ModelViewSet):
@@ -19,10 +30,6 @@ class ClaimViewSet(viewsets.ModelViewSet):
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
 
-from rest_framework.decorators import action
-from rest_framework.response import Response
-
-from django.utils import timezone
 import uuid
 
 class InvoiceViewSet(viewsets.ModelViewSet):
@@ -314,3 +321,137 @@ class PaymentReconciliationViewSet(viewsets.ModelViewSet):
 class PaymentNoticeViewSet(viewsets.ModelViewSet):
     queryset = PaymentNotice.objects.all()
     serializer_class = PaymentNoticeSerializer
+
+
+# ── eClaims ViewSets ──────────────────────────────────────────────────────────
+
+class EClaimViewSet(viewsets.ModelViewSet):
+    """
+    PhilHealth eClaims — FHIR Claim resource with nested diagnoses, procedures, items.
+
+    Endpoints:
+        GET/POST   /api/billing/eclaims/
+        GET/PATCH/DELETE /api/billing/eclaims/{identifier}/
+        POST       /api/billing/eclaims/{identifier}/submit/  — draft → active
+        POST       /api/billing/eclaims/{identifier}/void/    — any  → cancelled
+        GET        /api/billing/eclaims/search_patients/
+    """
+    queryset = (
+        Claim.objects
+        .prefetch_related('diagnoses', 'procedures', 'care_team', 'items')
+        .order_by('-created')
+    )
+    serializer_class = EClaimSerializer
+    lookup_field = 'identifier'
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['subject_id', 'status', 'type', 'use']
+    search_fields = ['identifier']
+    ordering_fields = ['created', 'created_at', 'billablePeriod_start']
+    ordering = ['-created']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        subject_id = self.request.query_params.get('subject_id')
+        if subject_id:
+            qs = qs.filter(subject_id=subject_id)
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def submit(self, request, identifier=None):
+        """Advance a draft claim to active (submitted)."""
+        claim = self.get_object()
+        if claim.status != 'draft':
+            return Response(
+                {'detail': f'Cannot submit a claim with status "{claim.status}".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        claim.status = 'active'
+        claim.created = timezone.now()
+        claim.save(update_fields=['status', 'created'])
+        return Response(EClaimSerializer(claim).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def void(self, request, identifier=None):
+        """Void (cancel) a claim."""
+        claim = self.get_object()
+        if claim.status == 'cancelled':
+            return Response({'detail': 'Claim is already cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+        claim.status = 'cancelled'
+        claim.save(update_fields=['status'])
+        return Response(EClaimSerializer(claim).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def search_patients(self, request):
+        """Search patients for the claim filing form."""
+        from patients.models import Patient
+        from django.db.models import Q as DQ
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            qs = Patient.objects.filter(active=True).order_by('-id')[:10]
+        else:
+            qs = Patient.objects.filter(
+                DQ(first_name__icontains=query) |
+                DQ(last_name__icontains=query) |
+                DQ(patient_id__icontains=query) |
+                DQ(philhealth_id__icontains=query),
+                active=True,
+            ).order_by('-id')[:10]
+        results = [
+            {
+                'id': p.id,
+                'patient_id': p.patient_id,
+                'full_name': f"{p.first_name} {p.last_name}".strip(),
+                'gender': p.gender,
+                'age': p.age,
+                'philhealth_id': p.philhealth_id,
+                'contact': p.mobile_number,
+            }
+            for p in qs
+        ]
+        return Response(results, status=status.HTTP_200_OK)
+
+
+class ClaimResponseViewSet(viewsets.ModelViewSet):
+    """
+    FHIR ClaimResponse — adjudication results from PhilHealth.
+    """
+    queryset = (
+        ClaimResponse.objects
+        .prefetch_related('totals', 'items')
+        .order_by('-created')
+    )
+    serializer_class = ClaimResponseSerializer
+    lookup_field = 'identifier'
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['subject_id', 'status', 'request_id', 'outcome']
+    search_fields = ['identifier', 'disposition', 'preAuthRef']
+    ordering_fields = ['created', 'created_at']
+    ordering = ['-created']
+
+
+class CoverageViewSet(viewsets.ModelViewSet):
+    """
+    FHIR Coverage — PhilHealth membership / enrollment records.
+
+    Endpoints:
+        GET/POST   /api/billing/coverage/
+        GET/PATCH/DELETE /api/billing/coverage/{identifier}/
+        GET        /api/billing/coverage/for_patient/?patient_id=<id>
+    """
+    queryset = Coverage.objects.all().order_by('-created_at')
+    serializer_class = CoverageSerializer
+    lookup_field = 'identifier'
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['beneficiary_id', 'subscriber_id', 'status', 'type_code', 'class_code']
+    search_fields = ['identifier', 'subscriber_pin', 'network', 'class_name']
+    ordering_fields = ['period_start', 'period_end', 'created_at']
+    ordering = ['-created_at']
+
+    @action(detail=False, methods=['get'])
+    def for_patient(self, request):
+        """Return active coverage records for a patient."""
+        patient_id = request.query_params.get('patient_id')
+        if not patient_id:
+            return Response({'detail': 'patient_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        qs = Coverage.objects.filter(beneficiary_id=patient_id, status='active').order_by('order')
+        return Response(CoverageSerializer(qs, many=True).data, status=status.HTTP_200_OK)

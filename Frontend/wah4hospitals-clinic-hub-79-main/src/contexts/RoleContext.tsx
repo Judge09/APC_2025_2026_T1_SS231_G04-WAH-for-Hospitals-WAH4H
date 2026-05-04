@@ -87,6 +87,7 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'compliance',
     'statistics',
     'billing',
+    'philhealth',
     'settings',
     'admin',
   ],
@@ -145,6 +146,7 @@ const roleAccessConfig: Record<UserRole, string[]> = {
   billing_clerk: [
     'dashboard',
     'billing',
+    'philhealth',
     'patients',
     'settings',
     'admin',          // TEMPORARY: remove after initial setup

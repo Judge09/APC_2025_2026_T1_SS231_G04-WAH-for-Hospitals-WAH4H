@@ -46,7 +46,8 @@
       "Bash(git commit -m ' *)",
       "Bash(echo \"exit:$?\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\({k:v for k,v in d.get\\('dependencies',{}\\).items\\(\\) if 'date' in k.lower\\(\\) or 'fns' in k.lower\\(\\)}\\)\")",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
