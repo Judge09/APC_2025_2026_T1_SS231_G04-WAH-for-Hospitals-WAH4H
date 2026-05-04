@@ -277,7 +277,7 @@ class Immunization(FHIRResourceModel):
         blank=False,
         related_name='immunizations'
     )
-    encounter_id = models.BigIntegerField(db_index=True, null=False, blank=False)
+    encounter_id = models.BigIntegerField(db_index=True, null=True, blank=True)
 
     # Occurrence
     occurrence_datetime = models.DateTimeField(null=True, blank=True)

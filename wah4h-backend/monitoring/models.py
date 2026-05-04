@@ -36,6 +36,7 @@ class Observation(FHIRResourceModel):
     value_boolean = models.BooleanField(null=True, blank=True)
     value_integer = models.CharField(max_length=255, null=True, blank=True)
     value_quantity = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    value_quantity_unit = models.CharField(max_length=50, null=True, blank=True)
     value_codeableconcept = models.CharField(max_length=100, null=True, blank=True)
     value_datetime = models.DateTimeField(null=True, blank=True)
     value_time = models.CharField(max_length=255, null=True, blank=True)

@@ -721,7 +721,7 @@ def patient_to_fhir(patient):
         contact: dict = {
             "relationship": [{
                 "coding": [{
-                    "system":  "http://hl7.org/fhir/ValueSet/relatedperson-relationshiptype",
+                    "system":  "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
                     "display": patient.contact_relationship or "Emergency Contact",
                 }]
             }],
@@ -1734,8 +1734,6 @@ def import_immunization_from_fhir(fhir_data):
         "lot_number":           lot_number,
         "expiration_date":      expiration_date,
         "note":                 note_text,
-        # encounter_id is required NOT NULL — default 0 when not in payload
-        "encounter_id":         0,
     }
     fields = {k: v for k, v in fields.items() if v is not None}
 
@@ -2220,8 +2218,9 @@ def observation_to_fhir(model):
 
     if model.value_quantity is not None:
         qty = {"value": float(model.value_quantity), "system": _UCUM_SYSTEM}
-        # Observation model has no `unit` column; UCUM unit stored in value_codeableconcept
-        # or left blank — only add unit fields when a value is available via that channel.
+        if model.value_quantity_unit:
+            qty["unit"] = model.value_quantity_unit
+            qty["code"] = model.value_quantity_unit
         fhir["valueQuantity"] = qty
     elif model.value_string:
         fhir["valueString"] = model.value_string
@@ -2925,3 +2924,636 @@ def import_organization_from_fhir(fhir_data: dict):
 
     org, _ = Organization.objects.update_or_create(nhfr_code=nhfr_code, defaults=fields)
     return org
+
+
+# =============================================================================
+# COVERAGE — FHIR R4 / PHCore (PhilHealth membership)
+# =============================================================================
+
+_PHILHEALTH_MEMBER_SYSTEM = "http://philhealth.gov.ph/fhir/Identifier/philhealth-id"
+_PHIC_PAYOR_SYSTEM        = "https://philhealth.gov.ph"
+_COVERAGE_TYPE_CS         = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+_SUBSCRIBER_REL_CS        = "http://terminology.hl7.org/CodeSystem/subscriber-relationship"
+
+
+def coverage_to_fhir(model) -> dict:
+    """Convert a local Coverage instance to a FHIR R4 Coverage resource."""
+    pk = getattr(model, "coverage_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"coverage:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Coverage",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-coverage"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "status": model.status or "active",
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    # Type — e.g. PUBLICPOL for PhilHealth
+    if model.type_code:
+        fhir["type"] = {
+            "coding": [{
+                "system":  _COVERAGE_TYPE_CS,
+                "code":    model.type_code,
+                "display": model.type_display or model.type_code,
+            }]
+        }
+
+    # Subscriber (PhilHealth member)
+    if model.subscriber_id:
+        patient_fhir_id, patient_display = _patient_ref(model.subscriber_id)
+        fhir["subscriber"] = {
+            "display":   patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        }
+
+    # Subscriber PIN (PhilHealth member ID)
+    if model.subscriber_pin:
+        fhir["subscriberId"] = model.subscriber_pin
+
+    # Beneficiary (always required)
+    patient_fhir_id, patient_display = _patient_ref(model.beneficiary_id)
+    fhir["beneficiary"] = {
+        "display":   patient_display,
+        "reference": f"Patient/{patient_fhir_id}",
+    }
+
+    if model.dependent:
+        fhir["dependent"] = model.dependent
+
+    if model.relationship_code:
+        fhir["relationship"] = {
+            "coding": [{
+                "system":  _SUBSCRIBER_REL_CS,
+                "code":    model.relationship_code,
+                "display": model.relationship_display or model.relationship_code,
+            }]
+        }
+
+    period = {}
+    if model.period_start:
+        period["start"] = str(model.period_start)
+    if model.period_end:
+        period["end"] = str(model.period_end)
+    if period:
+        fhir["period"] = period
+
+    # Payor — PhilHealth as Organization
+    if model.payor_id:
+        payor_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{model.payor_id}"))
+        fhir["payor"] = [{"reference": f"Organization/{payor_fhir_id}"}]
+    else:
+        # Default to PhilHealth as the payor when no local record exists
+        fhir["payor"] = [{"display": "Philippine Health Insurance Corporation (PhilHealth)"}]
+
+    # Class (membership category)
+    if model.class_code or model.class_name:
+        fhir["class"] = [{
+            "type": {
+                "coding": [{"system": "http://terminology.hl7.org/CodeSystem/coverage-class", "code": "group"}]
+            },
+            "value": model.class_code or "",
+            "name":  model.class_name or "",
+        }]
+
+    if model.order:
+        fhir["order"] = model.order
+
+    if model.network:
+        fhir["network"] = model.network
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+# =============================================================================
+# CLAIM — FHIR R4 / PHCore (PhilHealth eClaims)
+# =============================================================================
+
+_CLAIM_TYPE_CS      = "http://terminology.hl7.org/CodeSystem/claim-type"
+_CLAIM_USE_CS       = "http://hl7.org/fhir/claim-use"
+_PROCESS_PRIORITY_CS = "http://terminology.hl7.org/CodeSystem/processpriority"
+_SNOMED_PROC_CS     = "http://snomed.info/sct"
+
+
+def claim_to_fhir(model) -> dict:
+    """Convert a local Claim instance to a FHIR R4 Claim resource.
+
+    Reads related ClaimDiagnosis, ClaimProcedure, ClaimItem, ClaimCareTeam rows
+    via the normalized child tables.
+    """
+    pk = getattr(model, "claim_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"claim:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
+
+    fhir: dict = {
+        "resourceType": "Claim",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-claim"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "status": model.status or "active",
+        "use":    model.use or "claim",
+        "patient": {
+            "display":   patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+        "created": format_fhir_datetime(model.created) if model.created else format_fhir_datetime(model.created_at),
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    if model.type:
+        fhir["type"] = {
+            "coding": [{"system": _CLAIM_TYPE_CS, "code": model.type}]
+        }
+
+    if model.priority:
+        fhir["priority"] = {
+            "coding": [{"system": _PROCESS_PRIORITY_CS, "code": model.priority}]
+        }
+
+    # Insurer (PhilHealth)
+    if model.insurer_id:
+        insurer_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{model.insurer_id}"))
+        fhir["insurer"] = {"reference": f"Organization/{insurer_fhir_id}"}
+    else:
+        fhir["insurer"] = {"display": "Philippine Health Insurance Corporation (PhilHealth)"}
+
+    # Provider (the submitting hospital/practitioner)
+    if model.provider_id:
+        provider = _practitioner_ref(model.provider_id)
+        if provider:
+            fhir["provider"] = provider
+        else:
+            org_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{model.provider_id}"))
+            fhir["provider"] = {"reference": f"Organization/{org_fhir_id}"}
+
+    # Billable period
+    bp = {}
+    if model.billablePeriod_start:
+        bp["start"] = str(model.billablePeriod_start)
+    if model.billablePeriod_end:
+        bp["end"] = str(model.billablePeriod_end)
+    if bp:
+        fhir["billablePeriod"] = bp
+
+    # Facility
+    if model.facility_id:
+        try:
+            from accounts.models import Location
+            loc = Location.objects.get(location_id=model.facility_id)
+            fhir["facility"] = {"display": loc.name}
+        except Exception:
+            pass
+
+    # Diagnoses
+    try:
+        diagnoses = list(model.diagnoses.all())
+        if diagnoses:
+            fhir["diagnosis"] = []
+            for i, d in enumerate(diagnoses, 1):
+                entry: dict = {"sequence": i}
+                if d.diagnosisCodeableConcept:
+                    entry["diagnosisCodeableConcept"] = {
+                        "coding": [{"system": _ICD10_SYSTEM, "code": d.diagnosisCodeableConcept}]
+                    }
+                if d.type:
+                    entry["type"] = [{"coding": [{"code": d.type}]}]
+                if d.onAdmission:
+                    entry["onAdmission"] = {"coding": [{"code": d.onAdmission}]}
+                fhir["diagnosis"].append(entry)
+    except Exception:
+        pass
+
+    # Procedures
+    try:
+        procedures = list(model.procedures.all())
+        if procedures:
+            fhir["procedure"] = []
+            for i, p in enumerate(procedures, 1):
+                entry = {"sequence": i}
+                if p.procedureCodeableConcept:
+                    entry["procedureCodeableConcept"] = {
+                        "coding": [{"system": _SNOMED_PROC_CS, "code": p.procedureCodeableConcept}]
+                    }
+                fhir["procedure"].append(entry)
+    except Exception:
+        pass
+
+    # Care team
+    try:
+        care_team = list(model.care_team.all())
+        if care_team:
+            fhir["careTeam"] = []
+            for i, ct in enumerate(care_team, 1):
+                member: dict = {"sequence": i}
+                if ct.provider_id:
+                    provider_ref = _practitioner_ref(ct.provider_id)
+                    if provider_ref:
+                        member["provider"] = provider_ref
+                if ct.role:
+                    member["role"] = {"coding": [{"code": ct.role}]}
+                fhir["careTeam"].append(member)
+    except Exception:
+        pass
+
+    # Items (line items)
+    try:
+        items = list(model.items.all())
+        if items:
+            fhir["item"] = []
+            for i, it in enumerate(items, 1):
+                item_entry: dict = {"sequence": i}
+                if it.productOrService:
+                    item_entry["productOrService"] = {"text": it.productOrService}
+                if it.unitPrice is not None:
+                    item_entry["unitPrice"] = {
+                        "value":    float(it.unitPrice),
+                        "currency": "PHP",
+                    }
+                if it.quantity is not None:
+                    item_entry["quantity"] = {"value": float(it.quantity)}
+                if it.servicedDate:
+                    item_entry["servicedDate"] = str(it.servicedDate)
+                fhir["item"].append(item_entry)
+    except Exception:
+        pass
+
+    # Total
+    if model.total is not None:
+        currency = model.total_currency or "PHP"
+        fhir["total"] = {"value": float(model.total), "currency": currency}
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def claimresponse_to_fhir(model) -> dict:
+    """Convert a local ClaimResponse instance to a FHIR R4 ClaimResponse resource."""
+    pk = getattr(model, "claimResponse_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"claimresponse:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
+
+    fhir: dict = {
+        "resourceType": "ClaimResponse",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-claimresponse"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "status":  model.status or "active",
+        "use":     model.use or "claim",
+        "patient": {
+            "display":   patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+        "created": format_fhir_datetime(model.created) if model.created else format_fhir_datetime(model.created_at),
+        "outcome": model.outcome or "complete",
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    if model.type:
+        fhir["type"] = {"coding": [{"system": _CLAIM_TYPE_CS, "code": model.type}]}
+
+    # Insurer
+    if model.insurer_id:
+        insurer_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{model.insurer_id}"))
+        fhir["insurer"] = {"reference": f"Organization/{insurer_fhir_id}"}
+    else:
+        fhir["insurer"] = {"display": "Philippine Health Insurance Corporation (PhilHealth)"}
+
+    # Linked request claim
+    if model.request_id:
+        claim_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"claim:{model.request_id}"))
+        fhir["request"] = {"reference": f"Claim/{claim_fhir_id}"}
+
+    if model.disposition:
+        fhir["disposition"] = model.disposition
+
+    if model.preAuthRef:
+        fhir["preAuthRef"] = model.preAuthRef
+
+    period = {}
+    if model.preAuthPeriod_start:
+        period["start"] = str(model.preAuthPeriod_start)
+    if model.preAuthPeriod_end:
+        period["end"] = str(model.preAuthPeriod_end)
+    if period:
+        fhir["preAuthPeriod"] = period
+
+    # Payment
+    if model.payment_type or model.payment_date:
+        payment: dict = {}
+        if model.payment_type:
+            payment["type"] = {"coding": [{"code": model.payment_type}]}
+        if model.payment_date:
+            payment["date"] = format_fhir_datetime(model.payment_date)
+        fhir["payment"] = payment
+
+    # Totals
+    try:
+        totals = list(model.totals.all())
+        if totals:
+            fhir["total"] = [
+                {
+                    "category": {"coding": [{"code": t.category}]},
+                    "amount":   {"value": float(t.amount), "currency": "PHP"},
+                }
+                for t in totals if t.amount is not None
+            ]
+    except Exception:
+        pass
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+# =============================================================================
+# APPOINTMENT / SCHEDULE / SLOT — FHIR R4
+# =============================================================================
+
+_APPOINTMENT_STATUS_CS = "http://hl7.org/fhir/appointmentstatus"
+_PARTICIPATION_STATUS_CS = "http://hl7.org/fhir/participationstatus"
+_PARTICIPANT_TYPE_CS   = "http://terminology.hl7.org/CodeSystem/v3-ParticipationType"
+_ACT_CODE_CS           = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+_SERVICE_TYPE_CS       = f"{_URN_CS}/service-type"
+_SPECIALTY_CS          = "http://snomed.info/sct"
+
+
+def schedule_to_fhir(model) -> dict:
+    """Convert a local Schedule instance to a FHIR R4 Schedule resource."""
+    pk = getattr(model, "schedule_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"schedule:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Schedule",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-schedule"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "active": model.status == "active",
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    if model.service_type_code or model.service_type_display:
+        fhir["serviceType"] = [{
+            "coding": [{
+                "system":  _SERVICE_TYPE_CS,
+                "code":    model.service_type_code or "",
+                "display": model.service_type_display or model.service_type_code or "",
+            }]
+        }]
+
+    if model.specialty_code or model.specialty_display:
+        fhir["specialty"] = [{
+            "coding": [{
+                "system":  _SPECIALTY_CS,
+                "code":    model.specialty_code or "",
+                "display": model.specialty_display or model.specialty_code or "",
+            }]
+        }]
+
+    # Actor list — practitioner, location, or organization
+    actors = []
+    if model.actor_practitioner_id:
+        ref = _practitioner_ref(model.actor_practitioner_id)
+        if ref:
+            actors.append(ref)
+    if model.actor_location_id:
+        try:
+            from accounts.models import Location
+            loc = Location.objects.get(location_id=model.actor_location_id)
+            actors.append({"display": loc.name, "reference": f"Location/{loc.identifier}"})
+        except Exception:
+            pass
+    if model.actor_organization_id:
+        org_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{model.actor_organization_id}"))
+        actors.append({"reference": f"Organization/{org_fhir_id}"})
+    if actors:
+        fhir["actor"] = actors
+
+    horizon = {}
+    if model.planning_horizon_start:
+        horizon["start"] = format_fhir_datetime(model.planning_horizon_start)
+    if model.planning_horizon_end:
+        horizon["end"] = format_fhir_datetime(model.planning_horizon_end)
+    if horizon:
+        fhir["planningHorizon"] = horizon
+
+    if model.comment:
+        fhir["comment"] = model.comment
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def slot_to_fhir(model) -> dict:
+    """Convert a local Slot instance to a FHIR R4 Slot resource."""
+    pk = getattr(model, "slot_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"slot:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    schedule_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"schedule:{model.schedule_id}"))
+
+    fhir: dict = {
+        "resourceType": "Slot",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-slot"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "schedule":  {"reference": f"Schedule/{schedule_fhir_id}"},
+        "status":    model.status,
+        "start":     format_fhir_datetime(model.start),
+        "end":       format_fhir_datetime(model.end),
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    if model.service_type_code or model.service_type_display:
+        fhir["serviceType"] = [{
+            "coding": [{
+                "system":  _SERVICE_TYPE_CS,
+                "code":    model.service_type_code or "",
+                "display": model.service_type_display or "",
+            }]
+        }]
+
+    if model.specialty_code:
+        fhir["specialty"] = [{
+            "coding": [{"system": _SPECIALTY_CS, "code": model.specialty_code,
+                        "display": model.specialty_display or model.specialty_code}]
+        }]
+
+    if model.appointment_type_code:
+        fhir["appointmentType"] = {
+            "coding": [{
+                "system":  _ACT_CODE_CS,
+                "code":    model.appointment_type_code,
+                "display": model.appointment_type_display or model.appointment_type_code,
+            }]
+        }
+
+    if model.overbooked:
+        fhir["overbooked"] = model.overbooked
+
+    if model.comment:
+        fhir["comment"] = model.comment
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def appointment_to_fhir(model) -> dict:
+    """Convert a local Appointment instance to a FHIR R4 Appointment resource."""
+    pk = getattr(model, "appointment_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"appointment:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
+
+    fhir: dict = {
+        "resourceType": "Appointment",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-appointment"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "status": model.status,
+    }
+
+    if model.identifier:
+        fhir["identifier"] = [{"value": model.identifier}]
+
+    if model.cancellation_reason_code:
+        fhir["cancelationReason"] = {
+            "coding": [{"code": model.cancellation_reason_code,
+                        "display": model.cancellation_reason_display or model.cancellation_reason_code}]
+        }
+
+    if model.service_type_code or model.service_type_display:
+        fhir["serviceType"] = [{
+            "coding": [{
+                "system":  _SERVICE_TYPE_CS,
+                "code":    model.service_type_code or "",
+                "display": model.service_type_display or "",
+            }]
+        }]
+
+    if model.specialty_code:
+        fhir["specialty"] = [{
+            "coding": [{"system": _SPECIALTY_CS, "code": model.specialty_code,
+                        "display": model.specialty_display or model.specialty_code}]
+        }]
+
+    if model.appointment_type_code:
+        fhir["appointmentType"] = {
+            "coding": [{
+                "system":  _ACT_CODE_CS,
+                "code":    model.appointment_type_code,
+                "display": model.appointment_type_display or model.appointment_type_code,
+            }]
+        }
+
+    if model.reason_code:
+        fhir["reasonCode"] = [{"text": model.reason_code}]
+
+    if model.priority is not None:
+        fhir["priority"] = model.priority
+
+    if model.description:
+        fhir["description"] = model.description
+
+    # Slot reference
+    if model.slot_id:
+        slot_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"slot:{model.slot_id}"))
+        fhir["slot"] = [{"reference": f"Slot/{slot_fhir_id}"}]
+
+    if model.created_datetime:
+        fhir["created"] = format_fhir_datetime(model.created_datetime)
+
+    if model.comment:
+        fhir["comment"] = model.comment
+
+    if model.patient_instruction:
+        fhir["patientInstruction"] = model.patient_instruction
+
+    if model.minutes_duration:
+        fhir["minutesDuration"] = model.minutes_duration
+
+    if model.start:
+        fhir["start"] = format_fhir_datetime(model.start)
+    if model.end:
+        fhir["end"] = format_fhir_datetime(model.end)
+
+    # Participants — patient (required) + optional practitioner + optional location
+    participants = []
+
+    patient_part: dict = {
+        "actor": {
+            "display":   patient_display,
+            "reference": f"Patient/{patient_fhir_id}",
+        },
+        "required": "required",
+        "status": model.patient_participation_status or "accepted",
+    }
+    participants.append(patient_part)
+
+    if model.practitioner_id:
+        pract_ref = _practitioner_ref(model.practitioner_id)
+        if pract_ref:
+            participants.append({
+                "type": [{
+                    "coding": [{
+                        "system":  _PARTICIPANT_TYPE_CS,
+                        "code":    "PPRF",
+                        "display": "primary performer",
+                    }]
+                }],
+                "actor":    pract_ref,
+                "required": "required",
+                "status":   model.practitioner_participation_status or "accepted",
+            })
+
+    if model.location_id:
+        try:
+            from accounts.models import Location
+            loc = Location.objects.get(location_id=model.location_id)
+            participants.append({
+                "actor":    {"display": loc.name, "reference": f"Location/{loc.identifier or loc.location_id}"},
+                "required": "required",
+                "status":   "accepted",
+            })
+        except Exception:
+            pass
+
+    fhir["participant"] = participants
+
+    # Resulting encounter
+    if model.resulting_encounter_id:
+        fhir["basedOn"] = [{"reference": f"Encounter/{model.resulting_encounter_id}"}]
+
+    return {k: v for k, v in fhir.items() if v is not None}

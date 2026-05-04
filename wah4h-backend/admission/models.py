@@ -222,3 +222,208 @@ class ProcedurePerformer(TimeStampedModel):
     
     def __str__(self):
         return f"ProcedurePerformer {self.procedure_performer_id} for Procedure {self.procedure_id}"
+
+
+# =============================================================================
+# APPOINTMENT SCHEDULING — FHIR R4
+# Resources: Schedule → Slot → Appointment (booking funnel)
+# =============================================================================
+
+class Schedule(FHIRResourceModel):
+    """
+    FHIR Schedule Resource — defines an actor's (Practitioner / Location) availability window.
+    Slots are carved out of this window. Appointments consume Slots.
+    Inherits: identifier, status, created_at, updated_at from FHIRResourceModel.
+    """
+    schedule_id = models.AutoField(primary_key=True)
+
+    # Actor references (Fortress Pattern — Practitioner, Location, or HealthcareService)
+    actor_practitioner_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    actor_location_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    actor_organization_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+
+    # Service type / specialty offered in this schedule
+    service_type_code = models.CharField(max_length=100, null=True, blank=True)
+    service_type_display = models.CharField(max_length=255, null=True, blank=True)
+    specialty_code = models.CharField(max_length=100, null=True, blank=True)
+    specialty_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Planning horizon
+    planning_horizon_start = models.DateTimeField(null=True, blank=True)
+    planning_horizon_end = models.DateTimeField(null=True, blank=True)
+
+    # Human-readable comment
+    comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'appointment_schedule'
+        indexes = [
+            models.Index(fields=['actor_practitioner_id']),
+            models.Index(fields=['actor_location_id']),
+            models.Index(fields=['planning_horizon_start', 'planning_horizon_end']),
+        ]
+
+    def __str__(self):
+        return f"Schedule {self.schedule_id} [{self.planning_horizon_start} – {self.planning_horizon_end}]"
+
+
+class Slot(FHIRResourceModel):
+    """
+    FHIR Slot Resource — a single bookable time block within a Schedule.
+    Inherits: identifier, status, created_at, updated_at from FHIRResourceModel.
+
+    status values: busy | free | busy-unavailable | busy-tentative | entered-in-error
+    """
+    slot_id = models.AutoField(primary_key=True)
+
+    schedule = models.ForeignKey(
+        Schedule,
+        on_delete=models.CASCADE,
+        related_name='slots',
+        db_column='schedule_id',
+    )
+
+    # Service type / specialty (may differ from Schedule for multi-specialty locations)
+    service_type_code = models.CharField(max_length=100, null=True, blank=True)
+    service_type_display = models.CharField(max_length=255, null=True, blank=True)
+    specialty_code = models.CharField(max_length=100, null=True, blank=True)
+    specialty_display = models.CharField(max_length=255, null=True, blank=True)
+    appointment_type_code = models.CharField(max_length=100, null=True, blank=True)
+    appointment_type_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Slot window
+    start = models.DateTimeField(null=False, blank=False, db_index=True)
+    end = models.DateTimeField(null=False, blank=False)
+
+    overbooked = models.BooleanField(default=False)
+    comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'appointment_slot'
+        indexes = [
+            models.Index(fields=['schedule', 'start']),
+            models.Index(fields=['status', 'start']),
+        ]
+
+    def __str__(self):
+        return f"Slot {self.slot_id} ({self.status}) {self.start} – {self.end}"
+
+
+class Appointment(FHIRResourceModel):
+    """
+    FHIR Appointment Resource — a booking of a healthcare event.
+    Inherits: identifier, status, created_at, updated_at from FHIRResourceModel.
+
+    status values: proposed | pending | booked | arrived | fulfilled |
+                   cancelled | noshow | entered-in-error | checked-in | waitlist
+    """
+    appointment_id = models.AutoField(primary_key=True)
+
+    # Cancellation
+    cancellation_reason_code = models.CharField(max_length=100, null=True, blank=True)
+    cancellation_reason_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Service classification
+    service_category_code = models.CharField(max_length=100, null=True, blank=True)
+    service_category_display = models.CharField(max_length=255, null=True, blank=True)
+    service_type_code = models.CharField(max_length=100, null=True, blank=True)
+    service_type_display = models.CharField(max_length=255, null=True, blank=True)
+    specialty_code = models.CharField(max_length=100, null=True, blank=True)
+    specialty_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Appointment type — ROUTINE, WALKIN, CHECKUP, FOLLOWUP, EMERGENCY, etc.
+    appointment_type_code = models.CharField(max_length=100, null=True, blank=True)
+    appointment_type_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Reason (free text + ICD-10 code)
+    reason_code = models.CharField(max_length=255, null=True, blank=True)
+    reason_reference_id = models.BigIntegerField(null=True, blank=True, db_index=True)  # Ref to Condition
+
+    priority = models.PositiveSmallIntegerField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+
+    # Timing
+    start = models.DateTimeField(null=True, blank=True, db_index=True)
+    end = models.DateTimeField(null=True, blank=True)
+    created_datetime = models.DateTimeField(null=True, blank=True)
+    minutes_duration = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    # Slot consumed by this appointment (Fortress Pattern — avoids circular import)
+    slot_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+
+    # Participants (Fortress Pattern)
+    patient_id = models.BigIntegerField(null=False, blank=False, db_index=True)   # Required — the patient
+    practitioner_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    location_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+
+    # Participant status for patient and practitioner
+    patient_participation_status = models.CharField(
+        max_length=50, null=True, blank=True,
+        help_text="accepted | declined | tentative | needs-action"
+    )
+    practitioner_participation_status = models.CharField(
+        max_length=50, null=True, blank=True,
+        help_text="accepted | declined | tentative | needs-action"
+    )
+
+    # Scheduling / referral context (Fortress Pattern)
+    based_on_service_request_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+
+    # The resulting Encounter, once the appointment is fulfilled
+    resulting_encounter_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+
+    comment = models.TextField(null=True, blank=True)
+    patient_instruction = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'appointment'
+        indexes = [
+            models.Index(fields=['patient_id', 'start']),
+            models.Index(fields=['practitioner_id', 'start']),
+            models.Index(fields=['status', 'start']),
+        ]
+
+    def __str__(self):
+        return f"Appointment {self.appointment_id} ({self.status}) {self.start}"
+
+
+class ServiceRequest(FHIRResourceModel):
+    """
+    FHIR ServiceRequest Resource — an order or referral for a service.
+    Inherits: identifier, status, created_at, updated_at from FHIRResourceModel.
+
+    Minimal implementation sufficient for Encounter.based_on_service_request_id
+    and Appointment.based_on_service_request_id references.
+    """
+    service_request_id = models.AutoField(primary_key=True)
+
+    intent = models.CharField(max_length=100, null=True, blank=True,
+                              help_text="proposal | plan | directive | order | ...")
+    priority = models.CharField(max_length=100, null=True, blank=True)
+
+    # What is requested
+    code = models.CharField(max_length=255, null=True, blank=True)
+    code_system = models.CharField(max_length=255, null=True, blank=True)
+    code_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Fortress Pattern references
+    subject_id = models.BigIntegerField(null=False, blank=False, db_index=True)   # Patient
+    encounter_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    requester_id = models.BigIntegerField(null=True, blank=True, db_index=True)   # Practitioner
+    performer_id = models.BigIntegerField(null=True, blank=True, db_index=True)   # Practitioner / Organization
+
+    reason_code = models.CharField(max_length=255, null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+
+    occurrence_datetime = models.DateTimeField(null=True, blank=True)
+    authored_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'service_request'
+        indexes = [
+            models.Index(fields=['subject_id']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"ServiceRequest {self.service_request_id} — {self.code or self.identifier}"

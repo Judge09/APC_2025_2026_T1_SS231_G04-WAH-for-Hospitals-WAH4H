@@ -86,8 +86,9 @@ class Claim(FHIRResourceModel):
     accident_location_reference = models.CharField(max_length=255, null=True, blank=True)
     
     # Totals
-    total = models.CharField(max_length=255, null=True, blank=True)
-    
+    total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    total_currency = models.CharField(max_length=10, null=True, blank=True, default='PHP')
+
     class Meta:
         db_table = 'billing_claim'
         indexes = [
@@ -965,3 +966,64 @@ class PaymentNotice(FHIRResourceModel):
             models.Index(fields=['status']),
             models.Index(fields=['payment_date']),
         ]
+
+
+class Coverage(FHIRResourceModel):
+    """
+    FHIR Coverage Resource — PhilHealth insurance/membership record.
+    Inherits: identifier, status, created_at, updated_at from FHIRResourceModel.
+
+    Maps a patient (beneficiary) to their PhilHealth policy. Required by Claim
+    to link a claim submission to the insurer (PhilHealth).
+    """
+    coverage_id = models.AutoField(primary_key=True)
+
+    # Policy type — e.g. "PHIC" for PhilHealth Individual Contributor
+    type_code = models.CharField(max_length=100, null=True, blank=True)
+    type_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Fortress Pattern: external references
+    policy_holder_id = models.BigIntegerField(null=True, blank=True, db_index=True)   # Organization or Patient
+    subscriber_id = models.BigIntegerField(null=True, blank=True, db_index=True)       # Patient (member)
+    beneficiary_id = models.BigIntegerField(null=False, blank=False, db_index=True)    # Patient
+    payor_id = models.BigIntegerField(null=True, blank=True, db_index=True)            # Organization (PhilHealth)
+
+    # PhilHealth PIN stored as subscriber identifier
+    subscriber_pin = models.CharField(
+        max_length=14, null=True, blank=True,
+        help_text="PhilHealth member PIN (XX-XXXXXXXXX-X format)"
+    )
+
+    # Membership category — Individual, Employed, Indigent, Senior Citizen, etc.
+    class_code = models.CharField(max_length=100, null=True, blank=True)
+    class_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # Coverage period
+    period_start = models.DateField(null=True, blank=True)
+    period_end = models.DateField(null=True, blank=True)
+
+    # Dependent order (0 = principal member, 1+ = dependents)
+    dependent = models.CharField(max_length=10, null=True, blank=True)
+    relationship_code = models.CharField(max_length=100, null=True, blank=True)
+    relationship_display = models.CharField(max_length=255, null=True, blank=True)
+
+    # Order of benefit application
+    order = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    # Network — e.g. "Z-Benefit", "Konsulta Package"
+    network = models.CharField(max_length=255, null=True, blank=True)
+
+    # Cost-to-beneficiary (co-pay / deductible summary text)
+    cost_to_beneficiary = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'billing_coverage'
+        indexes = [
+            models.Index(fields=['beneficiary_id']),
+            models.Index(fields=['subscriber_pin']),
+            models.Index(fields=['status']),
+            models.Index(fields=['payor_id']),
+        ]
+
+    def __str__(self):
+        return f"Coverage {self.coverage_id} — {self.subscriber_pin or self.identifier}"

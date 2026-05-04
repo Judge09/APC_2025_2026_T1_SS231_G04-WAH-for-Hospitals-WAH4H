@@ -27,7 +27,7 @@ class Organization(FHIRResourceModel):
     address_district = models.CharField(max_length=255, null=True, blank=True)
     address_state = models.CharField(max_length=255, null=True, blank=True)
     address_country = models.CharField(max_length=255, null=True, blank=True)
-    address_postal_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    address_postal_code = models.CharField(max_length=100, null=True, blank=True)
     contact_purpose = models.CharField(max_length=50, null=True, blank=True)
     contact_first_name = models.CharField(max_length=50, null=True, blank=True)
     contact_last_name = models.CharField(max_length=50, null=True, blank=True)
@@ -36,7 +36,7 @@ class Organization(FHIRResourceModel):
     contact_address_city = models.CharField(max_length=50, null=True, blank=True)
     contact_address_state = models.CharField(max_length=50, null=True, blank=True)
     contact_address_country = models.CharField(max_length=50, null=True, blank=True)
-    contact_postal_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    contact_postal_code = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         db_table = 'organization'
@@ -50,8 +50,8 @@ class Location(FHIRResourceModel):
     location_id = models.AutoField(primary_key=True)
     identifier = models.CharField(max_length=100, unique=True, null=True, blank=True)
     status = models.CharField(max_length=100)
-    physical_type_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    type_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    physical_type_code = models.CharField(max_length=100, null=True, blank=True)
+    type_code = models.CharField(max_length=100, null=True, blank=True)
     operational_status = models.CharField(max_length=100, null=True, blank=True)
     mode = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -81,7 +81,7 @@ class Location(FHIRResourceModel):
     address_district = models.CharField(max_length=255, null=True, blank=True)
     address_state = models.CharField(max_length=255, null=True, blank=True)
     address_country = models.CharField(max_length=255, null=True, blank=True)
-    address_postal_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    address_postal_code = models.CharField(max_length=100, null=True, blank=True)
     hours_of_operation_days = models.CharField(max_length=255, null=True, blank=True)
     hours_of_operation_all_day = models.CharField(max_length=255, null=True, blank=True)
     opening_time = models.CharField(max_length=255, null=True, blank=True)
