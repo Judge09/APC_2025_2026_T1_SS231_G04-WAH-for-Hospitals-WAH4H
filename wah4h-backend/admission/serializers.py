@@ -408,5 +408,336 @@ class ProcedureSerializer(serializers.ModelSerializer):
         # Create performers
         for performer_data in performers_data:
             ProcedurePerformer.objects.create(procedure=procedure, **performer_data)
-            
+
         return procedure
+
+
+# ============================================================================
+# APPOINTMENT MODULE SERIALIZERS
+# ============================================================================
+
+from admission.models import Schedule, Slot, Appointment
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    """
+    Schedule Serializer — availability window for a practitioner / location.
+    Fat Serializer pattern: validation + enriched read output in one class.
+    """
+    actor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Schedule
+        fields = [
+            'schedule_id', 'identifier', 'status', 'active',
+            'actor_practitioner_id', 'actor_location_id', 'actor_organization_id',
+            'actor_name',
+            'service_type_code', 'service_type_display',
+            'specialty_code', 'specialty_display',
+            'planning_horizon_start', 'planning_horizon_end',
+            'comment', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['schedule_id', 'created_at', 'updated_at', 'actor_name']
+        extra_kwargs = {
+            'planning_horizon_start': {'required': True},
+            'planning_horizon_end':   {'required': True},
+        }
+
+    def get_actor_name(self, obj):
+        if obj.actor_practitioner_id:
+            try:
+                p = Practitioner.objects.get(practitioner_id=obj.actor_practitioner_id)
+                return f"{p.first_name} {p.last_name}".strip()
+            except Practitioner.DoesNotExist:
+                pass
+        if obj.actor_location_id:
+            try:
+                from accounts.models import Location as Loc
+                return Loc.objects.get(location_id=obj.actor_location_id).name
+            except Exception:
+                pass
+        return None
+
+    def validate(self, data):
+        start = data.get('planning_horizon_start')
+        end   = data.get('planning_horizon_end')
+        if start and end and end <= start:
+            raise serializers.ValidationError(
+                {"planning_horizon_end": "End must be after start."}
+            )
+        if data.get('actor_practitioner_id'):
+            if not Practitioner.objects.filter(
+                practitioner_id=data['actor_practitioner_id']
+            ).exists():
+                raise serializers.ValidationError(
+                    {"actor_practitioner_id": "Practitioner not found."}
+                )
+        return data
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if not validated_data.get('identifier'):
+            validated_data['identifier'] = f"SCH-{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+        if not validated_data.get('status'):
+            validated_data['status'] = 'active'
+        return super().create(validated_data)
+
+
+class SlotSerializer(serializers.ModelSerializer):
+    """
+    Slot Serializer — single bookable block within a Schedule.
+    Enforces start < end and prevents overlap within the same schedule.
+    """
+    schedule_id = serializers.IntegerField(write_only=True, required=True)
+    schedule_detail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Slot
+        fields = [
+            'slot_id', 'identifier', 'status',
+            'schedule_id', 'schedule_detail',
+            'service_type_code', 'service_type_display',
+            'specialty_code', 'specialty_display',
+            'appointment_type_code', 'appointment_type_display',
+            'start', 'end', 'overbooked', 'comment',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['slot_id', 'created_at', 'updated_at', 'schedule_detail']
+        extra_kwargs = {
+            'start':  {'required': True},
+            'end':    {'required': True},
+            'status': {'required': False, 'default': 'free'},
+        }
+
+    def get_schedule_detail(self, obj):
+        return {
+            'schedule_id': obj.schedule_id,
+            'actor_name':  ScheduleSerializer(obj.schedule).data.get('actor_name'),
+            'planning_horizon_start': obj.schedule.planning_horizon_start,
+            'planning_horizon_end':   obj.schedule.planning_horizon_end,
+        }
+
+    def validate(self, data):
+        start = data.get('start')
+        end   = data.get('end')
+        if start and end and end <= start:
+            raise serializers.ValidationError({"end": "Slot end must be after start."})
+
+        schedule_id = data.get('schedule_id')
+        if schedule_id:
+            if not Schedule.objects.filter(schedule_id=schedule_id, status='active').exists():
+                raise serializers.ValidationError(
+                    {"schedule_id": "Active schedule not found."}
+                )
+            # Overlap check (exclude current instance on update)
+            overlap_qs = Slot.objects.filter(
+                schedule_id=schedule_id,
+                start__lt=end,
+                end__gt=start,
+            )
+            if self.instance:
+                overlap_qs = overlap_qs.exclude(slot_id=self.instance.slot_id)
+            if overlap_qs.exists():
+                raise serializers.ValidationError(
+                    "This time window overlaps with an existing slot in the same schedule."
+                )
+        return data
+
+    @transaction.atomic
+    def create(self, validated_data):
+        schedule_id = validated_data.pop('schedule_id')
+        schedule    = Schedule.objects.get(schedule_id=schedule_id)
+        if not validated_data.get('identifier'):
+            validated_data['identifier'] = f"SLT-{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+        if not validated_data.get('status'):
+            validated_data['status'] = 'free'
+        return Slot.objects.create(schedule=schedule, **validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        schedule_id = validated_data.pop('schedule_id', None)
+        if schedule_id and schedule_id != instance.schedule_id:
+            instance.schedule = Schedule.objects.get(schedule_id=schedule_id)
+        return super().update(instance, validated_data)
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    """
+    Appointment Serializer — fat serializer handling the full booking lifecycle.
+
+    Business rules enforced here:
+    - Patient must exist.
+    - Practitioner must exist (when provided).
+    - Slot must be 'free' before booking.
+    - Start must precede end.
+    - A patient cannot have two overlapping 'booked'/'pending' appointments.
+    - Booking a slot atomically flips Slot.status → 'busy'.
+    - Cancelling/noshow flips the slot back to 'free'.
+    """
+    patient_summary     = serializers.SerializerMethodField()
+    practitioner_summary = serializers.SerializerMethodField()
+    slot_detail         = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Appointment
+        fields = [
+            'appointment_id', 'identifier', 'status',
+            'patient_id', 'patient_summary',
+            'practitioner_id', 'practitioner_summary',
+            'location_id',
+            'slot_id', 'slot_detail',
+            'service_category_code', 'service_category_display',
+            'service_type_code', 'service_type_display',
+            'specialty_code', 'specialty_display',
+            'appointment_type_code', 'appointment_type_display',
+            'reason_code', 'priority', 'description',
+            'start', 'end', 'minutes_duration', 'created_datetime',
+            'patient_participation_status', 'practitioner_participation_status',
+            'based_on_service_request_id', 'resulting_encounter_id',
+            'cancellation_reason_code', 'cancellation_reason_display',
+            'comment', 'patient_instruction',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'appointment_id', 'identifier', 'created_at', 'updated_at',
+            'patient_summary', 'practitioner_summary', 'slot_detail',
+        ]
+        extra_kwargs = {
+            'patient_id': {'required': True},
+            'status':     {'required': False},
+        }
+
+    # ------------------------------------------------------------------ #
+    # Enriched read fields                                                 #
+    # ------------------------------------------------------------------ #
+
+    def get_patient_summary(self, obj):
+        try:
+            return _patient_basic_dict(Patient.objects.get(id=obj.patient_id))
+        except Patient.DoesNotExist:
+            return None
+
+    def get_practitioner_summary(self, obj):
+        if not obj.practitioner_id:
+            return None
+        try:
+            p = Practitioner.objects.get(practitioner_id=obj.practitioner_id)
+            return {
+                'practitioner_id': p.practitioner_id,
+                'full_name': f"{p.first_name} {p.last_name}".strip(),
+                'qualification_code': p.qualification_code,
+            }
+        except Practitioner.DoesNotExist:
+            return None
+
+    def get_slot_detail(self, obj):
+        if not obj.slot_id:
+            return None
+        try:
+            s = Slot.objects.select_related('schedule').get(slot_id=obj.slot_id)
+            return {
+                'slot_id': s.slot_id,
+                'status':  s.status,
+                'start':   s.start,
+                'end':     s.end,
+            }
+        except Slot.DoesNotExist:
+            return None
+
+    # ------------------------------------------------------------------ #
+    # Validation                                                           #
+    # ------------------------------------------------------------------ #
+
+    def validate(self, data):
+        patient_id = data.get('patient_id')
+        if patient_id and not Patient.objects.filter(id=patient_id).exists():
+            raise serializers.ValidationError({"patient_id": "Patient not found."})
+
+        practitioner_id = data.get('practitioner_id')
+        if practitioner_id and not Practitioner.objects.filter(
+            practitioner_id=practitioner_id
+        ).exists():
+            raise serializers.ValidationError({"practitioner_id": "Practitioner not found."})
+
+        start = data.get('start')
+        end   = data.get('end')
+        if start and end and end <= start:
+            raise serializers.ValidationError({"end": "Appointment end must be after start."})
+
+        slot_id = data.get('slot_id')
+        if slot_id:
+            try:
+                slot = Slot.objects.get(slot_id=slot_id)
+            except Slot.DoesNotExist:
+                raise serializers.ValidationError({"slot_id": "Slot not found."})
+
+            # On create only — slot must be free
+            if not self.instance and slot.status != 'free':
+                raise serializers.ValidationError(
+                    {"slot_id": f"Slot is not available (status: {slot.status})."}
+                )
+
+            # Derive start/end from slot when not explicitly provided
+            if not data.get('start'):
+                data['start'] = slot.start
+            if not data.get('end'):
+                data['end'] = slot.end
+
+        # Prevent overlapping active bookings for the same patient
+        if patient_id and start and end:
+            conflict_qs = Appointment.objects.filter(
+                patient_id=patient_id,
+                status__in=['proposed', 'pending', 'booked', 'arrived'],
+                start__lt=end,
+                end__gt=start,
+            )
+            if self.instance:
+                conflict_qs = conflict_qs.exclude(appointment_id=self.instance.appointment_id)
+            if conflict_qs.exists():
+                raise serializers.ValidationError(
+                    "Patient already has an overlapping active appointment in this time window."
+                )
+
+        return data
+
+    # ------------------------------------------------------------------ #
+    # Write operations                                                     #
+    # ------------------------------------------------------------------ #
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if not validated_data.get('identifier'):
+            validated_data['identifier'] = f"APT-{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+        if not validated_data.get('status'):
+            validated_data['status'] = 'booked'
+        if not validated_data.get('created_datetime'):
+            validated_data['created_datetime'] = timezone.now()
+
+        slot_id = validated_data.get('slot_id')
+        appointment = Appointment.objects.create(**validated_data)
+
+        # Mark slot as busy
+        if slot_id:
+            Slot.objects.filter(slot_id=slot_id).update(status='busy')
+
+        return appointment
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        old_slot_id = instance.slot_id
+        new_slot_id = validated_data.get('slot_id', old_slot_id)
+
+        appointment = super().update(instance, validated_data)
+
+        # Slot management on slot change
+        if new_slot_id and new_slot_id != old_slot_id:
+            if old_slot_id:
+                Slot.objects.filter(slot_id=old_slot_id).update(status='free')
+            Slot.objects.filter(slot_id=new_slot_id).update(status='busy')
+
+        # Free up slot if appointment is cancelled or noshow
+        if validated_data.get('status') in ('cancelled', 'noshow', 'entered-in-error'):
+            if appointment.slot_id:
+                Slot.objects.filter(slot_id=appointment.slot_id).update(status='free')
+
+        return appointment
