@@ -479,6 +479,15 @@ class ScheduleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"planning_horizon_end": "End must be after start."}
             )
+        # FHIR R4 Schedule.actor is 1..* — at least one actor required
+        if not any([
+            data.get('actor_practitioner_id'),
+            data.get('actor_location_id'),
+            data.get('actor_organization_id'),
+        ]):
+            raise serializers.ValidationError(
+                {"actor": "At least one actor (practitioner, location, or organization) is required — FHIR R4 Schedule.actor is 1..*"}
+            )
         if data.get('actor_practitioner_id'):
             if not Practitioner.objects.filter(
                 practitioner_id=data['actor_practitioner_id']

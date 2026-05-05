@@ -56,6 +56,7 @@ class Claim(FHIRResourceModel):
     enterer_id = models.BigIntegerField(null=True, blank=True)
     insurer_id = models.BigIntegerField(null=True, blank=True)
     provider_id = models.BigIntegerField(null=True, blank=True)
+    coverage_id = models.BigIntegerField(null=True, blank=True)  # FHIR Claim.insurance[].coverage (1..*)
     facility_id = models.BigIntegerField(null=True, blank=True)
     prescription_id = models.BigIntegerField(null=True, blank=True)
     originalPrescription_id = models.BigIntegerField(null=True, blank=True)
@@ -305,6 +306,8 @@ class ClaimResponse(FHIRResourceModel):
     payment_adjustment = models.CharField(max_length=255, null=True, blank=True)
     payment_adjustmentReason = models.CharField(max_length=255, null=True, blank=True)
     payment_date = models.DateTimeField(null=True, blank=True)
+    payment_amount_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    payment_amount_currency = models.CharField(max_length=10, null=True, blank=True, default='PHP')
     
     # Other
     fundsReserve = models.CharField(max_length=255, null=True, blank=True)

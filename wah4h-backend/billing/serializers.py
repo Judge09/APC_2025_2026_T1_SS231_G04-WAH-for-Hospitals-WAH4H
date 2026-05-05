@@ -198,7 +198,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
                 "lineItem": [
                     {
                         "sequence": int(li.sequence) if li.sequence and str(li.sequence).isdigit() else idx + 1,
-                        "chargeItemCodeableConcept": codeable_concept(PHC_SERVICE_TYPE_CS, li.chargeitem_code) if li.chargeitem_code else None,
+                        # FHIR R4 Invoice.lineItem.chargeItem[x] is 1..1 — prefer code, fall back to reference
+                        **( {"chargeItemCodeableConcept": codeable_concept(PHC_SERVICE_TYPE_CS, li.chargeitem_code)}
+                            if li.chargeitem_code else
+                            {"chargeItemReference": fhir_reference("ChargeItem", li.chargeitem_reference_id)}
+                            if li.chargeitem_reference_id else {} ),
                         "priceComponent": [
                             {
                                 "type": pc.type or "base",
@@ -305,6 +309,7 @@ class PaymentReconciliationSerializer(serializers.ModelSerializer):
                         "amount": money(d.amount_value, d.amount_currency or "PHP"),
                     }
                     for d in obj.details.all()
+                    if d.type  # FHIR R4 detail.type is 1..1 — skip entries with no type
                 ],
                 "formCode": codeable_concept("http://terminology.hl7.org/CodeSystem/forms-codes", obj.form_code) if obj.form_code else None,
             }
@@ -477,6 +482,13 @@ class EClaimSerializer(serializers.ModelSerializer):
                 "created": obj.created.isoformat() if obj.created else None,
                 "insurer": fhir_reference("Organization", obj.insurer_id) if obj.insurer_id else None,
                 "provider": fhir_reference("Practitioner", obj.provider_id) if obj.provider_id else None,
+                "insurance": [
+                    {
+                        "sequence": 1,
+                        "focal": True,
+                        "coverage": fhir_reference("Coverage", obj.coverage_id),
+                    }
+                ] if obj.coverage_id else [],
                 "priority": codeable_concept(HL7_PRIORITY, obj.priority or "normal"),
                 "diagnosis": [
                     {
@@ -594,6 +606,7 @@ class ClaimResponseSerializer(serializers.ModelSerializer):
                         "adjustment": money(obj.payment_adjustment),
                         "adjustmentReason": codeable_concept("http://terminology.hl7.org/CodeSystem/payment-adjustment-reason", obj.payment_adjustmentReason) if obj.payment_adjustmentReason else None,
                         "date": str(obj.payment_date.date()) if obj.payment_date else None,
+                        "amount": money(obj.payment_amount_value, obj.payment_amount_currency or "PHP"),
                     }
                     if obj.payment_type or obj.payment_date else None
                 ),

@@ -72,16 +72,21 @@ PHC_EXT_NATIONALITY    = f"{PHC_EXT_BASE}/ph-core-patient-nationality"
 
 # ── PHCore profile URLs ───────────────────────────────────────────────────────
 PHC_PROFILE = {
-    "Patient":        f"{PHC_EXT_BASE}/ph-core-patient",
-    "Practitioner":   f"{PHC_EXT_BASE}/ph-core-practitioner",
-    "Organization":   f"{PHC_EXT_BASE}/ph-core-organization",
-    "Coverage":       f"{PHC_EXT_BASE}/ph-core-coverage",
-    "Claim":          f"{PHC_EXT_BASE}/ph-core-claim",
-    "ClaimResponse":  f"{PHC_EXT_BASE}/ph-core-claim-response",
-    "Schedule":       f"{PHC_EXT_BASE}/ph-core-schedule",
-    "Slot":           f"{PHC_EXT_BASE}/ph-core-slot",
-    "Appointment":    f"{PHC_EXT_BASE}/ph-core-appointment",
-    "Location":       f"{PHC_EXT_BASE}/ph-core-location",
+    "Patient":               f"{PHC_EXT_BASE}/ph-core-patient",
+    "Practitioner":          f"{PHC_EXT_BASE}/ph-core-practitioner",
+    "PractitionerRole":      f"{PHC_EXT_BASE}/ph-core-practitioner-role",
+    "Organization":          f"{PHC_EXT_BASE}/ph-core-organization",
+    "Coverage":              f"{PHC_EXT_BASE}/ph-core-coverage",
+    "Claim":                 f"{PHC_EXT_BASE}/ph-core-claim",
+    "ClaimResponse":         f"{PHC_EXT_BASE}/ph-core-claim-response",
+    "Schedule":              f"{PHC_EXT_BASE}/ph-core-schedule",
+    "Slot":                  f"{PHC_EXT_BASE}/ph-core-slot",
+    "Appointment":           f"{PHC_EXT_BASE}/ph-core-appointment",
+    "Location":              f"{PHC_EXT_BASE}/ph-core-location",
+    "Invoice":               f"{PHC_EXT_BASE}/ph-core-invoice",
+    "Account":               f"{PHC_EXT_BASE}/ph-core-account",
+    "PaymentReconciliation": f"{PHC_EXT_BASE}/ph-core-payment-reconciliation",
+    "ServiceRequest":        f"{PHC_EXT_BASE}/ph-core-service-request",
 }
 
 # ── Subscriber relationship mapping ───────────────────────────────────────────
