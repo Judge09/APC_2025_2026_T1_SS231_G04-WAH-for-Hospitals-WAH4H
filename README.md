@@ -1,4 +1,4 @@
-# WAH4H — Work at Home for Hospitals
+# WAH4H — WAH For Hospital
 
 > A comprehensive, FHIR-compliant Hospital Information System (HIS) built for Philippine Local Government Unit (LGU) hospitals.
 
