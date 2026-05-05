@@ -528,6 +528,28 @@ def patient_to_fhir(patient):
         "valueBoolean": bool(patient.indigenous_flag),
     })
 
+    # 1f. Indigenous group name — only when patient is indigenous
+    indigenous_group = getattr(patient, "indigenous_group", None)
+    if patient.indigenous_flag and indigenous_group:
+        extensions.append({
+            "url": f"{_URN_EXT}/indigenous-group",
+            "valueString": indigenous_group,
+        })
+
+    # 1g. PWD (Persons with Disability) type
+    pwd_type = getattr(patient, "pwd_type", None)
+    if pwd_type:
+        extensions.append({
+            "url": f"{_URN_EXT}/disability-type",
+            "valueCodeableConcept": {
+                "coding": [{
+                    "system":  f"{_URN_CS}/disability-type",
+                    "code":    _slug(pwd_type),
+                    "display": pwd_type,
+                }]
+            },
+        })
+
     # ------------------------------------------------------------------
     # 2. Core skeleton
     # ------------------------------------------------------------------

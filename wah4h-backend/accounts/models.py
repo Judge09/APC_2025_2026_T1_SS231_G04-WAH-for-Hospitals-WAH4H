@@ -58,9 +58,9 @@ class Location(FHIRResourceModel):
     alias = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     telecom = models.CharField(max_length=50, null=True, blank=True)
-    longitude = models.CharField(max_length=255, null=True, blank=True)
-    latitude = models.CharField(max_length=255, null=True, blank=True)
-    altitude = models.CharField(max_length=255, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=18, decimal_places=10, null=True, blank=True)
+    latitude = models.DecimalField(max_digits=18, decimal_places=10, null=True, blank=True)
+    altitude = models.DecimalField(max_digits=18, decimal_places=10, null=True, blank=True)
     managing_organization = models.ForeignKey(
         'accounts.Organization',
         on_delete=models.PROTECT,

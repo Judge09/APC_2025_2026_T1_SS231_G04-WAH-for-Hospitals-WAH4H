@@ -19,6 +19,15 @@ import secrets
 import string
 
 from .models import Organization, Practitioner, PractitionerRole, RoleModuleConfig
+from core.fhir_utils import (
+    codeable_concept, fhir_extension, fhir_period, fhir_reference,
+    fhir_identifier, fhir_meta,
+    PHC_EXT_PRC_LICENSE, PHC_EXT_NHFR,
+    NHFR_IDENTIFIER_SYSTEM,
+    PHC_FACILITY_TYPE_CS, PHC_CS_BASE, PHC_SPECIALTY_CS,
+    WAH4H_PRACTITIONER_SYSTEM, WAH4H_PRACTITIONER_ROLE_SYSTEM,
+    HL7_ROLE_CODE,
+)
 
 User = get_user_model()
 
@@ -37,6 +46,7 @@ class HospitalSettingsSerializer(serializers.ModelSerializer):
     """Full Organization serializer for admin hospital profile editing."""
     fhir_resource_type = serializers.SerializerMethodField()
     fhir_identifier = serializers.SerializerMethodField()
+    fhir = serializers.SerializerMethodField()
 
     class Meta:
         model = Organization
@@ -67,8 +77,9 @@ class HospitalSettingsSerializer(serializers.ModelSerializer):
             'contact_postal_code',
             'fhir_resource_type',
             'fhir_identifier',
+            'fhir',
         ]
-        read_only_fields = ['organization_id', 'fhir_resource_type', 'fhir_identifier']
+        read_only_fields = ['organization_id', 'fhir_resource_type', 'fhir_identifier', 'fhir']
 
     def get_fhir_resource_type(self, obj):
         return 'Organization'
@@ -76,10 +87,55 @@ class HospitalSettingsSerializer(serializers.ModelSerializer):
     def get_fhir_identifier(self, obj):
         if obj.nhfr_code:
             return {
-                'system': 'https://nhfr.doh.gov.ph/facility',
+                'system': NHFR_IDENTIFIER_SYSTEM,
                 'value': obj.nhfr_code,
             }
         return None
+
+    def get_fhir(self, obj):
+        try:
+            identifiers = []
+            if obj.nhfr_code:
+                identifiers.append(fhir_identifier(NHFR_IDENTIFIER_SYSTEM, obj.nhfr_code, use="official"))
+
+            extensions = []
+            if obj.nhfr_code:
+                extensions.append(fhir_extension(PHC_EXT_NHFR, "String", obj.nhfr_code))
+
+            address = None
+            if obj.address_line or obj.address_city:
+                address = [{
+                    "use": "work",
+                    "type": "physical",
+                    "line": [obj.address_line] if obj.address_line else [],
+                    "city": obj.address_city,
+                    "district": obj.address_district,
+                    "state": obj.address_state,
+                    "postalCode": obj.address_postal_code,
+                    "country": obj.address_country or "PH",
+                }]
+
+            telecom = []
+            if obj.telecom:
+                telecom.append({"system": "phone", "value": str(obj.telecom), "use": "work"})
+
+            resource = {
+                "resourceType": "Organization",
+                "id": str(obj.organization_id),
+                "meta": fhir_meta("Organization", obj.updated_at),
+                "identifier": identifiers,
+                "active": bool(obj.active),
+                "type": [codeable_concept(PHC_FACILITY_TYPE_CS, obj.type_code)] if obj.type_code else [],
+                "name": obj.name,
+                "alias": [obj.alias] if obj.alias else [],
+                "telecom": telecom,
+                "extension": extensions,
+            }
+            if address:
+                resource["address"] = address
+            return resource
+        except Exception:
+            return {}
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -135,6 +191,8 @@ class RoleModuleConfigSerializer(serializers.ModelSerializer):
 
 class PractitionerSerializer(serializers.ModelSerializer):
     """Serializer for listing/practitioner dropdowns."""
+    fhir = serializers.SerializerMethodField()
+
     class Meta:
         model = Practitioner
         fields = [
@@ -147,7 +205,113 @@ class PractitionerSerializer(serializers.ModelSerializer):
             'active',
             'birth_date',
             'telecom',
+            'fhir',
         ]
+
+    def get_fhir(self, obj):
+        try:
+            extensions = []
+            if obj.qualification_identifier:
+                extensions.append(fhir_extension(
+                    PHC_EXT_PRC_LICENSE, "String", obj.qualification_identifier
+                ))
+
+            qualification = []
+            if obj.qualification_code or obj.qualification_identifier:
+                q: dict = {
+                    "code": codeable_concept(
+                        f"{PHC_CS_BASE}/ph-core-qualification",
+                        obj.qualification_code or "unknown",
+                    ),
+                }
+                if obj.qualification_identifier:
+                    q["identifier"] = [fhir_identifier(
+                        "https://prc.gov.ph/fhir/Identifier/license",
+                        obj.qualification_identifier,
+                        use="official",
+                    )]
+                if obj.qualification_period_start or obj.qualification_period_end:
+                    q["period"] = fhir_period(obj.qualification_period_start, obj.qualification_period_end)
+                if obj.qualification_issuer_id:
+                    q["issuer"] = fhir_reference("Organization", obj.qualification_issuer_id)
+                qualification.append(q)
+
+            given = obj.first_name.split() if obj.first_name else []
+            if obj.middle_name:
+                given.append(obj.middle_name)
+
+            return {
+                "resourceType": "Practitioner",
+                "id": obj.identifier,
+                "meta": fhir_meta("Practitioner", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_PRACTITIONER_SYSTEM, obj.identifier, use="official")],
+                "active": bool(obj.active),
+                "name": [{
+                    "use": "official",
+                    "family": obj.last_name,
+                    "given": given,
+                    "suffix": [obj.suffix_name] if obj.suffix_name else [],
+                }],
+                "birthDate": str(obj.birth_date) if obj.birth_date else None,
+                "qualification": qualification,
+                "extension": extensions,
+            }
+        except Exception:
+            return {}
+
+class PractitionerRoleSerializer(serializers.ModelSerializer):
+    """PractitionerRole — links a Practitioner to an Organization with a role."""
+
+    class Meta:
+        model = PractitionerRole
+        fields = '__all__'
+        read_only_fields = ['practitioner_role_id', 'created_at', 'updated_at']
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        try:
+            telecom = []
+            if obj.telecom:
+                telecom.append({"system": "phone", "value": str(obj.telecom), "use": "work"})
+
+            available_time = []
+            if obj.available_days_of_week or obj.available_start_time:
+                days = [d.strip() for d in obj.available_days_of_week.split(",")] if obj.available_days_of_week else []
+                available_time.append({
+                    "daysOfWeek": days,
+                    "allDay": bool(obj.available_all_day_flag),
+                    "availableStartTime": obj.available_start_time,
+                    "availableEndTime": obj.available_end_time,
+                })
+
+            not_available = []
+            if obj.not_available_description:
+                not_available.append({
+                    "description": obj.not_available_description,
+                    "during": fhir_period(obj.not_available_period_start, obj.not_available_period_end),
+                })
+
+            rep['fhir'] = {
+                "resourceType": "PractitionerRole",
+                "id": obj.identifier,
+                "meta": fhir_meta("PractitionerRole", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_PRACTITIONER_ROLE_SYSTEM, obj.identifier, use="official")],
+                "active": bool(obj.active) if obj.active is not None else True,
+                "period": fhir_period(obj.period_start, obj.period_end),
+                "practitioner": fhir_reference("Practitioner", obj.practitioner_id),
+                "organization": fhir_reference("Organization", obj.organization_id),
+                "location": [fhir_reference("Location", obj.location_id)] if obj.location_id else [],
+                "code": [codeable_concept(HL7_ROLE_CODE, obj.role_code)] if obj.role_code else [],
+                "specialty": [codeable_concept(PHC_SPECIALTY_CS, obj.specialty_code)] if obj.specialty_code else [],
+                "telecom": telecom,
+                "availableTime": available_time,
+                "notAvailable": not_available,
+                "availabilityExceptions": obj.availability_exceptions,
+            }
+        except Exception:
+            rep['fhir'] = None
+        return rep
+
 
 # ============================================================================
 # UTILITY FUNCTIONS

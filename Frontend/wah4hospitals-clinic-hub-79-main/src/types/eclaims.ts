@@ -1,5 +1,14 @@
 // src/types/eclaims.ts
 
+// FHIR R4 / PHCore R4 resource representation (included alongside flat fields)
+export interface FHIRResource {
+  resourceType: string;
+  id: string;
+  meta?: { profile?: string[]; lastUpdated?: string };
+  identifier?: Array<{ system: string; value: string; use?: string }>;
+  [key: string]: unknown;
+}
+
 export interface EClaimPatient {
   id: number;
   patient_id: string;
@@ -36,6 +45,7 @@ export interface Coverage {
   patient_summary?: EClaimPatient;
   created_at?: string;
   updated_at?: string;
+  fhir?: FHIRResource;
 }
 
 export interface NewCoverage {
@@ -121,6 +131,7 @@ export interface EClaim {
   items: ClaimItem[];
   created_at?: string;
   updated_at?: string;
+  fhir?: FHIRResource;
 }
 
 export interface NewEClaim {
@@ -167,4 +178,5 @@ export interface ClaimResponse {
   claim_summary?: { claim_id: number; identifier: string; status: string };
   created?: string;
   created_at?: string;
+  fhir?: FHIRResource;
 }

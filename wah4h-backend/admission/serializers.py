@@ -19,6 +19,16 @@ from admission.models import Encounter, Procedure, ProcedurePerformer
 from patients.models import Patient
 from accounts.models import Practitioner, Location
 
+# FHIR R4 / PHCore R4 utilities
+from core.fhir_utils import (
+    codeable_concept, fhir_extension, fhir_period, fhir_reference,
+    fhir_identifier, fhir_meta,
+    PHC_SERVICE_TYPE_CS, PHC_SPECIALTY_CS, PHC_APPT_TYPE_CS,
+    HL7_ACT_CODE, SNOMED_SYSTEM, HL7_PARTICIPANT_TYPE, HL7_SERVICE_CATEGORY,
+    WAH4H_SCHEDULE_SYSTEM, WAH4H_SLOT_SYSTEM,
+    WAH4H_APPOINTMENT_SYSTEM, WAH4H_SERVICE_REQUEST_SYSTEM,
+)
+
 
 def _patient_basic_dict(patient: Patient) -> dict:
     """Shared patient DTO used by multiple serializers."""
@@ -416,7 +426,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
 # APPOINTMENT MODULE SERIALIZERS
 # ============================================================================
 
-from admission.models import Schedule, Slot, Appointment
+from admission.models import Schedule, Slot, Appointment, ServiceRequest
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
@@ -425,6 +435,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
     Fat Serializer pattern: validation + enriched read output in one class.
     """
     actor_name = serializers.SerializerMethodField()
+    active = serializers.SerializerMethodField()
 
     class Meta:
         model = Schedule
@@ -442,6 +453,9 @@ class ScheduleSerializer(serializers.ModelSerializer):
             'planning_horizon_start': {'required': True},
             'planning_horizon_end':   {'required': True},
         }
+
+    def get_active(self, obj):
+        return obj.status == "active"
 
     def get_actor_name(self, obj):
         if obj.actor_practitioner_id:
@@ -481,6 +495,29 @@ class ScheduleSerializer(serializers.ModelSerializer):
         if not validated_data.get('status'):
             validated_data['status'] = 'active'
         return super().create(validated_data)
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        try:
+            rep['fhir'] = {
+                "resourceType": "Schedule",
+                "id": obj.identifier,
+                "meta": fhir_meta("Schedule", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_SCHEDULE_SYSTEM, obj.identifier, use="official")],
+                "active": obj.status == "active",
+                "serviceType": [codeable_concept(PHC_SERVICE_TYPE_CS, obj.service_type_code, obj.service_type_display)] if obj.service_type_code else [],
+                "specialty": [codeable_concept(PHC_SPECIALTY_CS, obj.specialty_code, obj.specialty_display)] if obj.specialty_code else [],
+                "actor": [ref for ref in [
+                    fhir_reference("Practitioner", obj.actor_practitioner_id) if obj.actor_practitioner_id else None,
+                    fhir_reference("Location", obj.actor_location_id) if obj.actor_location_id else None,
+                    fhir_reference("Organization", obj.actor_organization_id) if obj.actor_organization_id else None,
+                ] if ref],
+                "planningHorizon": fhir_period(obj.planning_horizon_start, obj.planning_horizon_end),
+                "comment": obj.comment,
+            }
+        except Exception:
+            rep['fhir'] = {}
+        return rep
 
 
 class SlotSerializer(serializers.ModelSerializer):
@@ -559,6 +596,28 @@ class SlotSerializer(serializers.ModelSerializer):
         if schedule_id and schedule_id != instance.schedule_id:
             instance.schedule = Schedule.objects.get(schedule_id=schedule_id)
         return super().update(instance, validated_data)
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        try:
+            rep['fhir'] = {
+                "resourceType": "Slot",
+                "id": obj.identifier,
+                "meta": fhir_meta("Slot", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_SLOT_SYSTEM, obj.identifier, use="official")],
+                "serviceType": [codeable_concept(PHC_SERVICE_TYPE_CS, obj.service_type_code, obj.service_type_display)] if obj.service_type_code else [],
+                "specialty": [codeable_concept(PHC_SPECIALTY_CS, obj.specialty_code, obj.specialty_display)] if obj.specialty_code else [],
+                "appointmentType": codeable_concept(PHC_APPT_TYPE_CS, obj.appointment_type_code, obj.appointment_type_display) if obj.appointment_type_code else None,
+                "schedule": fhir_reference("Schedule", obj.schedule.identifier),
+                "status": obj.status,
+                "start": obj.start.isoformat() if obj.start else None,
+                "end": obj.end.isoformat() if obj.end else None,
+                "overbooked": obj.overbooked,
+                "comment": obj.comment,
+            }
+        except Exception:
+            rep['fhir'] = {}
+        return rep
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -741,3 +800,107 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 Slot.objects.filter(slot_id=appointment.slot_id).update(status='free')
 
         return appointment
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        try:
+            slot_identifier = None
+            if obj.slot_id:
+                try:
+                    slot_identifier = Slot.objects.get(slot_id=obj.slot_id).identifier
+                except Slot.DoesNotExist:
+                    pass
+            rep['fhir'] = {
+                "resourceType": "Appointment",
+                "id": obj.identifier,
+                "meta": fhir_meta("Appointment", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_APPOINTMENT_SYSTEM, obj.identifier, use="official")],
+                "status": obj.status,
+                "cancelationReason": codeable_concept(HL7_ACT_CODE, obj.cancellation_reason_code, obj.cancellation_reason_display) if obj.cancellation_reason_code else None,
+                "serviceCategory": [codeable_concept(HL7_SERVICE_CATEGORY, obj.service_category_code, obj.service_category_display)] if obj.service_category_code else [],
+                "serviceType": [codeable_concept(PHC_SERVICE_TYPE_CS, obj.service_type_code, obj.service_type_display)] if obj.service_type_code else [],
+                "specialty": [codeable_concept(PHC_SPECIALTY_CS, obj.specialty_code, obj.specialty_display)] if obj.specialty_code else [],
+                "appointmentType": codeable_concept(PHC_APPT_TYPE_CS, obj.appointment_type_code, obj.appointment_type_display) if obj.appointment_type_code else None,
+                "reasonCode": [codeable_concept(SNOMED_SYSTEM, obj.reason_code)] if obj.reason_code else [],
+                "priority": obj.priority,
+                "description": obj.description,
+                "start": obj.start.isoformat() if obj.start else None,
+                "end": obj.end.isoformat() if obj.end else None,
+                "minutesDuration": obj.minutes_duration,
+                "slot": [fhir_reference("Slot", slot_identifier)] if slot_identifier else [],
+                "created": obj.created_datetime.isoformat() if obj.created_datetime else None,
+                "patientInstruction": obj.patient_instruction,
+                "basedOn": [fhir_reference("ServiceRequest", obj.based_on_service_request_id)] if obj.based_on_service_request_id else [],
+                "participant": [p for p in [
+                    {
+                        "actor": fhir_reference("Patient", obj.patient_id),
+                        "status": obj.patient_participation_status or "accepted",
+                        "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "SBJ", "Subject")],
+                    } if obj.patient_id else None,
+                    {
+                        "actor": fhir_reference("Practitioner", obj.practitioner_id),
+                        "status": obj.practitioner_participation_status or "accepted",
+                        "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "PPRF", "Primary performer")],
+                    } if obj.practitioner_id else None,
+                    {
+                        "actor": fhir_reference("Location", obj.location_id),
+                        "status": "accepted",
+                        "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "LOC", "Location")],
+                    } if obj.location_id else None,
+                ] if p],
+                "comment": obj.comment,
+            }
+        except Exception:
+            rep['fhir'] = {}
+        return rep
+
+
+class ServiceRequestSerializer(serializers.ModelSerializer):
+    """
+    ServiceRequest Serializer — FHIR R4 order/referral for a clinical service.
+    """
+    patient_summary = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceRequest
+        fields = '__all__'
+        read_only_fields = ['service_request_id', 'identifier', 'created_at', 'updated_at']
+
+    def get_patient_summary(self, obj):
+        try:
+            return _patient_basic_dict(Patient.objects.get(id=obj.subject_id))
+        except Patient.DoesNotExist:
+            return None
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if not validated_data.get('identifier'):
+            validated_data['identifier'] = f"SRQ-{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+        if not validated_data.get('status'):
+            validated_data['status'] = 'active'
+        return super().create(validated_data)
+
+    def to_representation(self, obj):
+        rep = super().to_representation(obj)
+        try:
+            rep['fhir'] = {
+                "resourceType": "ServiceRequest",
+                "id": obj.identifier,
+                "meta": fhir_meta("ServiceRequest", obj.updated_at),
+                "identifier": [fhir_identifier(WAH4H_SERVICE_REQUEST_SYSTEM, obj.identifier, use="official")],
+                "status": obj.status,
+                "intent": obj.intent or "order",
+                "priority": obj.priority,
+                "code": codeable_concept(obj.code_system or SNOMED_SYSTEM, obj.code, obj.code_display) if obj.code else None,
+                "subject": fhir_reference("Patient", obj.subject_id),
+                "encounter": fhir_reference("Encounter", obj.encounter_id) if obj.encounter_id else None,
+                "occurrenceDateTime": obj.occurrence_datetime.isoformat() if obj.occurrence_datetime else None,
+                "authoredOn": obj.authored_on.isoformat() if obj.authored_on else None,
+                "requester": fhir_reference("Practitioner", obj.requester_id) if obj.requester_id else None,
+                "performer": [fhir_reference("Practitioner", obj.performer_id)] if obj.performer_id else [],
+                "reasonCode": [codeable_concept(SNOMED_SYSTEM, obj.reason_code)] if obj.reason_code else [],
+                "note": [{"text": obj.note}] if obj.note else [],
+            }
+        except Exception:
+            rep['fhir'] = None
+        return rep

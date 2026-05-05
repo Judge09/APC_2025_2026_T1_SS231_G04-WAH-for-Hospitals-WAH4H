@@ -47,7 +47,10 @@
       "Bash(echo \"exit:$?\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\({k:v for k,v in d.get\\('dependencies',{}\\).items\\(\\) if 'date' in k.lower\\(\\) or 'fns' in k.lower\\(\\)}\\)\")",
       "Bash(python3 -)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(DJANGO_SETTINGS_MODULE=wah4h_backend.settings python -c \"import django; django.setup\\(\\); from admission.serializers import ScheduleSerializer, SlotSerializer, AppointmentSerializer; print\\('Import OK'\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"import django; django.setup\\(\\); from admission.serializers import ScheduleSerializer, SlotSerializer, AppointmentSerializer; print\\('Import OK'\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"import django; django.setup\\(\\); from billing.serializers import EClaimSerializer; print\\('EClaimSerializer OK'\\)\")"
     ]
   }
 }

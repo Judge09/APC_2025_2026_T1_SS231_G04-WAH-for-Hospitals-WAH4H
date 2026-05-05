@@ -1,5 +1,14 @@
 // src/types/appointment.ts
 
+// FHIR R4 / PHCore R4 resource representation (included alongside flat fields)
+export interface FHIRResource {
+  resourceType: string;
+  id: string;
+  meta?: { profile?: string[]; lastUpdated?: string };
+  identifier?: Array<{ system: string; value: string; use?: string }>;
+  [key: string]: unknown;
+}
+
 export interface PatientSummary {
   id: number;
   patient_id: string;
@@ -48,6 +57,7 @@ export interface Schedule {
   comment?: string;
   created_at?: string;
   updated_at?: string;
+  fhir?: FHIRResource;
 }
 
 export interface NewSchedule {
@@ -83,6 +93,7 @@ export interface Slot {
   comment?: string;
   created_at?: string;
   updated_at?: string;
+  fhir?: FHIRResource;
 }
 
 export interface NewSlot {
@@ -145,6 +156,7 @@ export interface Appointment {
   patient_instruction?: string;
   created_at?: string;
   updated_at?: string;
+  fhir?: FHIRResource;
 }
 
 export interface NewAppointment {
