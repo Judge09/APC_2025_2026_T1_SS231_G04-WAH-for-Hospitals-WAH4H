@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from './RoleContext';
 
-const API_BASE_URL = import.meta.env.LOCAL_8000 || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.LOCAL_8000 || '';
 
 // Session idle timeout: 15 minutes (matches JWT access token lifetime)
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
