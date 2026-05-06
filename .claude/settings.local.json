@@ -50,7 +50,11 @@
       "Bash(python3 -c ' *)",
       "Bash(DJANGO_SETTINGS_MODULE=wah4h_backend.settings python -c \"import django; django.setup\\(\\); from admission.serializers import ScheduleSerializer, SlotSerializer, AppointmentSerializer; print\\('Import OK'\\)\")",
       "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"import django; django.setup\\(\\); from admission.serializers import ScheduleSerializer, SlotSerializer, AppointmentSerializer; print\\('Import OK'\\)\")",
-      "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"import django; django.setup\\(\\); from billing.serializers import EClaimSerializer; print\\('EClaimSerializer OK'\\)\")"
+      "Bash(DJANGO_SETTINGS_MODULE=wah4h.settings python -c \"import django; django.setup\\(\\); from billing.serializers import EClaimSerializer; print\\('EClaimSerializer OK'\\)\")",
+      "Bash(sed -n '843,860p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/patients/api/views.py)",
+      "Bash(sed -n '665,700p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)",
+      "Bash(sed -n '830,852p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)",
+      "Bash(sed -n '329,345p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)"
     ]
   }
 }
