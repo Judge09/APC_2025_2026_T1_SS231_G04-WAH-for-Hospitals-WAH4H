@@ -24,6 +24,7 @@ WAH4H_INVOICE_SYSTEM          = f"{WAH4H_SYSTEM_BASE}/invoice"
 WAH4H_PAYMENT_RECON_SYSTEM    = f"{WAH4H_SYSTEM_BASE}/payment-reconciliation"
 WAH4H_ACCOUNT_SYSTEM          = f"{WAH4H_SYSTEM_BASE}/account"
 WAH4H_PRACTITIONER_ROLE_SYSTEM = f"{WAH4H_SYSTEM_BASE}/practitioner-role"
+WAH4H_PATIENT_SYSTEM           = f"{WAH4H_SYSTEM_BASE}/patient"
 
 # ── HL7 / FHIR standard code systems ─────────────────────────────────────────
 HL7_CLAIM_TYPE       = "http://terminology.hl7.org/CodeSystem/claim-type"

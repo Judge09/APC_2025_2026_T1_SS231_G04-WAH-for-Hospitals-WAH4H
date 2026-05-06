@@ -54,7 +54,9 @@
       "Bash(sed -n '843,860p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/patients/api/views.py)",
       "Bash(sed -n '665,700p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)",
       "Bash(sed -n '830,852p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)",
-      "Bash(sed -n '329,345p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)"
+      "Bash(sed -n '329,345p' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/accounts/views.py)",
+      "Bash(grep -r '$everything\\\\|/fhir/\\\\|FHIR.*endpoint' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/patients/ '--include=*.py')",
+      "Bash(grep -r 'capability\\\\|CapabilityStatement\\\\|$everything\\\\|metadata' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend '--include=*.py')"
     ]
   }
 }

@@ -573,7 +573,7 @@ def patient_to_fhir(patient):
         "resourceType": "Patient",
         "id": resource_id,
         "meta": {
-            "lastUpdated": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "lastUpdated": _meta_last_updated(patient.updated_at),
             "profile": [f"{_URN_EXT}/ph-core-patient"],
         },
         "extension": extensions,
@@ -581,10 +581,16 @@ def patient_to_fhir(patient):
     }
 
     # ------------------------------------------------------------------
-    # 3. Identifier — use="official" + SB social-beneficiary type coding.
+    # 3. Identifiers — WAH4H internal ID always present; PhilHealth ID when set.
+    # Every patient must have at least one FHIR identifier for external routing.
     # ------------------------------------------------------------------
+    identifiers = [{
+        "use":    "secondary",
+        "system": "https://wah4h.echosphere.cfd/fhir/identifier/patient",
+        "value":  patient.patient_id,
+    }]
     if patient.philhealth_id:
-        fhir["identifier"] = [{
+        identifiers.append({
             "use":  "official",
             "type": {
                 "coding": [{
@@ -595,7 +601,8 @@ def patient_to_fhir(patient):
             },
             "system": "http://philhealth.gov.ph/fhir/Identifier/philhealth-id",
             "value":  patient.philhealth_id,
-        }]
+        })
+    fhir["identifier"] = identifiers
 
     # ------------------------------------------------------------------
     # 4. Name — use="official"

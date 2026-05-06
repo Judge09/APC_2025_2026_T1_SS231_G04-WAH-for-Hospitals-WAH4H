@@ -12,8 +12,11 @@ import os
 import threading
 import uuid
 
+from datetime import datetime, timezone
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import connection
+from django.http import JsonResponse
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -1490,3 +1493,128 @@ def get_transaction(request, transaction_id):
         'createdAt': txn.created_at,
         'updatedAt': txn.updated_at,
     })
+
+
+# ============================================================================
+# FHIR SERVER ENDPOINTS
+# ============================================================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def fhir_capability_statement(request):
+    """FHIR R4 CapabilityStatement — public discovery endpoint.
+
+    External systems call GET /fhir/metadata to learn what resources and
+    operations WAH4H supports before initiating interoperability exchanges.
+    No authentication required per FHIR R4 spec §3.1.0.
+    """
+    statement = {
+        "resourceType": "CapabilityStatement",
+        "status": "active",
+        "date": "2026-05-05",
+        "kind": "instance",
+        "fhirVersion": "4.0.1",
+        "format": ["json"],
+        "implementationGuide": [
+            "urn://example.com/ph-core/fhir/ImplementationGuide/ph-core"
+        ],
+        "implementation": {
+            "description": "WAH4H Hospital Information System FHIR R4 Server",
+            "url": "https://wah4h-backend-e0caecbeghh3hfbh.southeastasia-01.azurewebsites.net/fhir",
+        },
+        "rest": [{
+            "mode": "server",
+            "security": {
+                "cors": True,
+                "service": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/restful-security-service",
+                                         "code": "Bearer", "display": "Bearer Token"}]}],
+                "description": "JWT Bearer token required for all endpoints except /fhir/metadata",
+            },
+            "resource": [
+                {
+                    "type": "Patient",
+                    "profile": "urn://example.com/ph-core/fhir/StructureDefinition/ph-core-patient",
+                    "interaction": [{"code": "read"}, {"code": "search-type"}, {"code": "create"}, {"code": "update"}],
+                    "searchParam": [
+                        {"name": "identifier", "type": "token"},
+                        {"name": "name", "type": "string"},
+                        {"name": "birthdate", "type": "date"},
+                        {"name": "gender", "type": "token"},
+                    ],
+                    "operation": [{"name": "everything", "definition": "http://hl7.org/fhir/OperationDefinition/Patient-everything"}],
+                },
+                {"type": "Condition", "interaction": [{"code": "read"}, {"code": "search-type"}, {"code": "create"}]},
+                {"type": "AllergyIntolerance", "interaction": [{"code": "read"}, {"code": "search-type"}, {"code": "create"}]},
+                {"type": "Immunization", "interaction": [{"code": "read"}, {"code": "search-type"}, {"code": "create"}]},
+                {"type": "Encounter", "interaction": [{"code": "read"}, {"code": "search-type"}]},
+                {"type": "Procedure", "interaction": [{"code": "read"}, {"code": "search-type"}]},
+                {"type": "Observation", "interaction": [{"code": "read"}, {"code": "search-type"}]},
+                {"type": "MedicationRequest", "interaction": [{"code": "read"}, {"code": "search-type"}]},
+                {"type": "DiagnosticReport", "interaction": [{"code": "read"}, {"code": "search-type"}]},
+            ],
+            "operation": [
+                {"name": "process-query", "definition": "urn://example.com/wah4pc/fhir/OperationDefinition/process-query"},
+                {"name": "receive-push", "definition": "urn://example.com/wah4pc/fhir/OperationDefinition/receive-push"},
+            ],
+        }],
+    }
+    return JsonResponse(statement, status=200, content_type='application/fhir+json')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fhir_patient_everything(request, patient_id):
+    """FHIR R4 Patient/$everything — returns a searchset Bundle of all clinical
+    resources associated with the patient.
+
+    patient_id: WAH4H patient_id string (e.g. 'WAH-2026-00001') or numeric PK.
+    Requires JWT authentication.
+    """
+    try:
+        if not patient_id.lstrip('-').isdigit():
+            patient = Patient.objects.get(patient_id=patient_id, status='active')
+        else:
+            patient = Patient.objects.get(pk=int(patient_id), status='active')
+    except Patient.DoesNotExist:
+        return JsonResponse({
+            "resourceType": "OperationOutcome",
+            "issue": [{"severity": "error", "code": "not-found",
+                       "diagnostics": f"Patient '{patient_id}' not found"}],
+        }, status=404, content_type='application/fhir+json')
+
+    pid = patient.pk
+    entries = [{"resource": patient_to_fhir(patient), "search": {"mode": "match"}}]
+
+    from admission.models import Encounter, Procedure as AdmissionProcedure
+    from monitoring.models import Observation as ObservationModel
+    from pharmacy.models import MedicationRequest as MedicationRequestModel
+    from laboratory.models import DiagnosticReport as DiagnosticReportModel
+
+    cross_module_resources = [
+        (conditions_to_bundle,       Condition.objects.filter(patient_id=pid).order_by('-created_at')),
+        (allergies_to_bundle,        AllergyIntolerance.objects.filter(patient_id=pid).order_by('-created_at')),
+        (immunizations_to_bundle,    Immunization.objects.filter(patient_id=pid).order_by('-created_at')),
+        (encounters_to_bundle,       Encounter.objects.filter(subject_id=pid).order_by('-period_start')),
+        (procedures_to_bundle,       AdmissionProcedure.objects.filter(subject_id=pid).order_by('-performed_datetime')),
+        (observations_to_bundle,     ObservationModel.objects.filter(subject_id=pid).order_by('-effective_datetime')),
+        (medicationrequests_to_bundle, MedicationRequestModel.objects.filter(subject_id=pid).order_by('-authored_on')),
+        (diagnosticreports_to_bundle,  DiagnosticReportModel.objects.filter(subject_id=pid).order_by('-issued_datetime')),
+    ]
+
+    for bundle_fn, qs in cross_module_resources:
+        try:
+            bundle = bundle_fn(qs)
+            for entry in bundle.get('entry', []):
+                resource = entry.get('resource', entry)
+                entries.append({"resource": resource, "search": {"mode": "include"}})
+        except Exception:
+            logger.exception("$everything bundle assembly error for patient %s", pid)
+
+    response_bundle = {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "total": len(entries),
+        "entry": entries,
+    }
+    return JsonResponse(response_bundle, status=200, content_type='application/fhir+json')
