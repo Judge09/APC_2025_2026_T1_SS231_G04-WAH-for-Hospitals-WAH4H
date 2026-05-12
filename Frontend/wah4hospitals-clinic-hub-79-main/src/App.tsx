@@ -5,7 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { RoleProvider } from "@/contexts/RoleContext";
+import { RoleProvider, useRole } from "@/contexts/RoleContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import SessionTimeout from "@/components/auth/SessionTimeout";
 import ModernLayout from "@/components/layout/ModernLayout";
@@ -77,6 +77,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const location = useLocation();
+  const { availableTabs } = useRole();
+  const { user } = useAuth();
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -114,8 +116,24 @@ const AppContent = () => {
     }
   }, [location.pathname]);
 
+  // Guard: kick back to dashboard when availableTabs is loaded and the active
+  // tab is not in it. The availableTabs.length check prevents false positives
+  // during the initial render when tabs haven't been populated yet.
+  useEffect(() => {
+    if (availableTabs.length > 0 && activeTab !== 'dashboard' && !availableTabs.includes(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, availableTabs]);
+
   const renderContent = () => {
-    switch (activeTab) {
+    // Synchronous guard: if tabs are loaded and user lacks access, render
+    // dashboard content immediately — never let a forbidden page mount.
+    const effectiveTab =
+      availableTabs.length > 0 && activeTab !== 'dashboard' && !availableTabs.includes(activeTab)
+        ? 'dashboard'
+        : activeTab;
+
+    switch (effectiveTab) {
       case 'dashboard':
         return <ModernDashboard />;
       case 'patients':
@@ -145,7 +163,7 @@ const AppContent = () => {
       case 'settings':
         return <Settings />;
       case 'admin':
-        return <AdminPage />;
+        return user?.role === 'admin' ? <AdminPage /> : <ModernDashboard />;
       default:
         return <ModernDashboard />;
     }

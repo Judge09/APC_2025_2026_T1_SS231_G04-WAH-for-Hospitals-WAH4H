@@ -95,26 +95,24 @@ const ModernLayout: React.FC<ModernLayoutProps> = ({
 
   const getRoleDisplayName = () => {
     const roleMap: Record<string, string> = {
+      'admin': 'Administrator',
       'doctor': 'Doctor',
       'nurse': 'Nurse',
       'pharmacist': 'Pharmacist',
-      'lab-technician': 'Lab Technician',
-      'administrator': 'Administrator',
-      'radiologist': 'Radiologist',
-      'billing-staff': 'Billing Staff'
+      'lab_technician': 'Lab Technician',
+      'billing_clerk': 'Billing Clerk',
     };
     return roleMap[currentRole] || currentRole;
   };
 
   const getRoleWelcomeMessage = () => {
     const messages: Record<string, string> = {
+      'admin': 'Welcome back, Admin! Full system access available.',
       'doctor': 'Welcome back, Doctor! Your patients are waiting.',
       'nurse': 'Welcome back! Ready to provide excellent patient care.',
       'pharmacist': 'Welcome back! Medication management is ready.',
-      'lab-technician': 'Welcome back! Lab results and monitoring await.',
-      'administrator': 'Welcome back, Admin! Full system access available.',
-      'radiologist': 'Welcome back! Imaging and monitoring tools ready.',
-      'billing-staff': 'Welcome back! Billing and financial tools available.'
+      'lab_technician': 'Welcome back! Lab results and monitoring await.',
+      'billing_clerk': 'Welcome back! Billing and financial tools available.',
     };
     return messages[currentRole] || 'Welcome back!';
   };

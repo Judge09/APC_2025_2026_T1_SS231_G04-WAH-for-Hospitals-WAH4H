@@ -103,7 +103,6 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'monitoring',
     'discharge',
     'settings',
-    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   // ========== NURSE: Patient care coordination and monitoring ==========
@@ -118,7 +117,6 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'pharmacy',
     'inventory',
     'settings',
-    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   // ========== LAB TECHNICIAN: Laboratory operations ==========
@@ -130,7 +128,6 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'patients',
     'compliance',
     'settings',
-    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   pharmacist: [
@@ -140,7 +137,6 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'patients',
     'compliance',
     'settings',
-    'admin',          // TEMPORARY: remove after initial setup
   ],
 
   billing_clerk: [
@@ -149,7 +145,6 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'philhealth',
     'patients',
     'settings',
-    'admin',          // TEMPORARY: remove after initial setup
   ],
 };
 
@@ -235,8 +230,15 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const { user } = useAuth();
 
   const [currentRole, setCurrentRoleState] = useState<UserRole>(() => {
-    const savedRole = localStorage.getItem('userRole') as UserRole | null;
-    return (savedRole || (user?.role as UserRole) || 'doctor');
+    // Read from the canonical auth store (cleared on logout) to avoid stale userRole key
+    try {
+      const raw = localStorage.getItem('currentUser');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.role) return parsed.role as UserRole;
+      }
+    } catch {}
+    return 'doctor';
   });
 
   const [availableTabs, setAvailableTabs] = useState<string[]>([]);

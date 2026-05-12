@@ -117,18 +117,21 @@ const COUNTRIES = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALL_MODULES = [
-  { id: 'dashboard',  label: 'Dashboard' },
-  { id: 'patients',   label: 'Patients' },
-  { id: 'admission',  label: 'Admission' },
-  { id: 'pharmacy',   label: 'Pharmacy' },
-  { id: 'laboratory', label: 'Laboratory' },
-  { id: 'monitoring', label: 'Monitoring' },
-  { id: 'discharge',  label: 'Discharge' },
-  { id: 'inventory',  label: 'Inventory' },
-  { id: 'compliance', label: 'Compliance' },
-  { id: 'statistics', label: 'Statistics' },
-  { id: 'billing',    label: 'Billing' },
-  { id: 'settings',   label: 'Settings' },
+  { id: 'dashboard',   label: 'Dashboard' },
+  { id: 'patients',    label: 'Patients' },
+  { id: 'admission',   label: 'Admission' },
+  { id: 'appointment', label: 'Appointment' },
+  { id: 'pharmacy',    label: 'Pharmacy' },
+  { id: 'laboratory',  label: 'Laboratory' },
+  { id: 'monitoring',  label: 'Monitoring' },
+  { id: 'discharge',   label: 'Discharge' },
+  { id: 'inventory',   label: 'Inventory' },
+  { id: 'compliance',  label: 'Compliance' },
+  { id: 'statistics',  label: 'Statistics' },
+  { id: 'billing',     label: 'Billing' },
+  { id: 'philhealth',  label: 'PhilHealth' },
+  { id: 'settings',    label: 'Settings' },
+  { id: 'admin',       label: 'Admin Panel' },
 ];
 
 // FHIR PractitionerRole codes aligned with PHCore R4

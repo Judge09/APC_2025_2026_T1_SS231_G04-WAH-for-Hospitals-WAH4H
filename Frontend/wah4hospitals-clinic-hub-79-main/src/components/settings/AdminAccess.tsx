@@ -1,35 +1,28 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Shield, Lock } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminAccess = () => {
-  const { isAdminMode, currentRole, availableTabs, setAdminMode } = useRole();
+  const { currentRole, availableTabs } = useRole();
   const { user } = useAuth();
-
-  const handleAdminToggle = (enabled: boolean) => {
-    if (enabled && currentRole !== 'administrator') {
-      return; // Only administrators can enable admin mode
-    }
-    setAdminMode(enabled);
-  };
 
   const getRoleDisplayName = () => {
     const roleMap: Record<string, string> = {
+      'admin': 'Administrator',
       'doctor': 'Doctor',
       'nurse': 'Nurse',
       'pharmacist': 'Pharmacist',
-      'lab-technician': 'Lab Technician',
-      'administrator': 'Administrator',
-      'radiologist': 'Radiologist',
-      'billing-staff': 'Billing Staff'
+      'lab_technician': 'Lab Technician',
+      'billing_clerk': 'Billing Clerk',
     };
     return roleMap[currentRole] || currentRole;
   };
+
+  const isAdmin = currentRole === 'admin';
 
   return (
     <Card>
@@ -54,27 +47,19 @@ const AdminAccess = () => {
           </p>
         </div>
 
-        {/* Admin Mode Toggle (Only for Administrators) */}
-        {currentRole === 'administrator' && (
-          <div className="flex items-center justify-between p-3 border rounded-lg">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              <div>
-                <p className="font-medium">Administrator Mode</p>
-                <p className="text-sm text-muted-foreground">
-                  {isAdminMode ? 'Full system access enabled' : 'Role-based access active'}
-                </p>
-              </div>
+        {/* Admin indicator */}
+        {isAdmin && (
+          <div className="flex items-center gap-2 p-3 border rounded-lg bg-purple-50">
+            <Shield className="w-4 h-4 text-purple-600" />
+            <div>
+              <p className="font-medium text-purple-800">Administrator</p>
+              <p className="text-sm text-purple-600">Full system access enabled</p>
             </div>
-            <Switch 
-              checked={isAdminMode}
-              onCheckedChange={handleAdminToggle}
-            />
           </div>
         )}
 
         {/* Role Restrictions Notice */}
-        {currentRole !== 'administrator' && (
+        {!isAdmin && (
           <div className="flex items-center gap-2 p-3 border rounded-lg bg-blue-50">
             <Lock className="w-4 h-4 text-blue-600" />
             <div>
@@ -91,12 +76,12 @@ const AdminAccess = () => {
           <h3 className="font-medium">Available Modules</h3>
           <div className="grid grid-cols-2 gap-2">
             {availableTabs.map(module => (
-              <div 
-                key={module} 
+              <div
+                key={module}
                 className="flex items-center gap-2 p-2 bg-green-50 text-green-800 rounded-md text-sm"
               >
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                {module.charAt(0).toUpperCase() + module.slice(1)}
+                {module.charAt(0).toUpperCase() + module.slice(1).replace('_', ' ')}
               </div>
             ))}
           </div>
@@ -108,7 +93,7 @@ const AdminAccess = () => {
         {/* Role Change Notice */}
         <div className="p-3 border rounded-lg bg-yellow-50">
           <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> Your role is determined by your account and cannot be changed from this interface. 
+            <strong>Note:</strong> Your role is determined by your account and cannot be changed from this interface.
             Contact an administrator to modify your role permissions.
           </p>
         </div>
