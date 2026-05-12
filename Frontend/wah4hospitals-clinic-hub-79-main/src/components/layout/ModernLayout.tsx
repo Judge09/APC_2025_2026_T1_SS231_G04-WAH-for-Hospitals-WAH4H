@@ -45,8 +45,11 @@ const ModernLayout: React.FC<ModernLayoutProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
 
-  // Filter tabs based on role permissions - ALWAYS filter based on available tabs
-  const filteredTabs = tabs.filter(tab => availableTabs.includes(tab.id));
+  // Filter tabs based on role permissions. Admin tab is hard-gated to admin role only.
+  const filteredTabs = tabs.filter(tab => {
+    if (tab.id === 'admin') return user?.role === 'admin';
+    return availableTabs.includes(tab.id);
+  });
 
   const notifications = [
     { id: 1, title: "New patient admission", time: "2 min ago", type: "info" },
