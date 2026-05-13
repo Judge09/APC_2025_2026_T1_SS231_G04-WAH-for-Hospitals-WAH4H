@@ -158,6 +158,7 @@ const Register = () => {
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -488,59 +489,62 @@ const Register = () => {
   };
 
   const handleNext = async () => {
-    let isValid = false;
+    if (isNavigating) return;
+    setIsNavigating(true);
 
-    if (currentStep === 1) {
-      isValid = validateStep1();
-      if (!privacyAccepted) {
-        setPrivacyError('You must acknowledge the Privacy Statement to create an account.');
-        return;
-      }
+    try {
+      let isValid = false;
 
-      // If step1 is valid, pre-check mobile uniqueness to provide immediate feedback
-      // First, check email availability to avoid duplicate registrations
-      if (isValid && formData.email) {
-        try {
-          const resp = await api.get(`/api/accounts/check-email/?email=${encodeURIComponent(formData.email)}`);
-          const available = resp?.data?.data?.available;
-          if (available === false) {
-            setErrors((prev) => ({ ...prev, email: resp?.data?.data?.message || 'Email is already registered. Please use a different email.' }));
-            return;
-          }
-        } catch (err) {
-          // Non-blocking: if check-email fails, log and continue to mobile check; server will still validate on submit
-          console.error('Email availability check failed:', err);
+      if (currentStep === 1) {
+        isValid = validateStep1();
+        if (!privacyAccepted) {
+          setPrivacyError('You must acknowledge the Privacy Statement to create an account.');
+          return;
         }
-      }
 
-      if (isValid && formData.mobile) {
-        try {
-          const cleaned = formData.mobile.replace(/\D/g, '');
-          const resp = await api.get('/api/accounts/practitioners/');
-          let data: any = resp.data;
-          if (data.results && Array.isArray(data.results)) data = data.results;
-
-          const conflict = (data || []).find((p: any) => {
-            const telecom = (p.telecom || '').toString().replace(/\D/g, '');
-            return telecom === cleaned;
-          });
-
-          if (conflict) {
-            setErrors((prev) => ({ ...prev, mobile: 'Mobile number is already in use by another account.' }));
-            return;
+        if (isValid && formData.email) {
+          try {
+            const resp = await api.get(`/api/accounts/check-email/?email=${encodeURIComponent(formData.email)}`);
+            const available = resp?.data?.data?.available;
+            if (available === false) {
+              setErrors((prev) => ({ ...prev, email: resp?.data?.data?.message || 'Email is already registered. Please use a different email.' }));
+              return;
+            }
+          } catch (err) {
+            console.error('Email availability check failed:', err);
           }
-        } catch (err) {
-          // Non-blocking: if practitioners endpoint fails, allow progression and rely on server-side validation
-          console.error('Pre-check practitioners failed:', err);
         }
-      }
-    } else if (currentStep === 2) {
-      isValid = validateStep2();
-    }
 
-    if (isValid) {
-      setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (isValid && formData.mobile) {
+          try {
+            const cleaned = formData.mobile.replace(/\D/g, '');
+            const resp = await api.get('/api/accounts/practitioners/');
+            let data: any = resp.data;
+            if (data.results && Array.isArray(data.results)) data = data.results;
+
+            const conflict = (data || []).find((p: any) => {
+              const telecom = (p.telecom || '').toString().replace(/\D/g, '');
+              return telecom === cleaned;
+            });
+
+            if (conflict) {
+              setErrors((prev) => ({ ...prev, mobile: 'Mobile number is already in use by another account.' }));
+              return;
+            }
+          } catch (err) {
+            console.error('Pre-check practitioners failed:', err);
+          }
+        }
+      } else if (currentStep === 2) {
+        isValid = validateStep2();
+      }
+
+      if (isValid) {
+        setCurrentStep((prev) => prev + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -1404,10 +1408,20 @@ const Register = () => {
                 <Button
                   type="button"
                   onClick={handleNext}
+                  disabled={isNavigating}
                   className="bg-blue-600 hover:bg-blue-700 rounded-lg"
                 >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  {isNavigating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               ) : (
                 <Button
