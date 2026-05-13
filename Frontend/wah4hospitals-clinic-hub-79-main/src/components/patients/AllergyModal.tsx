@@ -48,6 +48,8 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<AllergyFormData>({
     resolver: zodResolver(allergyFormSchema),
     defaultValues: allergy
@@ -145,7 +147,8 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
             {errors.code && <p className="text-xs text-red-500">{errors.code.message}</p>}
             <p className="text-xs text-gray-500">Or enter custom allergen code</p>
             <Input
-              {...register('code')}
+              value={COMMON_ALLERGENS.some((o) => o.value === watch('code')) ? '' : (watch('code') ?? '')}
+              onChange={(e) => setValue('code', e.target.value, { shouldValidate: true })}
               placeholder="Custom allergen code"
               className={errors.code ? 'border-red-500' : ''}
             />
