@@ -180,9 +180,9 @@ SIMPLE_JWT = {
 
 # Feature flags
 # Set to False to disable OTP for login flow only (easy to re-enable)
-LOGIN_USE_OTP = True
+LOGIN_USE_OTP = False  # QA: disabled for testing
 # Set to False to disable OTP for registration flow (creates account immediately)
-REGISTER_USE_OTP = True
+REGISTER_USE_OTP = False  # QA: disabled for testing
 # ============================================================================
 # EMAIL CONFIGURATION (Console Backend for Development)
 # ============================================================================
