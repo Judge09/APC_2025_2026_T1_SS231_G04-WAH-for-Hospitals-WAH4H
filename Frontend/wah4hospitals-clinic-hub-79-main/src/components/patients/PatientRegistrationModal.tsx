@@ -200,12 +200,22 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
     const isValid = await step3Form.trigger();
     if (!isValid) return;
 
-    const finalData: PatientFormData = {
+    const rawFinal = {
       ...allStepsData,
       ...step3Form.getValues(),
-      active: true, // Default status to active
-      status: 'active', // Default status field to active
+      active: true,
+      status: 'active',
     } as PatientFormData;
+
+    // Strip non-digits from mobile numbers so the strict 09XXXXXXXXX regex passes
+    if (rawFinal.mobile_number) {
+      rawFinal.mobile_number = rawFinal.mobile_number.replace(/\D/g, '');
+    }
+    if (rawFinal.contact_mobile_number) {
+      rawFinal.contact_mobile_number = rawFinal.contact_mobile_number.replace(/\D/g, '');
+    }
+
+    const finalData = rawFinal;
 
     // Validate complete form
     try {
