@@ -80,7 +80,20 @@
       "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H log --oneline -5)",
       "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H show a175cb32 --stat)",
       "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H branch -a)",
-      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H log --oneline origin/main -5)"
+      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H log --oneline origin/main -5)",
+      "Bash(cat)",
+      "Bash(chmod +x /tmp/extract_profile_info.sh)",
+      "Bash(/tmp/extract_profile_info.sh /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/docs/fhir/resources/structure-definitions/profiles/StructureDefinition-ph-core-patient.json)",
+      "Bash(chmod +x /tmp/extract_all_profiles.sh)",
+      "Bash(/tmp/extract_all_profiles.sh)",
+      "Bash(chmod +x /tmp/extract_extensions.sh)",
+      "Bash(/tmp/extract_extensions.sh)",
+      "Bash(chmod +x /tmp/detailed_extensions.sh)",
+      "Bash(/tmp/detailed_extensions.sh)",
+      "Bash(chmod +x /tmp/extract_naming_systems.sh)",
+      "Bash(/tmp/extract_naming_systems.sh)",
+      "Bash(chmod +x /tmp/extract_valuesets.sh)",
+      "Bash(/tmp/extract_valuesets.sh)"
     ]
   }
 }

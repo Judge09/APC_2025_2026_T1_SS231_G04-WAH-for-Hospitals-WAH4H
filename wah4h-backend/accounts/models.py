@@ -119,6 +119,9 @@ class Practitioner(FHIRResourceModel):
     qualification_issuer = models.ForeignKey('accounts.Organization', on_delete=models.PROTECT, db_column='qualification_issuer_id', null=True, blank=True, related_name='qualified_practitioners')
     qualification_period_start = models.DateField(null=True, blank=True)
     qualification_period_end = models.DateField(null=True, blank=True)
+    # PRC license — required PH Core practitioner identifier
+    # System: http://prc.gov.ph/fhir/Identifier/prc-license
+    prc_license_number = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'practitioner'

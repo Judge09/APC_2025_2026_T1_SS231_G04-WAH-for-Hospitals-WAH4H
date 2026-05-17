@@ -37,8 +37,14 @@ class Patient(TimeStampedModel):
             )
         ],
     )
+    # PhilSys National ID — NamingSystem-PhilSysIDNS (http://philsys.gov.ph/fhir/Identifier/philsys-id)
+    philsys_id = models.CharField(max_length=50, null=True, blank=True)
     blood_type = models.CharField(max_length=100, null=True, blank=True)
     pwd_type = models.CharField(max_length=100, null=True, blank=True)
+    # PWD sub-fields for ph-core-pwd-disability complex extension
+    pwd_id = models.CharField(max_length=100, null=True, blank=True)
+    pwd_expiry_date = models.DateField(null=True, blank=True)
+    pwd_issuing_lgu = models.CharField(max_length=255, null=True, blank=True)
 
     # Occupation and Education
     occupation = models.CharField(max_length=255, null=True, blank=True)
@@ -103,6 +109,7 @@ class Patient(TimeStampedModel):
             models.Index(fields=['patient_id']),
             models.Index(fields=['last_name', 'first_name']),
             models.Index(fields=['philhealth_id']),
+            models.Index(fields=['philsys_id']),
         ]
 
     def __str__(self):
@@ -236,6 +243,8 @@ class AllergyIntolerance(FHIRResourceModel):
     reaction_exposure_route = models.CharField(max_length=255, null=True, blank=True)
     reaction_note = models.TextField(null=True, blank=True)
     reaction_manifestation = models.CharField(max_length=255, null=True, blank=True)
+    # SNOMED CT code for reaction manifestation (e.g. "271807003" for skin eruption)
+    reaction_manifestation_code = models.CharField(max_length=50, null=True, blank=True)
     reaction_substance = models.CharField(max_length=255, null=True, blank=True)
 
     # Notes

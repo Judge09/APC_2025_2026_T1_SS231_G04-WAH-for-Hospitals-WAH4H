@@ -185,32 +185,45 @@ _RELIGION_CODE: dict[str, str] = {
     "Other":                 "1099",
 }
 
-# Educational attainment — slug codes matching the PH-Core CodeSystem
+# Educational attainment — PSA PSCED level codes (ValueSet-educational-attainments)
+# System: https://psa.gov.ph/classification/psced/level
 _EDUCATION_CODE: dict[str, str] = {
-    "No Formal Education":            "no-formal-education",
-    "No formal education":            "no-formal-education",
-    "Elementary":                     "elementary",
-    "Elementary (incomplete)":        "elementary",
-    "Elementary (complete)":          "elementary",
-    "High School":                    "high-school",
-    "Junior High School":             "junior-high-school",
-    "Junior High School (incomplete)":"junior-high-school",
-    "Junior High School (complete)":  "junior-high-school",
-    "Senior High School":             "senior-high-school",
-    "Senior High School (K-12)":      "senior-high-school",
-    "Vocational/Technical":           "vocational-technical",
-    "Vocational":                     "vocational-technical",
-    "Vocational / Technical / TESDA": "vocational-technical",
-    "College Undergraduate":          "college-undergraduate",
-    "College (incomplete)":           "college-undergraduate",
-    "College Graduate":               "college-graduate",
-    "College (complete)":             "college-graduate",
-    "Post Graduate":                  "post-graduate",
-    "Post-Graduate":                  "post-graduate",
-    "Post-Graduate (Master)":         "post-graduate",
-    "Masteral":                       "masteral",
-    "Doctorate":                      "doctorate",
-    "Post-Graduate (Doctorate)":      "doctorate",
+    # Canonical PSCED level names
+    "No Grade Completed":                    "C201300",
+    "Early Childhood Education":             "C201301",
+    "Primary Education":                     "C201302",
+    "Lower Secondary Education":             "C201303",
+    "Upper Secondary Education":             "C201304",
+    "Post-Secondary Non-Tertiary Education": "C201305",
+    "Short-Cycle Tertiary Education":        "C201306",
+    "Bachelor's Degree or Equivalent":       "C201307",
+    "Master's Degree or Equivalent":         "C201308",
+    "Doctoral Degree or Equivalent":         "C201309",
+    # Frontend display label aliases → nearest PSCED level
+    "No Formal Education":                   "C201300",
+    "No formal education":                   "C201300",
+    "Elementary":                            "C201302",
+    "Elementary (incomplete)":               "C201302",
+    "Elementary (complete)":                 "C201302",
+    "High School":                           "C201304",
+    "Junior High School":                    "C201303",
+    "Junior High School (incomplete)":       "C201303",
+    "Junior High School (complete)":         "C201303",
+    "Senior High School":                    "C201304",
+    "Senior High School (K-12)":             "C201304",
+    "Vocational/Technical":                  "C201305",
+    "Vocational":                            "C201305",
+    "Vocational / Technical / TESDA":        "C201305",
+    "College Undergraduate":                 "C201307",
+    "College (incomplete)":                  "C201307",
+    "College Graduate":                      "C201307",
+    "College (complete)":                    "C201307",
+    "Post Graduate":                         "C201308",
+    "Post-Graduate":                         "C201308",
+    "Post-Graduate (Master)":                "C201308",
+    "Masteral":                              "C201308",
+    "Doctorate":                             "C201309",
+    "Post-Graduate (Doctorate)":             "C201309",
 }
 
 # Occupation — Philippine Standard Occupational Classification (PSOC)
@@ -241,6 +254,69 @@ _OCCUPATION_CODE: dict[str, str] = {
     "Government Employee":      "2",
     "OFW":                      "2",
     "Military/Police":          "0",
+}
+
+# Race / ethnicity — PH Core CodeSystem-race-cs codes
+# System: https://fhir-ph-core.wah.ph/CodeSystem/race-cs
+_RACE_CODE_MAP: dict[str, str] = {
+    "Tagalog":                              "RACE-PH-001",
+    "Bisaya/Binisaya":                      "RACE-PH-002",
+    "Bisaya":                               "RACE-PH-002",
+    "Binisaya":                             "RACE-PH-002",
+    "Ilocano":                              "RACE-PH-003",
+    "Cebuano":                              "RACE-PH-004",
+    "Ilonggo (Hiligaynon)":                 "RACE-PH-005",
+    "Ilonggo":                              "RACE-PH-005",
+    "Hiligaynon":                           "RACE-PH-005",
+    "Bikol/Bicol":                          "RACE-PH-006",
+    "Bikol":                                "RACE-PH-006",
+    "Bicol":                                "RACE-PH-006",
+    "Waray":                                "RACE-PH-007",
+    "Kapampangan":                          "RACE-PH-008",
+    "Pangasinan":                           "RACE-PH-009",
+    "Maguindanao":                          "RACE-PH-010",
+    "Maranao":                              "RACE-PH-011",
+    "Tausug":                               "RACE-PH-012",
+    "Sama/Bajau":                           "RACE-PH-013",
+    "Sama":                                 "RACE-PH-013",
+    "Bajau":                                "RACE-PH-013",
+    "Yakan":                                "RACE-PH-014",
+    "Igorot":                               "RACE-PH-015",
+    "Aeta/Agta (Negrito)":                  "RACE-PH-016",
+    "Aeta":                                 "RACE-PH-016",
+    "Agta":                                 "RACE-PH-016",
+    "Negrito":                              "RACE-PH-016",
+    "Lumad":                                "RACE-PH-017",
+    "Other Philippine Ethnolinguistic Group": "RACE-PH-018",
+    "Filipino-Chinese (Fil-Chi)":           "RACE-PH-019",
+    "Filipino-Chinese":                     "RACE-PH-019",
+    "Filipino-Spanish (Fil-Spanish)":       "RACE-PH-020",
+    "Filipino-Spanish":                     "RACE-PH-020",
+    "Filipino-American (Fil-Am)":           "RACE-PH-021",
+    "Filipino-American":                    "RACE-PH-021",
+    "Filipino-Indian (Fil-Indian)":         "RACE-PH-022",
+    "Filipino-Indian":                      "RACE-PH-022",
+    "Asian":                                "RACE-INT-001",
+    "White / Caucasian":                    "RACE-INT-002",
+    "White":                                "RACE-INT-002",
+    "Caucasian":                            "RACE-INT-002",
+    "Black / African":                      "RACE-INT-003",
+    "Black":                                "RACE-INT-003",
+    "African":                              "RACE-INT-003",
+    "Hispanic / Latino":                    "RACE-INT-004",
+    "Hispanic":                             "RACE-INT-004",
+    "Latino":                               "RACE-INT-004",
+    "Middle Eastern / Arab":                "RACE-INT-005",
+    "Middle Eastern":                       "RACE-INT-005",
+    "Arab":                                 "RACE-INT-005",
+    "Pacific Islander":                     "RACE-INT-006",
+    "Mixed Race / Multiracial":             "RACE-INT-007",
+    "Mixed Race":                           "RACE-INT-007",
+    "Multiracial":                          "RACE-INT-007",
+    "Other Race / Ethnicity":               "RACE-UNK-001",
+    "Unknown / Not Stated":                 "RACE-UNK-002",
+    "Unknown":                              "RACE-UNK-002",
+    "Filipino":                             "RACE-PH-001",   # broad nationality → Tagalog (closest)
 }
 
 # ---------------------------------------------------------------------------
@@ -475,22 +551,24 @@ def patient_to_fhir(patient):
             })
 
     # 1b. Race  (falls back to nationality when race is not separately recorded)
+    # System: https://fhir-ph-core.wah.ph/CodeSystem/race-cs (PH Core CodeSystem-race-cs)
     race = patient.race or patient.nationality
     if race:
+        race_code = _RACE_CODE_MAP.get(race, _RACE_CODE_MAP.get(race.strip(), "RACE-UNK-001"))
         extensions.append({
             "url": f"{_URN_EXT}/race",
             "valueCodeableConcept": {
                 "coding": [{
-                    "system": f"{_URN_CS}/race",
-                    "code":    _slug(race),
+                    "system":  "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+                    "code":    race_code,
                     "display": race,
                 }]
             },
         })
 
     # 1c. Educational attainment
-    # Only emit when the value maps to a recognised canonical code.
-    # Sending an unknown slug causes a 500/Save error on receiving systems.
+    # System: https://psa.gov.ph/classification/psced/level (PSA PSCED codes)
+    # Only emit when the value maps to a recognised PSCED code.
     if patient.education:
         edu_code = _EDUCATION_CODE.get(patient.education)
         if edu_code:
@@ -498,28 +576,34 @@ def patient_to_fhir(patient):
                 "url": f"{_URN_EXT}/educational-attainment",
                 "valueCodeableConcept": {
                     "coding": [{
-                        "system": f"{_URN_CS}/educational-attainment",
+                        "system":  "https://psa.gov.ph/classification/psced/level",
                         "code":    edu_code,
                         "display": patient.education,
                     }]
                 },
             })
 
-    # 1d. Occupation  (system is PSOC, not the generic PH-Core CS)
-    # Only emit when the value maps to a recognised numeric PSOC code.
-    # Sending a slug like "cybersecurity-analysts" causes validation errors.
+    # 1d. Occupation — complex extension per StructureDefinition-occupation.json
+    # Two child sub-extensions: classification (CodeableConcept, PSOC) + lengthPeriod (Period).
+    # System: https://psa.gov.ph/classification/psoc/unit
     if patient.occupation:
         occ_code = _OCCUPATION_CODE.get(patient.occupation)
         if occ_code:
-            extensions.append({
-                "url": f"{_URN_EXT}/occupation",
-                "valueCodeableConcept": {
-                    "coding": [{
-                        "system": f"{_URN_CS}/PSOC",
-                        "code":    occ_code,
-                        "display": patient.occupation,
-                    }]
+            occ_sub = [
+                {
+                    "url": "classification",
+                    "valueCodeableConcept": {
+                        "coding": [{
+                            "system":  "https://psa.gov.ph/classification/psoc/unit",
+                            "code":    occ_code,
+                            "display": patient.occupation,
+                        }]
+                    },
                 },
+            ]
+            extensions.append({
+                "url":       f"{_URN_EXT}/occupation",
+                "extension": occ_sub,
             })
 
     # 1e. Indigenous people (boolean — always present)
@@ -528,26 +612,50 @@ def patient_to_fhir(patient):
         "valueBoolean": bool(patient.indigenous_flag),
     })
 
-    # 1f. Indigenous group name — only when patient is indigenous
+    # 1f. Indigenous group — CodeableConcept with PH Core indigenous-groups-cs
+    # System: https://fhir-ph-core.wah.ph/phcore/CodeSystem/indigenous-groups-cs
+    # The CodeSystem uses the group name as both code and display.
     indigenous_group = getattr(patient, "indigenous_group", None)
     if patient.indigenous_flag and indigenous_group:
         extensions.append({
             "url": f"{_URN_EXT}/indigenous-group",
-            "valueString": indigenous_group,
-        })
-
-    # 1g. PWD (Persons with Disability) type
-    pwd_type = getattr(patient, "pwd_type", None)
-    if pwd_type:
-        extensions.append({
-            "url": f"{_URN_EXT}/disability-type",
             "valueCodeableConcept": {
                 "coding": [{
-                    "system":  f"{_URN_CS}/disability-type",
+                    "system":  "https://fhir-ph-core.wah.ph/phcore/CodeSystem/indigenous-groups-cs",
+                    "code":    indigenous_group,
+                    "display": indigenous_group,
+                }]
+            },
+        })
+
+    # 1g. PWD — complex extension per StructureDefinition-ph-core-pwd-disability.json
+    # Sub-extensions: pwdId (String), disabilityType (CodeableConcept), idExpirationDate (Date), issuingLGU (String)
+    # System: https://fhir-ph-core.wah.ph/phcore/CodeSystem/ph-core-disability-type-cs
+    pwd_type      = getattr(patient, "pwd_type", None)
+    pwd_id        = getattr(patient, "pwd_id", None)
+    pwd_expiry    = getattr(patient, "pwd_expiry_date", None)
+    pwd_lgu       = getattr(patient, "pwd_issuing_lgu", None)
+    if pwd_type:
+        pwd_sub = []
+        if pwd_id:
+            pwd_sub.append({"url": "pwdId", "valueString": pwd_id})
+        pwd_sub.append({
+            "url": "disabilityType",
+            "valueCodeableConcept": {
+                "coding": [{
+                    "system":  "https://fhir-ph-core.wah.ph/phcore/CodeSystem/ph-core-disability-type-cs",
                     "code":    _slug(pwd_type),
                     "display": pwd_type,
                 }]
             },
+        })
+        if pwd_expiry:
+            pwd_sub.append({"url": "idExpirationDate", "valueDate": str(pwd_expiry)})
+        if pwd_lgu:
+            pwd_sub.append({"url": "issuingLGU", "valueString": pwd_lgu})
+        extensions.append({
+            "url":       f"{_URN_EXT}/ph-core-pwd-disability",
+            "extension": pwd_sub,
         })
 
     # ------------------------------------------------------------------
@@ -601,6 +709,14 @@ def patient_to_fhir(patient):
             },
             "system": "http://philhealth.gov.ph/fhir/Identifier/philhealth-id",
             "value":  patient.philhealth_id,
+        })
+    # PhilSys National ID (NamingSystem-PhilSysIDNS)
+    philsys_id = getattr(patient, "philsys_id", None)
+    if philsys_id:
+        identifiers.append({
+            "use":    "official",
+            "system": "http://philsys.gov.ph/fhir/Identifier/philsys-id",
+            "value":  philsys_id,
         })
     fhir["identifier"] = identifiers
 
@@ -673,8 +789,7 @@ def patient_to_fhir(patient):
         addr_extensions = []
 
         # 8a. Region — only emit when a proper 9-digit PSA numeric code is known.
-        # Falling back to the raw short code ("NCR") in the code field would
-        # cause a validation error on the receiving system.
+        # System: https://psa.gov.ph/classification/psgc (PSA PSGC)
         if patient.address_state:
             region_code = _PSGC_REGION_CODE.get(patient.address_state)
             if region_code:
@@ -682,7 +797,7 @@ def patient_to_fhir(patient):
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/region",
                     "valueCoding": {
-                        "system":  f"{_URN_CS}/PSGC",
+                        "system":  "https://psa.gov.ph/classification/psgc",
                         "code":    region_code,
                         "display": region_display,
                     },
@@ -690,15 +805,13 @@ def patient_to_fhir(patient):
 
         # 8b. City-municipality — emit 9-digit PSA code only.
         # The DB stores a 10-digit frontend code; _PSGC_CITY_9 converts it.
-        # If no 9-digit code is known, omit the extension (never send a
-        # 10-digit code — it fails length/constraint checks on target systems).
         if patient.address_city:
             city_9 = _PSGC_CITY_9.get(patient.address_city)
             if city_9:
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/city-municipality",
                     "valueCoding": {
-                        "system":  f"{_URN_CS}/PSGC",
+                        "system":  "https://psa.gov.ph/classification/psgc",
                         "code":    city_9,
                         "display": city_display or patient.address_city,
                     },
@@ -706,15 +819,14 @@ def patient_to_fhir(patient):
 
         # 8c. Barangay — only emit when a real numeric PSGC code is available.
         # "Barangay N" names → code derived as city_prefix[:7] + N.zfill(3).
-        # Named barangays (e.g. "Almanza Uno") have no derivable code and are
-        # excluded entirely; sending an invented slug causes 500/Save errors.
+        # Named barangays have no derivable code and are excluded entirely.
         if patient.address_line:
             bgy_code = _barangay_psgc_code(patient.address_city, patient.address_line)
             if bgy_code:
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/barangay",
                     "valueCoding": {
-                        "system":  f"{_URN_CS}/PSGC",
+                        "system":  "https://psa.gov.ph/classification/psgc",
                         "code":    bgy_code,
                         "display": patient.address_line,
                     },
@@ -1242,6 +1354,14 @@ def immunization_to_fhir(model):
         fhir["lotNumber"] = model.lot_number
     if model.expiration_date:
         fhir["expirationDate"] = str(model.expiration_date)
+
+    # PH Core batch-number extension — maps to lot_number per PH EPI practice.
+    # URL: https://fhir-ph-core.wah.ph/phcore/StructureDefinition/batch-number
+    if model.lot_number:
+        fhir.setdefault("extension", []).append({
+            "url":         "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/batch-number",
+            "valueString": model.lot_number,
+        })
 
     # Site
     if model.site_code:
@@ -2085,7 +2205,15 @@ def allergy_to_fhir(model):
     if model.reaction_substance:
         reaction["substance"] = {"text": model.reaction_substance}
     if model.reaction_manifestation:
-        reaction["manifestation"] = [{"text": model.reaction_manifestation}]
+        manifestation_entry: dict = {"text": model.reaction_manifestation}
+        manif_code = getattr(model, "reaction_manifestation_code", None)
+        if manif_code:
+            manifestation_entry["coding"] = [{
+                "system":  "http://snomed.info/sct",
+                "code":    manif_code,
+                "display": model.reaction_manifestation,
+            }]
+        reaction["manifestation"] = [manifestation_entry]
     if model.reaction_description:
         reaction["description"] = model.reaction_description
     if model.reaction_severity:
@@ -2196,6 +2324,36 @@ def push_allergy(target_id, allergy_model, idempotency_key=None):
 _LOINC_SYSTEM        = "http://loinc.org"
 _UCUM_SYSTEM         = "http://unitsofmeasure.org"
 _OBS_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category"
+_OBS_INTERP_SYSTEM   = "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation"
+
+# Observation interpretation display → HL7 v3 ObservationInterpretation code
+_OBS_INTERPRETATION_CODE_MAP: dict[str, str] = {
+    "Normal":           "N",
+    "normal":           "N",
+    "Low":              "L",
+    "low":              "L",
+    "High":             "H",
+    "high":             "H",
+    "Abnormal":         "A",
+    "abnormal":         "A",
+    "Critical Low":     "LL",
+    "critical low":     "LL",
+    "Critical High":    "HH",
+    "critical high":    "HH",
+    "Positive":         "POS",
+    "positive":         "POS",
+    "Negative":         "NEG",
+    "negative":         "NEG",
+    "Indeterminate":    "IND",
+    "indeterminate":    "IND",
+    "Borderline":       "B",
+    "borderline":       "B",
+    "Expected":         "EXP",
+    "Unexpected":       "UNE",
+    "Susceptible":      "S",
+    "Resistant":        "R",
+    "Intermediate":     "I",
+}
 
 
 def observation_to_fhir(model):
@@ -2272,7 +2430,15 @@ def observation_to_fhir(model):
     elif model.value_codeableconcept:
         fhir["valueCodeableConcept"] = {"text": model.value_codeableconcept}
     if model.interpretation:
-        fhir["interpretation"] = [{"text": model.interpretation}]
+        interp_code = _OBS_INTERPRETATION_CODE_MAP.get(model.interpretation)
+        interp_entry: dict = {"text": model.interpretation}
+        if interp_code:
+            interp_entry["coding"] = [{
+                "system":  _OBS_INTERP_SYSTEM,
+                "code":    interp_code,
+                "display": model.interpretation,
+            }]
+        fhir["interpretation"] = [interp_entry]
     if model.note:
         fhir["note"] = [{"text": model.note}]
     rr_low = _try_float(model.reference_range_low)
@@ -2382,7 +2548,7 @@ def push_observation(target_id, observation_model, idempotency_key=None):
 # MEDICATION REQUEST — FHIR R4 / PHCore
 # =============================================================================
 
-_MEDICATION_SYSTEM = "http://www.nlm.nih.gov/research/umls/rxnorm"
+_MEDICATION_SYSTEM = "https://verification.fda.gov.ph"   # Philippine FDA drug registry (ValueSet-drugs-vs)
 
 
 def medicationrequest_to_fhir(model):
