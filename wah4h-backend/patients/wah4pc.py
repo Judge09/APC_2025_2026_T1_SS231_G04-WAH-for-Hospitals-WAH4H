@@ -19,7 +19,7 @@ from patients.psgc_data import (
 
 logger = logging.getLogger(__name__)
 
-URL = "https://wah4pc.echosphere.cfd"
+URL = "https://wah4pc-gateway.wah.ph"
 
 # ---------------------------------------------------------------------------
 # Extension / CodeSystem base URIs — PH Core canonical URLs.
