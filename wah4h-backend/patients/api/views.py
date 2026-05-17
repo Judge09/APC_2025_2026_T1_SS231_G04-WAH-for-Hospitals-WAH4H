@@ -1351,7 +1351,7 @@ def webhook_process_query(request):
             # ----------------------------------------------------------------
             # 4. Send the result back to the gateway (10 s hard timeout)
             # ----------------------------------------------------------------
-            http_requests.post(
+            gw_response = http_requests.post(
                 return_url,
                 headers={
                     'X-API-Key': os.getenv('WAH4PC_API_KEY'),
@@ -1366,7 +1366,15 @@ def webhook_process_query(request):
                 timeout=10,
             )
 
-            txn.status = 'COMPLETED'
+            if gw_response.status_code >= 400:
+                logger.error(
+                    '[WAH4PC] Gateway rejected process_query response for txn %s: %s %s',
+                    txn_id, gw_response.status_code, gw_response.text[:200],
+                )
+                txn.status = 'FAILED'
+                txn.error_message = f'Gateway returned {gw_response.status_code}: {gw_response.text[:200]}'
+            else:
+                txn.status = 'COMPLETED'
             txn.save()
 
         except Exception as e:
