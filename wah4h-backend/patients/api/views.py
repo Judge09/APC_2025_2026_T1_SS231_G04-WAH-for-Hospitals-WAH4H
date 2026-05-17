@@ -1214,7 +1214,10 @@ def webhook_process_query(request):
         or request.data.get('identifiers')
         or []
     )
-    return_url = request.data.get('gatewayReturnUrl')
+    return_url = (request.data.get('gatewayReturnUrl') or '').replace(
+        'https://wah4pc.echosphere.cfd',
+        'https://wah4pc-gateway.wah.ph',
+    )
     requester_id = request.data.get('requesterId')
     # Detect which resource type was requested: explicit param wins, then infer from return URL.
     requested_resource = request.data.get('resourceType', '')
