@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 URL = "https://wah4pc.echosphere.cfd"
 
 # ---------------------------------------------------------------------------
-# Extension / CodeSystem base URIs.
-# External providers require the urn://example.com/... scheme exactly.
+# Extension / CodeSystem base URIs — PH Core canonical URLs.
+# These match StructureDefinition.url in docs/fhir/resources/.
 # ---------------------------------------------------------------------------
-_URN_EXT = "urn://example.com/ph-core/fhir/StructureDefinition"
-_URN_CS  = "urn://example.com/ph-core/fhir/CodeSystem"
+_URN_EXT = "https://fhir-ph-core.wah.ph/phcore/StructureDefinition"
+_URN_CS  = "https://fhir-ph-core.wah.ph/phcore/CodeSystem"
 
 # Aliases kept so _get_extension / fhir_to_dict continue to work unchanged.
 _EXT_BASE = _URN_EXT
@@ -412,7 +412,7 @@ def patient_to_fhir(patient):
     """Convert a local Patient model instance to a PH Core FHIR Patient resource.
 
     Output structure precisely matches the Working-Version JSON reference:
-    - urn://example.com/... URIs on all custom extensions and profiles.
+    - PH Core canonical URIs (https://fhir-ph-core.wah.ph/phcore/...) on all extensions and profiles.
     - Address object carries a nested extension[] with valueCoding PSGC entries
       for region, city-municipality, and barangay.
     - Religion, race, educational-attainment, and occupation extensions each
@@ -525,7 +525,16 @@ def patient_to_fhir(patient):
             },
         })
 
-    # 1g. PWD — complex extension per StructureDefinition-ph-core-pwd-disability.json
+    # 1g. Nationality — valueCodeableConcept (ISO 3166 alpha-2)
+    if patient.nationality:
+        extensions.append({
+            "url": f"{_URN_EXT}/nationality",
+            "valueCodeableConcept": {
+                "text": patient.nationality,
+            },
+        })
+
+    # 1h. PWD — complex extension per StructureDefinition-ph-core-pwd-disability.json
     # Sub-extensions: pwdId (String), disabilityType (CodeableConcept), idExpirationDate (Date), issuingLGU (String)
     # System: https://fhir-ph-core.wah.ph/phcore/CodeSystem/ph-core-disability-type-cs
     pwd_type      = getattr(patient, "pwd_type", None)
@@ -873,18 +882,26 @@ def push_patient(target_id, patient, idempotency_key=None):
 def _get_extension(extensions, url):
     """Extract value from a FHIR extension by URL.
 
-    Matches both the legacy ``urn://example.com/ph-core/fhir/`` prefix and
-    the current ``https://example.com/ph-core/fhir/`` prefix so inbound
-    records from providers that have not yet updated their serialiser are
-    still parsed correctly.
+    Accepts three equivalent schemes for backward compatibility with inbound
+    records from providers using older serialisers:
+      - Canonical PH Core: https://fhir-ph-core.wah.ph/phcore/...
+      - Legacy URN:         urn://example.com/ph-core/fhir/...
+      - Legacy HTTPS:       https://example.com/ph-core/fhir/...
     """
-    # Build a set of candidate URLs to check (handles scheme migration)
-    candidates = {url}
-    if url.startswith("urn://example.com/ph-core/fhir/"):
-        candidates.add(url.replace("urn://example.com/ph-core/fhir/", "https://example.com/ph-core/fhir/", 1))
-    elif url.startswith("https://example.com/ph-core/fhir/"):
-        candidates.add(url.replace("https://example.com/ph-core/fhir/", "urn://example.com/ph-core/fhir/", 1))
+    _CANONICAL = "https://fhir-ph-core.wah.ph/phcore/"
+    _LEGACY_URN = "urn://example.com/ph-core/fhir/"
+    _LEGACY_HTTPS = "https://example.com/ph-core/fhir/"
 
+    def _aliases(u):
+        candidates = {u}
+        for src, dst in [(_CANONICAL, _LEGACY_URN), (_CANONICAL, _LEGACY_HTTPS),
+                         (_LEGACY_URN, _CANONICAL), (_LEGACY_URN, _LEGACY_HTTPS),
+                         (_LEGACY_HTTPS, _CANONICAL), (_LEGACY_HTTPS, _LEGACY_URN)]:
+            if u.startswith(src):
+                candidates.add(u.replace(src, dst, 1))
+        return candidates
+
+    candidates = _aliases(url)
     for ext in extensions:
         if ext.get("url") in candidates:
             for key, val in ext.items():
@@ -1186,7 +1203,7 @@ def immunization_to_fhir(model):
     """Convert a local Immunization model instance to a PH Core FHIR Immunization resource.
 
     Follows the Manual Dict Construction pattern used by patient_to_fhir:
-    - All URIs use the urn://example.com/... scheme.
+    - All URIs use the PH Core canonical https://fhir-ph-core.wah.ph/phcore/... scheme.
     - Null / empty fields are omitted entirely.
     - doseQuantity units are hardcoded to "ml" per the Working JSON spec.
     - performer.function is hardcoded to Administering Provider (AP).
@@ -1637,6 +1654,48 @@ def encounter_to_fhir(model):
             except (ValueError, TypeError):
                 pass
         fhir["diagnosis"] = [diag]
+
+    # priority — CodeableConcept (HL7 v3 ActPriority)
+    if model.priority:
+        fhir["priority"] = {
+            "coding": [{
+                "system":  "http://terminology.hl7.org/CodeSystem/v3-ActPriority",
+                "code":    model.priority,
+                "display": model.priority,
+            }],
+            "text": model.priority,
+        }
+
+    # serviceProvider — Organization reference
+    if model.service_provider_id:
+        fhir["serviceProvider"] = {
+            "reference": f"Organization/{model.service_provider_id}",
+        }
+
+    # hospitalization — admits/discharge details (ph-core must-support)
+    hosp: dict = {}
+    if model.admit_source:
+        hosp["admitSource"] = {"text": model.admit_source}
+    if model.re_admission:
+        hosp["reAdmission"] = {
+            "coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0092", "code": "R"}],
+            "text": "Re-admission",
+        }
+    if model.diet_preference:
+        hosp["dietPreference"] = [{"text": model.diet_preference}]
+    if model.special_courtesy:
+        hosp["specialCourtesy"] = [{"text": model.special_courtesy}]
+    if model.special_arrangement:
+        hosp["specialArrangement"] = [{"text": model.special_arrangement}]
+    if model.discharge_disposition:
+        hosp["dischargeDisposition"] = {"text": model.discharge_disposition}
+    if model.pre_admission_identifier:
+        hosp["preAdmissionIdentifier"] = {
+            "system": f"https://wah4h.echosphere.cfd/fhir/identifier/encounter",
+            "value":  model.pre_admission_identifier,
+        }
+    if hosp:
+        fhir["hospitalization"] = hosp
 
     return fhir
 
@@ -2780,9 +2839,9 @@ def push_diagnosticreport(target_id, dr_model, idempotency_key=None):
 # =============================================================================
 # ORGANIZATION — FHIR R4 / PHCore R4
 # =============================================================================
-# PHCore profile: urn://example.com/ph-core/fhir/StructureDefinition/ph-core-organization
+# PHCore profile: https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-organization
 # NHFR identifier system: https://nhfr.doh.gov.ph/facility
-# Facility-type CodeSystem: urn://example.com/ph-core/fhir/CodeSystem/facility-type
+# Facility-type CodeSystem: https://fhir-ph-core.wah.ph/phcore/CodeSystem/facility-type
 # =============================================================================
 
 _NHFR_SYSTEM      = "https://nhfr.doh.gov.ph/facility"
@@ -3673,3 +3732,361 @@ def appointment_to_fhir(model) -> dict:
         fhir["basedOn"] = [{"reference": f"Encounter/{model.resulting_encounter_id}"}]
 
     return {k: v for k, v in fhir.items() if v is not None}
+
+
+# =============================================================================
+# PRACTITIONER — FHIR R4 / PHCore R4
+# =============================================================================
+# PHCore profile: https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-practitioner
+# PRC license system: http://prc.gov.ph/fhir/Identifier/prc-license
+# =============================================================================
+
+_PRC_LICENSE_SYSTEM = "http://prc.gov.ph/fhir/Identifier/prc-license"
+_PRC_QUALIFICATION_CS = "http://terminology.hl7.org/CodeSystem/v2-0360"
+
+
+def practitioner_to_fhir(model) -> dict:
+    """Convert a local Practitioner instance to a PHCore R4-compliant FHIR resource."""
+    pk = getattr(model, "practitioner_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"practitioner:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Practitioner",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-practitioner"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "active": model.active if model.active is not None else True,
+    }
+
+    # 1. Identifiers — internal + PRC license
+    identifiers = [{
+        "use":    "secondary",
+        "system": "https://wah4h.echosphere.cfd/fhir/identifier/practitioner",
+        "value":  model.identifier,
+    }]
+    if model.prc_license_number:
+        identifiers.append({
+            "use":    "official",
+            "type": {
+                "coding": [{
+                    "system":  "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code":    "MD",
+                    "display": "Medical License number",
+                }]
+            },
+            "system": _PRC_LICENSE_SYSTEM,
+            "value":  model.prc_license_number,
+        })
+    fhir["identifier"] = identifiers
+
+    # 2. Name — use="official", split first/given/middle/suffix
+    given_names = model.first_name.split() if model.first_name else []
+    if model.middle_name:
+        given_names.append(model.middle_name)
+    name_entry: dict = {
+        "use":    "official",
+        "family": model.last_name,
+        "given":  given_names,
+    }
+    if model.suffix_name:
+        name_entry["suffix"] = [model.suffix_name]
+    fhir["name"] = [name_entry]
+
+    # 3. Demographics
+    if model.gender:
+        fhir["gender"] = model.gender.lower()
+    if model.birth_date:
+        fhir["birthDate"] = str(model.birth_date)
+
+    # 4. Telecom
+    if model.telecom:
+        fhir["telecom"] = [{"system": "phone", "value": model.telecom, "use": "work"}]
+
+    # 5. Address
+    if model.address_line or model.address_city:
+        addr = _clean({
+            "use":        "work",
+            "line":       [model.address_line] if model.address_line else [],
+            "city":       model.address_city,
+            "district":   model.address_district,
+            "state":      model.address_state,
+            "country":    model.address_country or "PH",
+            "postalCode": model.address_postal_code,
+        })
+        if "line" not in addr:
+            addr["line"] = []
+        fhir["address"] = [addr]
+
+    # 6. Communication language
+    if model.communication_language:
+        fhir["communication"] = [{
+            "coding": [{
+                "system":  "urn:ietf:bcp:47",
+                "code":    model.communication_language,
+                "display": model.communication_language,
+            }],
+            "text": model.communication_language,
+        }]
+
+    # 7. Qualification — code + optional period + optional issuer
+    qual_code = model.qualification_code
+    if qual_code:
+        qual: dict = {
+            "code": {
+                "coding": [{
+                    "system":  _PRC_QUALIFICATION_CS,
+                    "code":    qual_code,
+                    "display": qual_code,
+                }],
+                "text": qual_code,
+            }
+        }
+        if model.qualification_identifier:
+            qual["identifier"] = [{"value": model.qualification_identifier}]
+        period: dict = {}
+        if model.qualification_period_start:
+            period["start"] = str(model.qualification_period_start)
+        if model.qualification_period_end:
+            period["end"] = str(model.qualification_period_end)
+        if period:
+            qual["period"] = period
+        if model.qualification_issuer_id:
+            from accounts.models import Organization
+            try:
+                org = Organization.objects.get(pk=model.qualification_issuer_id)
+                qual["issuer"] = {
+                    "display":   org.name,
+                    "reference": f"Organization/{str(uuid.uuid5(uuid.NAMESPACE_OID, f'organization:{org.pk}'))}",
+                }
+            except Organization.DoesNotExist:
+                pass
+        fhir["qualification"] = [qual]
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def practitioners_to_bundle(queryset) -> dict:
+    """Wrap a Practitioner queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type":         "collection",
+        "entry":        [{"resource": practitioner_to_fhir(p)} for p in queryset],
+    }
+
+
+# =============================================================================
+# LOCATION — FHIR R4 / PHCore R4
+# =============================================================================
+# PHCore profile: https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-location
+# =============================================================================
+
+_LOCATION_PHYSICAL_TYPE_CS = "http://terminology.hl7.org/CodeSystem/location-physical-type"
+_LOCATION_TYPE_CS           = "http://terminology.hl7.org/CodeSystem/v3-RoleCode"
+
+
+def location_to_fhir(model) -> dict:
+    """Convert a local Location instance to a PHCore R4-compliant FHIR resource."""
+    pk = getattr(model, "location_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"location:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Location",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-location"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+        "status": model.status or "active",
+    }
+
+    # 1. Identifier
+    if model.identifier:
+        fhir["identifier"] = [{
+            "use":    "usual",
+            "system": "https://wah4h.echosphere.cfd/fhir/identifier/location",
+            "value":  model.identifier,
+        }]
+
+    # 2. Name + alias + description
+    if model.name:
+        fhir["name"] = model.name
+    if model.alias:
+        fhir["alias"] = [model.alias]
+    if model.description:
+        fhir["description"] = model.description
+
+    # 3. Mode
+    if model.mode:
+        fhir["mode"] = model.mode
+
+    # 4. Type (CodeableConcept)
+    if model.type_code:
+        fhir["type"] = [{
+            "coding": [{
+                "system":  _LOCATION_TYPE_CS,
+                "code":    model.type_code,
+                "display": model.type_code,
+            }],
+            "text": model.type_code,
+        }]
+
+    # 5. Physical type (CodeableConcept) — must-support
+    if model.physical_type_code:
+        fhir["physicalType"] = {
+            "coding": [{
+                "system":  _LOCATION_PHYSICAL_TYPE_CS,
+                "code":    model.physical_type_code,
+                "display": model.physical_type_code,
+            }],
+            "text": model.physical_type_code,
+        }
+
+    # 6. Telecom
+    if model.telecom:
+        fhir["telecom"] = [{"system": "phone", "value": model.telecom, "use": "work"}]
+
+    # 7. Address
+    if model.address_line or model.address_city:
+        addr = _clean({
+            "use":        "physical",
+            "line":       [model.address_line] if model.address_line else [],
+            "city":       model.address_city,
+            "district":   model.address_district,
+            "state":      model.address_state,
+            "country":    model.address_country or "PH",
+            "postalCode": model.address_postal_code,
+        })
+        if "line" not in addr:
+            addr["line"] = []
+        fhir["address"] = addr
+
+    # 8. Position — must-support; wrap lat/lon in FHIR Position object
+    if model.latitude is not None and model.longitude is not None:
+        pos: dict = {
+            "latitude":  float(model.latitude),
+            "longitude": float(model.longitude),
+        }
+        if model.altitude is not None:
+            pos["altitude"] = float(model.altitude)
+        fhir["position"] = pos
+
+    # 9. Managing organization
+    if model.managing_organization_id:
+        from accounts.models import Organization
+        try:
+            org = Organization.objects.get(pk=model.managing_organization_id)
+            org_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"organization:{org.pk}"))
+            fhir["managingOrganization"] = {
+                "display":   org.name,
+                "reference": f"Organization/{org_fhir_id}",
+            }
+        except Organization.DoesNotExist:
+            fhir["managingOrganization"] = {
+                "reference": f"Organization/{model.managing_organization_id}",
+            }
+
+    # 10. Part-of location
+    if model.part_of_location_id:
+        part_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"location:{model.part_of_location_id}"))
+        fhir["partOf"] = {"reference": f"Location/{part_fhir_id}"}
+
+    # 11. Hours of operation
+    if model.hours_of_operation_days:
+        hop: dict = {}
+        if model.hours_of_operation_days:
+            hop["daysOfWeek"] = [d.strip() for d in model.hours_of_operation_days.split(",") if d.strip()]
+        if model.hours_of_operation_all_day == "true" or model.hours_of_operation_all_day == "True":
+            hop["allDay"] = True
+        if model.opening_time:
+            hop["openingTime"] = model.opening_time
+        if model.closing_time:
+            hop["closingTime"] = model.closing_time
+        if hop:
+            fhir["hoursOfOperation"] = [hop]
+
+    if model.availability_exceptions:
+        fhir["availabilityExceptions"] = model.availability_exceptions
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def locations_to_bundle(queryset) -> dict:
+    """Wrap a Location queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type":         "collection",
+        "entry":        [{"resource": location_to_fhir(loc)} for loc in queryset],
+    }
+
+
+# =============================================================================
+# MEDICATION — FHIR R4 / PHCore R4
+# =============================================================================
+# PHCore profile: https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-medication
+# Drug code system: https://verification.fda.gov.ph (Philippine FDA registry, ValueSet-drugs-vs)
+# =============================================================================
+
+def medication_to_fhir(model) -> dict:
+    """Convert a local Medication instance to a PHCore R4-compliant FHIR resource."""
+    pk = getattr(model, "medication_id", None) or getattr(model, "pk", None)
+    resource_id = (
+        str(uuid.uuid5(uuid.NAMESPACE_OID, f"medication:{pk}"))
+        if pk is not None else str(uuid.uuid4())
+    )
+
+    fhir: dict = {
+        "resourceType": "Medication",
+        "id": resource_id,
+        "meta": {
+            "profile":     [f"{_URN_EXT}/ph-core-medication"],
+            "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
+        },
+    }
+
+    # 1. Identifier
+    if model.identifier:
+        fhir["identifier"] = [{
+            "use":    "usual",
+            "system": "https://wah4h.echosphere.cfd/fhir/identifier/medication",
+            "value":  model.identifier,
+        }]
+
+    # 2. Status
+    if model.status:
+        fhir["status"] = model.status
+
+    # 3. Code — must-support; use FDA drug registry system
+    if model.code_code or model.code_display:
+        coding_entry: dict = {}
+        drug_system = model.code_system or _MEDICATION_SYSTEM
+        if drug_system:
+            coding_entry["system"] = drug_system
+        if model.code_version:
+            coding_entry["version"] = model.code_version
+        if model.code_code:
+            coding_entry["code"] = model.code_code
+        if model.code_display:
+            coding_entry["display"] = model.code_display
+        fhir["code"] = {
+            "coding": [coding_entry],
+            "text":   model.code_display or model.code_code or "",
+        }
+
+    return {k: v for k, v in fhir.items() if v is not None}
+
+
+def medications_to_bundle(queryset) -> dict:
+    """Wrap a Medication queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type":         "collection",
+        "entry":        [{"resource": medication_to_fhir(m)} for m in queryset],
+    }

@@ -1516,7 +1516,7 @@ def fhir_capability_statement(request):
         "fhirVersion": "4.0.1",
         "format": ["json"],
         "implementationGuide": [
-            "urn://example.com/ph-core/fhir/ImplementationGuide/ph-core"
+            "https://fhir-ph-core.wah.ph/phcore/ImplementationGuide/ph-core"
         ],
         "implementation": {
             "description": "WAH4H Hospital Information System FHIR R4 Server",
@@ -1533,7 +1533,7 @@ def fhir_capability_statement(request):
             "resource": [
                 {
                     "type": "Patient",
-                    "profile": "urn://example.com/ph-core/fhir/StructureDefinition/ph-core-patient",
+                    "profile": "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-patient",
                     "interaction": [{"code": "read"}, {"code": "search-type"}, {"code": "create"}, {"code": "update"}],
                     "searchParam": [
                         {"name": "identifier", "type": "token"},
@@ -1553,8 +1553,8 @@ def fhir_capability_statement(request):
                 {"type": "DiagnosticReport", "interaction": [{"code": "read"}, {"code": "search-type"}]},
             ],
             "operation": [
-                {"name": "process-query", "definition": "urn://example.com/wah4pc/fhir/OperationDefinition/process-query"},
-                {"name": "receive-push", "definition": "urn://example.com/wah4pc/fhir/OperationDefinition/receive-push"},
+                {"name": "process-query", "definition": "https://fhir-ph-core.wah.ph/phcore/OperationDefinition/process-query"},
+                {"name": "receive-push", "definition": "https://fhir-ph-core.wah.ph/phcore/OperationDefinition/receive-push"},
             ],
         }],
     }

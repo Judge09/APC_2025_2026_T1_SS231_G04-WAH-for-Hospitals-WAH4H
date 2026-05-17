@@ -2,13 +2,12 @@
 """
 FHIR R4 / PHCore R4 utility functions and constants for WAH4H.
 
-Code system URNs use the urn://example.com/... scheme required by the
-external PHCore validation service (wah4pc.echosphere.cfd).
+Uses canonical PH Core URLs as defined in docs/fhir/resources/structure-definitions/.
 """
 
 # ── Base URIs (must match wah4pc.py) ──────────────────────────────────────────
-PHC_EXT_BASE = "urn://example.com/ph-core/fhir/StructureDefinition"
-PHC_CS_BASE  = "urn://example.com/ph-core/fhir/CodeSystem"
+PHC_EXT_BASE = "https://fhir-ph-core.wah.ph/phcore/StructureDefinition"
+PHC_CS_BASE  = "https://fhir-ph-core.wah.ph/phcore/CodeSystem"
 
 # ── WAH4H internal identifier systems ────────────────────────────────────────
 WAH4H_SYSTEM_BASE             = "https://wah4h.echosphere.cfd/fhir/identifier"
