@@ -1343,6 +1343,25 @@ def immunization_to_fhir(model):
     if model.note:
         fhir["note"] = [{"text": model.note}]
 
+    # protocolApplied — must-support; includes series, targetDisease, doseNumber
+    protocol: dict = {}
+    if model.protocol_series:
+        protocol["series"] = model.protocol_series
+    if model.protocol_target_disease_code:
+        protocol["targetDisease"] = [{
+            "coding": [{
+                "system":  "http://snomed.info/sct",
+                "code":    model.protocol_target_disease_code,
+                "display": model.protocol_target_disease_display or model.protocol_target_disease_code,
+            }]
+        }]
+    if model.dose_number_value is not None:
+        protocol["doseNumberPositiveInt"] = int(model.dose_number_value)
+    if model.series_doses_value is not None:
+        protocol["seriesDosesPositiveInt"] = int(model.series_doses_value)
+    if protocol:
+        fhir["protocolApplied"] = [protocol]
+
     return {k: v for k, v in fhir.items() if v is not None}
 
 
@@ -2443,8 +2462,19 @@ def import_observation_from_fhir(fhir_data, patient):
     identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
     category_raw = (fhir_data.get("category") or [{}])[0]
     category_code = ((category_raw.get("coding") or [{}])[0].get("code"))
+
+    # Parse encounter_id from reference string "Encounter/<id>"
+    enc_ref = (fhir_data.get("encounter") or {}).get("reference", "")
+    enc_id = None
+    if enc_ref.startswith("Encounter/"):
+        try:
+            enc_id = int(enc_ref.split("/", 1)[1])
+        except (ValueError, IndexError):
+            pass
+
     fields = {k: v for k, v in {
         "subject_id": patient.id,
+        "encounter_id": enc_id or 0,
         "status": fhir_data.get("status", "final"),
         "code": code,
         "category": category_code,
@@ -2606,8 +2636,19 @@ def import_medicationrequest_from_fhir(fhir_data, patient):
     identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
     med_cc = fhir_data.get("medicationCodeableConcept") or {}
     med_codings = med_cc.get("coding", [{}])
+
+    # Parse encounter_id from reference string "Encounter/<id>"
+    enc_ref = (fhir_data.get("encounter") or {}).get("reference", "")
+    enc_id = None
+    if enc_ref.startswith("Encounter/"):
+        try:
+            enc_id = int(enc_ref.split("/", 1)[1])
+        except (ValueError, IndexError):
+            pass
+
     fields = {k: v for k, v in {
         "subject_id": patient.id,
+        "encounter_id": enc_id or 0,
         "status": fhir_data.get("status", "active"),
         "intent": fhir_data.get("intent", "order"),
         "medication_code": med_codings[0].get("code") if med_codings else None,
@@ -3879,6 +3920,72 @@ def practitioners_to_bundle(queryset) -> dict:
     }
 
 
+def import_practitioner_from_fhir(fhir_data: dict):
+    """Parse a PHCore R4 Practitioner resource and upsert into the local Practitioner model.
+
+    Keyed on PRC license number when present; falls back to internal WAH4H identifier.
+    """
+    from accounts.models import Practitioner
+
+    prc_license = None
+    internal_id = None
+    for ident in fhir_data.get("identifier", []):
+        sys = ident.get("system", "")
+        if sys == _PRC_LICENSE_SYSTEM:
+            prc_license = ident.get("value")
+        elif "wah4h" in sys:
+            internal_id = ident.get("value")
+
+    lookup_key = prc_license or internal_id or f"import-{uuid.uuid4()}"
+
+    name_obj  = (fhir_data.get("name") or [{}])[0]
+    given     = name_obj.get("given") or []
+    first     = given[0] if given else ""
+    middle    = given[1] if len(given) > 1 else None
+    last      = name_obj.get("family") or ""
+    suffix    = (name_obj.get("suffix") or [None])[0]
+
+    addr      = (fhir_data.get("address") or [{}])[0]
+    addr_lines = addr.get("line") or []
+
+    comm      = (fhir_data.get("communication") or [{}])[0]
+    comm_code = ((comm.get("coding") or [{}])[0]).get("code") or comm.get("text")
+
+    qual      = (fhir_data.get("qualification") or [{}])[0]
+    qual_code = ((qual.get("code") or {}).get("coding") or [{}])[0].get("code") or \
+                (qual.get("code") or {}).get("text")
+    qual_ident = ((qual.get("identifier") or [{}])[0]).get("value")
+    qual_period = qual.get("period") or {}
+
+    fields = {k: v for k, v in {
+        "identifier":                  lookup_key,
+        "active":                      fhir_data.get("active", True),
+        "first_name":                  first,
+        "middle_name":                 middle,
+        "last_name":                   last,
+        "suffix_name":                 suffix,
+        "gender":                      fhir_data.get("gender"),
+        "birth_date":                  fhir_data.get("birthDate"),
+        "telecom":                     ((fhir_data.get("telecom") or [{}])[0]).get("value"),
+        "communication_language":      comm_code,
+        "address_line":                addr_lines[0] if addr_lines else None,
+        "address_city":                addr.get("city"),
+        "address_district":            addr.get("district"),
+        "address_state":               addr.get("state"),
+        "address_country":             addr.get("country"),
+        "address_postal_code":         addr.get("postalCode"),
+        "qualification_code":          qual_code,
+        "qualification_identifier":    qual_ident,
+        "qualification_period_start":  qual_period.get("start"),
+        "qualification_period_end":    qual_period.get("end"),
+        "prc_license_number":          prc_license,
+        "status":                      "active",
+    }.items() if v is not None}
+
+    obj, _ = Practitioner.objects.update_or_create(identifier=lookup_key, defaults=fields)
+    return obj
+
+
 # =============================================================================
 # LOCATION — FHIR R4 / PHCore R4
 # =============================================================================
@@ -4027,6 +4134,56 @@ def locations_to_bundle(queryset) -> dict:
     }
 
 
+def import_location_from_fhir(fhir_data: dict):
+    """Parse a PHCore R4 Location resource and upsert into the local Location model.
+
+    Keyed on the internal WAH4H identifier value.
+    """
+    from accounts.models import Location
+
+    identifier = None
+    for ident in fhir_data.get("identifier", []):
+        identifier = ident.get("value")
+        break
+    identifier = identifier or f"import-{uuid.uuid4()}"
+
+    addr      = fhir_data.get("address") or {}
+    addr_lines = addr.get("line") or []
+    pos       = fhir_data.get("position") or {}
+    phys_type = (fhir_data.get("physicalType") or {})
+    phys_code = ((phys_type.get("coding") or [{}])[0]).get("code") or phys_type.get("text")
+    loc_type  = (fhir_data.get("type") or [{}])[0]
+    type_code = ((loc_type.get("coding") or [{}])[0]).get("code") or loc_type.get("text")
+    hop       = (fhir_data.get("hoursOfOperation") or [{}])[0]
+
+    fields = {k: v for k, v in {
+        "status":               fhir_data.get("status", "active"),
+        "name":                 fhir_data.get("name"),
+        "alias":                (fhir_data.get("alias") or [None])[0],
+        "description":          fhir_data.get("description"),
+        "mode":                 fhir_data.get("mode"),
+        "type_code":            type_code,
+        "physical_type_code":   phys_code,
+        "telecom":              ((fhir_data.get("telecom") or [{}])[0]).get("value"),
+        "address_line":         addr_lines[0] if addr_lines else None,
+        "address_city":         addr.get("city"),
+        "address_district":     addr.get("district"),
+        "address_state":        addr.get("state"),
+        "address_country":      addr.get("country"),
+        "address_postal_code":  addr.get("postalCode"),
+        "latitude":             pos.get("latitude"),
+        "longitude":            pos.get("longitude"),
+        "altitude":             pos.get("altitude"),
+        "hours_of_operation_days":     ",".join(hop.get("daysOfWeek") or []) or None,
+        "opening_time":         hop.get("openingTime"),
+        "closing_time":         hop.get("closingTime"),
+        "availability_exceptions": fhir_data.get("availabilityExceptions"),
+    }.items() if v is not None}
+
+    obj, _ = Location.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
 # =============================================================================
 # MEDICATION — FHIR R4 / PHCore R4
 # =============================================================================
@@ -4090,3 +4247,36 @@ def medications_to_bundle(queryset) -> dict:
         "type":         "collection",
         "entry":        [{"resource": medication_to_fhir(m)} for m in queryset],
     }
+
+
+def import_medication_from_fhir(fhir_data: dict):
+    """Parse a PHCore R4 Medication resource and upsert into the local Medication model.
+
+    Keyed on code_code (drug registry code).
+    """
+    from pharmacy.models import Medication
+
+    code_block = fhir_data.get("code") or {}
+    codings    = code_block.get("coding") or [{}]
+    first_coding = codings[0]
+    code_code    = first_coding.get("code")
+    code_display = first_coding.get("display") or code_block.get("text")
+    code_system  = first_coding.get("system")
+    code_version = first_coding.get("version")
+
+    ids        = fhir_data.get("identifier") or [{}]
+    identifier = ids[0].get("value") if ids[0] else f"import-{uuid.uuid4()}"
+
+    if not code_code:
+        code_code = code_display or identifier
+
+    fields = {k: v for k, v in {
+        "identifier":   identifier,
+        "status":       fhir_data.get("status", "active"),
+        "code_display": code_display,
+        "code_system":  code_system,
+        "code_version": code_version,
+    }.items() if v is not None}
+
+    obj, _ = Medication.objects.update_or_create(code_code=code_code, defaults=fields)
+    return obj

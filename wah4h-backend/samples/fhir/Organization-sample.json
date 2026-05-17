@@ -1,0 +1,127 @@
+{
+  "resourceType": "Organization",
+  "id": "a748ee3b-4053-5a75-ab2c-b34c3e8b5ee4",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-organization"
+    ],
+    "lastUpdated": "2026-05-17T10:40:00.000Z"
+  },
+  "active": true,
+  "identifier": [
+    {
+      "use": "official",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "FI",
+            "display": "Facility ID"
+          }
+        ]
+      },
+      "system": "https://nhfr.doh.gov.ph/facility",
+      "value": "NHFR-MNL-001"
+    },
+    {
+      "use": "secondary",
+      "system": "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/organization-id",
+      "value": "1"
+    }
+  ],
+  "name": "WAH4H General Hospital",
+  "alias": [
+    "WAH4H"
+  ],
+  "type": [
+    {
+      "coding": [
+        {
+          "system": "https://fhir-ph-core.wah.ph/phcore/CodeSystem/facility-type",
+          "code": "hospital",
+          "display": "Hospital"
+        },
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+          "code": "prov",
+          "display": "Hospital"
+        }
+      ],
+      "text": "Hospital"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+6328123456",
+      "use": "work"
+    }
+  ],
+  "address": [
+    {
+      "use": "work",
+      "type": "physical",
+      "line": [
+        "1 Hospital Drive"
+      ],
+      "city": "City of Manila",
+      "district": "Metro Manila",
+      "state": "NCR",
+      "country": "PH",
+      "postalCode": "1100",
+      "extension": [
+        {
+          "url": "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/region",
+          "valueCoding": {
+            "system": "https://psa.gov.ph/classification/psgc",
+            "code": "1300000000",
+            "display": "NCR"
+          }
+        },
+        {
+          "url": "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/city-municipality",
+          "valueCoding": {
+            "system": "https://psa.gov.ph/classification/psgc",
+            "code": "1380600000",
+            "display": "City of Manila"
+          }
+        }
+      ]
+    }
+  ],
+  "contact": [
+    {
+      "purpose": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+            "code": "ADMIN",
+            "display": "ADMIN"
+          }
+        ]
+      },
+      "name": {
+        "family": "Villanueva",
+        "given": [
+          "Roberto"
+        ]
+      },
+      "telecom": [
+        {
+          "system": "phone",
+          "value": "+6328654321",
+          "use": "work"
+        }
+      ],
+      "address": {
+        "line": [
+          "1 Hospital Drive"
+        ],
+        "city": "Quezon City",
+        "state": "NCR",
+        "country": "PH",
+        "postalCode": "1100"
+      }
+    }
+  ]
+}

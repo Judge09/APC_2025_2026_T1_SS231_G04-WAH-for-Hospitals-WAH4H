@@ -1,0 +1,61 @@
+{
+  "resourceType": "Procedure",
+  "id": "TST-PROC-001",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-procedure"
+    ],
+    "lastUpdated": "2026-05-17T10:40:03.000Z"
+  },
+  "status": "completed",
+  "subject": {
+    "display": "FHIR TestPatient",
+    "reference": "Patient/32133444-8ba8-5a9a-b833-ac08d9994671"
+  },
+  "code": {
+    "text": "Appendectomy",
+    "coding": [
+      {
+        "code": "80146002",
+        "system": "http://snomed.info/sct",
+        "display": "Appendectomy"
+      }
+    ]
+  },
+  "category": {
+    "text": "Surgical procedure",
+    "coding": [
+      {
+        "code": "387713003",
+        "system": "http://snomed.info/sct",
+        "display": "Surgical procedure"
+      }
+    ]
+  },
+  "performedDateTime": "2026-05-02T22:00:00+08:00",
+  "note": [
+    {
+      "text": "Laparoscopic appendectomy performed under general anesthesia"
+    }
+  ],
+  "outcome": {
+    "text": "Successful"
+  },
+  "reasonCode": [
+    {
+      "text": "Acute appendicitis"
+    }
+  ],
+  "bodySite": [
+    {
+      "text": "Appendix",
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "66754008",
+          "display": "Appendix"
+        }
+      ]
+    }
+  ]
+}

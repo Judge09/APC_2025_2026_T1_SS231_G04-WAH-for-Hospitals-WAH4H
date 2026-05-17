@@ -1,0 +1,29 @@
+{
+  "resourceType": "Medication",
+  "id": "71024684-677c-54c3-9dd0-1130ca163895",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-medication"
+    ],
+    "lastUpdated": "2026-05-17T10:40:02.000Z"
+  },
+  "identifier": [
+    {
+      "use": "usual",
+      "system": "https://wah4h.echosphere.cfd/fhir/identifier/medication",
+      "value": "MED-AMOX-500"
+    }
+  ],
+  "status": "active",
+  "code": {
+    "coding": [
+      {
+        "system": "https://verification.fda.gov.ph",
+        "version": "2024",
+        "code": "FDA-PH-AMOX-500",
+        "display": "Amoxicillin 500mg Capsule"
+      }
+    ],
+    "text": "Amoxicillin 500mg Capsule"
+  }
+}

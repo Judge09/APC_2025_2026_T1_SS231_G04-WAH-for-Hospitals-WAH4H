@@ -1,0 +1,71 @@
+{
+  "resourceType": "Observation",
+  "id": "f7d9fef3-6b45-5734-8846-95d6615b87a2",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-observation"
+    ],
+    "lastUpdated": "2026-05-17T10:40:02.000Z"
+  },
+  "subject": {
+    "display": "FHIR TestPatient",
+    "reference": "Patient/32133444-8ba8-5a9a-b833-ac08d9994671"
+  },
+  "identifier": [
+    {
+      "value": "TST-OBS-001"
+    }
+  ],
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "vital-signs"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "8480-6"
+      }
+    ],
+    "text": "8480-6"
+  },
+  "encounter": {
+    "reference": "Encounter/1"
+  },
+  "effectiveDateTime": "2026-05-01T16:30:00+08:00",
+  "issued": "2026-05-01T16:35:00+08:00",
+  "valueQuantity": {
+    "value": 120.0,
+    "system": "http://unitsofmeasure.org",
+    "unit": "mmHg",
+    "code": "mmHg"
+  },
+  "interpretation": [
+    {
+      "text": "N"
+    }
+  ],
+  "note": [
+    {
+      "text": "BP measured sitting"
+    }
+  ],
+  "referenceRange": [
+    {
+      "low": {
+        "value": 90.0
+      },
+      "high": {
+        "value": 120.0
+      },
+      "text": "Normal adult systolic BP"
+    }
+  ]
+}

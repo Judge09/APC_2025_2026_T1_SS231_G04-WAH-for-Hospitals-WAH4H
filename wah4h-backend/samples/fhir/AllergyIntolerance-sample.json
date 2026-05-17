@@ -1,0 +1,77 @@
+{
+  "resourceType": "AllergyIntolerance",
+  "id": "053feb6d-886b-52f5-846e-5b8b75916acc",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-allergyintolerance"
+    ],
+    "lastUpdated": "2026-05-17T10:40:01.000Z"
+  },
+  "patient": {
+    "display": "FHIR TestPatient",
+    "reference": "Patient/32133444-8ba8-5a9a-b833-ac08d9994671"
+  },
+  "identifier": [
+    {
+      "value": "TST-ALLERGY-001"
+    }
+  ],
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+        "code": "active"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "type": "allergy",
+  "category": [
+    "medication"
+  ],
+  "criticality": "high",
+  "code": {
+    "text": "372687004",
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "372687004"
+      }
+    ]
+  },
+  "encounter": {
+    "reference": "Encounter/1"
+  },
+  "onsetDateTime": "2020-03-10T08:00:00+08:00",
+  "recordedDate": "2020-03-10",
+  "note": [
+    {
+      "text": "Patient carries epinephrine auto-injector"
+    }
+  ],
+  "reaction": [
+    {
+      "manifestation": [
+        {
+          "text": "Anaphylaxis",
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "39579001",
+              "display": "Anaphylaxis"
+            }
+          ]
+        }
+      ],
+      "description": "Severe anaphylactic reaction after penicillin administration",
+      "severity": "severe"
+    }
+  ]
+}

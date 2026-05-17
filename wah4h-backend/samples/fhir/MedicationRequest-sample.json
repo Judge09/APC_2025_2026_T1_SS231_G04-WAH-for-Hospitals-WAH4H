@@ -1,0 +1,61 @@
+{
+  "resourceType": "MedicationRequest",
+  "id": "cae388ce-a3b5-5eac-9775-27c3394a4d2f",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-medicationrequest"
+    ],
+    "lastUpdated": "2026-05-17T10:40:03.000Z"
+  },
+  "subject": {
+    "display": "FHIR TestPatient",
+    "reference": "Patient/32133444-8ba8-5a9a-b833-ac08d9994671"
+  },
+  "identifier": [
+    {
+      "value": "TST-MR-001"
+    }
+  ],
+  "status": "active",
+  "intent": "order",
+  "category": [
+    {
+      "text": "inpatient"
+    }
+  ],
+  "priority": "routine",
+  "medicationCodeableConcept": {
+    "text": "Amoxicillin 500mg",
+    "coding": [
+      {
+        "system": "https://verification.fda.gov.ph",
+        "code": "FDA-PH-AMOX-500",
+        "display": "Amoxicillin 500mg"
+      }
+    ]
+  },
+  "encounter": {
+    "reference": "Encounter/1"
+  },
+  "authoredOn": "2026-05-01 10:00:00+00:00",
+  "reasonCode": [
+    {
+      "text": "J06.9"
+    }
+  ],
+  "note": [
+    {
+      "text": "Take with food. Complete the full course."
+    }
+  ],
+  "dispenseRequest": {
+    "quantity": {
+      "value": 21.0
+    },
+    "numberOfRepeatsAllowed": "0",
+    "validityPeriod": {
+      "start": "2026-05-01",
+      "end": "2026-05-08"
+    }
+  }
+}

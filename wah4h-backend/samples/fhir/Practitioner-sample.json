@@ -1,0 +1,103 @@
+{
+  "resourceType": "Practitioner",
+  "id": "5bdaf9d1-a877-5474-a7e7-ac2903d27ebd",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-practitioner"
+    ],
+    "lastUpdated": "2026-05-17T10:39:59.000Z"
+  },
+  "active": true,
+  "identifier": [
+    {
+      "use": "secondary",
+      "system": "https://wah4h.echosphere.cfd/fhir/identifier/practitioner",
+      "value": "PRACT-001"
+    },
+    {
+      "use": "official",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "MD",
+            "display": "Medical License number"
+          }
+        ]
+      },
+      "system": "http://prc.gov.ph/fhir/Identifier/prc-license",
+      "value": "PRC-0123456"
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "family": "Reyes",
+      "given": [
+        "Dr.",
+        "Maria",
+        "Santos"
+      ],
+      "suffix": [
+        "MD"
+      ]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-07-20",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+63298765432",
+      "use": "work"
+    }
+  ],
+  "address": [
+    {
+      "use": "work",
+      "line": [
+        "456 Bonifacio Avenue"
+      ],
+      "city": "Makati City",
+      "district": "Metro Manila",
+      "state": "NCR",
+      "country": "PH",
+      "postalCode": "1200"
+    }
+  ],
+  "communication": [
+    {
+      "coding": [
+        {
+          "system": "urn:ietf:bcp:47",
+          "code": "fil",
+          "display": "fil"
+        }
+      ],
+      "text": "fil"
+    }
+  ],
+  "qualification": [
+    {
+      "code": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0360",
+            "code": "MD",
+            "display": "MD"
+          }
+        ],
+        "text": "MD"
+      },
+      "identifier": [
+        {
+          "value": "PRC-2024-MD-12345"
+        }
+      ],
+      "period": {
+        "start": "2012-06-01",
+        "end": "2027-06-01"
+      }
+    }
+  ]
+}
