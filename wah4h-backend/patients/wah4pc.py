@@ -325,13 +325,15 @@ _MAX_ATTEMPTS = 3
 _BACKOFF_SECONDS = [1, 2]  # sleep before attempt 2, then before attempt 3
 
 
-def request_patient(target_id, philhealth_id, idempotency_key=None):
+def request_patient(target_id, philhealth_id, idempotency_key=None, reason=None, notes=None):
     """Request patient data from another provider via WAH4PC gateway.
 
     Args:
         target_id: Target provider UUID
         philhealth_id: PhilHealth ID to search for
         idempotency_key: Optional idempotency key for retry safety (generated if not provided)
+        reason: Human-readable reason for the request (optional)
+        notes: Additional notes for the request (optional)
 
     Returns:
         dict: Response with 'data' key on success, or 'error' and 'status_code' on failure.
@@ -362,9 +364,11 @@ def request_patient(target_id, philhealth_id, idempotency_key=None):
                 json={
                     "requesterId": provider_id,
                     "targetId": target_id,
-                    "identifiers": [
+                    "patientIdentifiers": [
                         {"system": "http://philhealth.gov.ph/fhir/Identifier/philhealth-id", "value": philhealth_id}
                     ],
+                    "reason": reason,
+                    "notes": notes,
                 },
                 timeout=30,
             )
@@ -916,8 +920,10 @@ def get_providers():
     """Fetch all registered providers from WAH4PC gateway (public endpoint).
 
     Returns:
-        list: List of active provider dictionaries with id, name, type, isActive fields
+        list: List of active provider dictionaries with id, name, type, isActive fields.
+              Excludes our own provider so users cannot request data from themselves.
     """
+    own_provider_id = os.getenv("WAH4PC_PROVIDER_ID", "")
     try:
         response = requests.get(f"{URL}/api/v1/providers", timeout=10)
 
@@ -925,8 +931,11 @@ def get_providers():
             result = response.json()
             # Handle both wrapped {"data": [...]} and flat array formats
             providers = result.get("data", result) if isinstance(result, dict) else result
-            # Filter to only return active providers
-            return [p for p in providers if p.get("isActive", True)]
+            # Filter to only active providers that are not ourselves
+            return [
+                p for p in providers
+                if p.get("isActive", True) and p.get("id") != own_provider_id
+            ]
 
         return []
 

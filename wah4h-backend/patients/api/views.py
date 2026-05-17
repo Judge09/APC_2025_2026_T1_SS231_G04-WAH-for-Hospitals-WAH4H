@@ -858,7 +858,9 @@ def fetch_wah4pc(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    result = request_patient(target_id, philhealth_id)
+    reason = request.data.get('reason', 'Patient requested sync records')
+    notes = request.data.get('notes')
+    result = request_patient(target_id, philhealth_id, reason=reason, notes=notes)
 
     # Handle error responses
     if 'error' in result:
