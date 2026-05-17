@@ -36,6 +36,7 @@ from patients.wah4pc import (
     observations_to_bundle, import_observation_from_fhir, push_observation,
     medicationrequests_to_bundle, import_medicationrequest_from_fhir, push_medicationrequest,
     diagnosticreports_to_bundle, import_diagnosticreport_from_fhir, push_diagnosticreport,
+    gateway_get_transaction,
 )
 from patients.models import Patient, WAH4PCTransaction
 
@@ -1207,7 +1208,12 @@ def webhook_process_query(request):
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
     txn_id = request.data.get('transactionId')
-    identifiers = request.data.get('identifiers', [])
+    # Gateway sends identifiers as 'patientIdentifiers' (selector field) or 'identifiers'
+    identifiers = (
+        request.data.get('patientIdentifiers')
+        or request.data.get('identifiers')
+        or []
+    )
     return_url = request.data.get('gatewayReturnUrl')
     requester_id = request.data.get('requesterId')
     # Detect which resource type was requested: explicit param wins, then infer from return URL.
