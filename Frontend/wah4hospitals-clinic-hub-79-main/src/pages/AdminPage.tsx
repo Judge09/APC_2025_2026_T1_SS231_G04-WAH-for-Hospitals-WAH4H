@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import addressData from '../data/addressData.json';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,53 +53,25 @@ const CONTACT_PURPOSES = [
   { code: 'PRESS',  display: 'Press / Media' },
 ];
 
-// PSGC regions — short code stored in DB, matches wah4pc.py _PSGC_REGION
-const REGIONS = [
-  { code: 'NCR',   display: 'National Capital Region (NCR)' },
-  { code: 'CAR',   display: 'Cordillera Administrative Region (CAR)' },
-  { code: 'I',     display: 'Region I – Ilocos Region' },
-  { code: 'II',    display: 'Region II – Cagayan Valley' },
-  { code: 'III',   display: 'Region III – Central Luzon' },
-  { code: 'IVA',   display: 'Region IV-A – CALABARZON' },
-  { code: 'IVB',   display: 'Region IV-B – MIMAROPA' },
-  { code: 'V',     display: 'Region V – Bicol Region' },
-  { code: 'VI',    display: 'Region VI – Western Visayas' },
-  { code: 'VII',   display: 'Region VII – Central Visayas' },
-  { code: 'VIII',  display: 'Region VIII – Eastern Visayas' },
-  { code: 'IX',    display: 'Region IX – Zamboanga Peninsula' },
-  { code: 'X',     display: 'Region X – Northern Mindanao' },
-  { code: 'XI',    display: 'Region XI – Davao Region' },
-  { code: 'XII',   display: 'Region XII – SOCCSKSARGEN' },
-  { code: 'XIII',  display: 'Region XIII – Caraga' },
-  { code: 'BARMM', display: 'BARMM – Bangsamoro Autonomous Region' },
-];
+// PSGC regions — derived from addressData.json (all 18 Philippine regions)
+const REGIONS = (addressData.regions as { code: string; name: string }[]).map(r => ({
+  code: r.code,
+  display: r.name,
+}));
 
-// PSGC cities — 10-digit frontend code stored in DB, matches wah4pc.py _PSGC_CITY
-// Grouped by region for filtered display
-const CITIES: { code: string; display: string; region: string }[] = [
-  // NCR
-  { code: '1380100000', display: 'Caloocan City',    region: 'NCR' },
-  { code: '1380200000', display: 'Las Piñas City',   region: 'NCR' },
-  { code: '1380300000', display: 'Makati City',      region: 'NCR' },
-  { code: '1380400000', display: 'Malabon City',     region: 'NCR' },
-  { code: '1380500000', display: 'Mandaluyong City', region: 'NCR' },
-  { code: '1380600000', display: 'Manila',           region: 'NCR' },
-  { code: '1380700000', display: 'Marikina City',    region: 'NCR' },
-  { code: '1380800000', display: 'Muntinlupa City',  region: 'NCR' },
-  { code: '1380900000', display: 'Navotas City',     region: 'NCR' },
-  { code: '1381000000', display: 'Parañaque City',   region: 'NCR' },
-  { code: '1381100000', display: 'Pasay City',       region: 'NCR' },
-  { code: '1381200000', display: 'Pasig City',       region: 'NCR' },
-  { code: '1381300000', display: 'Quezon City',      region: 'NCR' },
-  { code: '1381400000', display: 'San Juan City',    region: 'NCR' },
-  { code: '1381500000', display: 'Taguig City',      region: 'NCR' },
-  { code: '1381600000', display: 'Valenzuela City',  region: 'NCR' },
-  { code: '1381701000', display: 'Pateros',          region: 'NCR' },
-  // Central Luzon (III)
-  { code: '0310600000', display: 'San Fernando City (Pampanga)', region: 'III' },
-  { code: '0318200000', display: 'Angeles City',     region: 'III' },
-  { code: '0307400000', display: 'Mabalacat City',   region: 'III' },
-];
+// PSGC cities — all 1,656 cities/municipalities derived from addressData.json
+// Flat list with region code for filtered display (province→region mapped via provinces dict)
+const _provinceToRegion: Record<string, string> = {};
+Object.entries(addressData.provinces as Record<string, { code: string; name: string }[]>).forEach(
+  ([regionCode, provs]) => provs.forEach(p => { _provinceToRegion[p.code] = regionCode; })
+);
+const CITIES: { code: string; display: string; region: string }[] = [];
+Object.entries(addressData.cities as Record<string, { code: string; name: string }[]>).forEach(
+  ([provCode, cities]) => {
+    const regionCode = _provinceToRegion[provCode] ?? 'NCR';
+    cities.forEach(c => CITIES.push({ code: c.code, display: c.name, region: regionCode }));
+  }
+);
 
 // ISO 3166-1 alpha-2 — Philippines-focused list
 const COUNTRIES = [

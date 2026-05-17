@@ -23,6 +23,19 @@ import {
   MARITAL_STATUS_MAP,
   PWD_TYPE_MAP,
 } from '../../constants/patientConstants';
+import addressData from '../../data/addressData.json';
+
+// Build lookup maps from addressData for display resolution
+const _cityByCode: Record<string, string> = {};
+Object.values(addressData.cities).forEach((cities: any[]) => {
+  cities.forEach((c: any) => { _cityByCode[c.code] = c.name; });
+});
+const _provinceByCode: Record<string, string> = {};
+Object.values(addressData.provinces).forEach((provs: any[]) => {
+  provs.forEach((p: any) => { _provinceByCode[p.code] = p.name; });
+});
+const _regionByCode: Record<string, string> = {};
+(addressData.regions as any[]).forEach((r: any) => { _regionByCode[r.code] = r.name; });
 
 // ============================================================================
 // GENERIC CARD WRAPPER & UTILITIES
@@ -98,13 +111,16 @@ const calculateAge = (dob: string | undefined) => {
   }
 };
 
-// Utility: Format full address
+// Utility: Format full address — resolves PSGC codes to display names
 const formatAddress = (patient: Patient) => {
   const parts: string[] = [];
   if (patient.address_line) parts.push(patient.address_line);
-  if (patient.address_city) parts.push(patient.address_city);
-  if (patient.address_district) parts.push(patient.address_district);
-  if (patient.address_state) parts.push(patient.address_state);
+  if (patient.address_city)
+    parts.push(_cityByCode[patient.address_city] ?? patient.address_city);
+  if (patient.address_district)
+    parts.push(_provinceByCode[patient.address_district] ?? patient.address_district);
+  if (patient.address_state)
+    parts.push(_regionByCode[patient.address_state] ?? patient.address_state);
   return parts.join(', ') || 'N/A';
 };
 
