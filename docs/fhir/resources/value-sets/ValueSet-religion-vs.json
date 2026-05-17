@@ -1,0 +1,238 @@
+{
+  "resourceType": "ValueSet",
+  "id": "religion-vs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/ValueSet/religion-vs",
+  "version": "0.2.0",
+  "name": "ReligionVS",
+  "title": "Religion",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "All religious affiliation codes for use in patient demographic records, based on the 2020 PSA Census of Population and Housing categories.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "concept": [
+          {
+            "code": "REL-001",
+            "display": "Roman Catholic"
+          },
+          {
+            "code": "REL-002",
+            "display": "Iglesia ni Cristo"
+          },
+          {
+            "code": "REL-003",
+            "display": "Seventh Day Adventist"
+          },
+          {
+            "code": "REL-004",
+            "display": "Aglipay (Iglesia Filipina Independiente)"
+          },
+          {
+            "code": "REL-005",
+            "display": "Bible Baptist Church"
+          },
+          {
+            "code": "REL-006",
+            "display": "United Church of Christ in the Philippines"
+          },
+          {
+            "code": "REL-007",
+            "display": "Jehovah's Witness"
+          },
+          {
+            "code": "REL-008",
+            "display": "Church of Christ"
+          },
+          {
+            "code": "REL-009",
+            "display": "Episcopal Church in the Philippines"
+          },
+          {
+            "code": "REL-010",
+            "display": "Assemblies of God"
+          },
+          {
+            "code": "REL-011",
+            "display": "Church of Jesus Christ of Latter-day Saints"
+          },
+          {
+            "code": "REL-012",
+            "display": "Members Church of God International"
+          },
+          {
+            "code": "REL-013",
+            "display": "Christianity (Other)"
+          },
+          {
+            "code": "REL-014",
+            "display": "Islam"
+          },
+          {
+            "code": "REL-015",
+            "display": "Buddhism"
+          },
+          {
+            "code": "REL-016",
+            "display": "Hinduism"
+          },
+          {
+            "code": "REL-017",
+            "display": "Indigenous/Tribal Religion"
+          },
+          {
+            "code": "REL-018",
+            "display": "Other Religion"
+          },
+          {
+            "code": "REL-019",
+            "display": "No Religion / None"
+          },
+          {
+            "code": "REL-020",
+            "display": "Unknown / Not Stated"
+          }
+        ]
+      }
+    ]
+  },
+  "expansion": {
+    "timestamp": "2026-05-15T00:00:00+00:00",
+    "total": 20,
+    "offset": 0,
+    "parameter": [
+      {
+        "name": "version",
+        "valueUri": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs|0.2.0"
+      }
+    ],
+    "contains": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-001",
+        "display": "Roman Catholic"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-002",
+        "display": "Iglesia ni Cristo"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-003",
+        "display": "Seventh Day Adventist"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-004",
+        "display": "Aglipay (Iglesia Filipina Independiente)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-005",
+        "display": "Bible Baptist Church"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-006",
+        "display": "United Church of Christ in the Philippines"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-007",
+        "display": "Jehovah's Witness"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-008",
+        "display": "Church of Christ"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-009",
+        "display": "Episcopal Church in the Philippines"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-010",
+        "display": "Assemblies of God"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-011",
+        "display": "Church of Jesus Christ of Latter-day Saints"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-012",
+        "display": "Members Church of God International"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-013",
+        "display": "Christianity (Other)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-014",
+        "display": "Islam"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-015",
+        "display": "Buddhism"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-016",
+        "display": "Hinduism"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-017",
+        "display": "Indigenous/Tribal Religion"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-018",
+        "display": "Other Religion"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-019",
+        "display": "No Religion / None"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+        "code": "REL-020",
+        "display": "Unknown / Not Stated"
+      }
+    ]
+  }
+}

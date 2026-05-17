@@ -1,0 +1,373 @@
+{
+  "resourceType": "ValueSet",
+  "id": "provinces",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/classification/psgc/ValueSet/provinces",
+  "version": "1Q-2026",
+  "name": "Provinces",
+  "title": "Provinces",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "All province codes from the Philippine Standard Geographic Code (PSGC) 1Q-2026, published by the Philippine Statistics Authority (PSA).",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://psa.gov.ph/classification/psgc",
+        "concept": [
+          {
+            "code": "1400100000",
+            "display": "Abra"
+          },
+          {
+            "code": "1401100000",
+            "display": "Benguet"
+          },
+          {
+            "code": "1402700000",
+            "display": "Ifugao"
+          },
+          {
+            "code": "1403200000",
+            "display": "Kalinga"
+          },
+          {
+            "code": "1404400000",
+            "display": "Mountain Province"
+          },
+          {
+            "code": "1408100000",
+            "display": "Apayao"
+          },
+          {
+            "code": "0102800000",
+            "display": "Ilocos Norte"
+          },
+          {
+            "code": "0102900000",
+            "display": "Ilocos Sur"
+          },
+          {
+            "code": "0103300000",
+            "display": "La Union"
+          },
+          {
+            "code": "0105500000",
+            "display": "Pangasinan"
+          },
+          {
+            "code": "0200900000",
+            "display": "Batanes"
+          },
+          {
+            "code": "0201500000",
+            "display": "Cagayan"
+          },
+          {
+            "code": "0203100000",
+            "display": "Isabela"
+          },
+          {
+            "code": "0205000000",
+            "display": "Nueva Vizcaya"
+          },
+          {
+            "code": "0205700000",
+            "display": "Quirino"
+          },
+          {
+            "code": "0300800000",
+            "display": "Bataan"
+          },
+          {
+            "code": "0301400000",
+            "display": "Bulacan"
+          },
+          {
+            "code": "0304900000",
+            "display": "Nueva Ecija"
+          },
+          {
+            "code": "0305400000",
+            "display": "Pampanga"
+          },
+          {
+            "code": "0306900000",
+            "display": "Tarlac"
+          },
+          {
+            "code": "0307100000",
+            "display": "Zambales"
+          },
+          {
+            "code": "0307700000",
+            "display": "Aurora"
+          },
+          {
+            "code": "0401000000",
+            "display": "Batangas"
+          },
+          {
+            "code": "0402100000",
+            "display": "Cavite"
+          },
+          {
+            "code": "0403400000",
+            "display": "Laguna"
+          },
+          {
+            "code": "0405600000",
+            "display": "Quezon"
+          },
+          {
+            "code": "0405800000",
+            "display": "Rizal"
+          },
+          {
+            "code": "1704000000",
+            "display": "Marinduque"
+          },
+          {
+            "code": "1705100000",
+            "display": "Occidental Mindoro"
+          },
+          {
+            "code": "1705200000",
+            "display": "Oriental Mindoro"
+          },
+          {
+            "code": "1705300000",
+            "display": "Palawan"
+          },
+          {
+            "code": "1705900000",
+            "display": "Romblon"
+          },
+          {
+            "code": "0500500000",
+            "display": "Albay"
+          },
+          {
+            "code": "0501600000",
+            "display": "Camarines Norte"
+          },
+          {
+            "code": "0501700000",
+            "display": "Camarines Sur"
+          },
+          {
+            "code": "0502000000",
+            "display": "Catanduanes"
+          },
+          {
+            "code": "0504100000",
+            "display": "Masbate"
+          },
+          {
+            "code": "0506200000",
+            "display": "Sorsogon"
+          },
+          {
+            "code": "0600400000",
+            "display": "Aklan"
+          },
+          {
+            "code": "0600600000",
+            "display": "Antique"
+          },
+          {
+            "code": "0601900000",
+            "display": "Capiz"
+          },
+          {
+            "code": "0603000000",
+            "display": "Iloilo"
+          },
+          {
+            "code": "0607900000",
+            "display": "Guimaras"
+          },
+          {
+            "code": "1804500000",
+            "display": "Negros Occidental"
+          },
+          {
+            "code": "1804600000",
+            "display": "Negros Oriental"
+          },
+          {
+            "code": "1806100000",
+            "display": "Siquijor"
+          },
+          {
+            "code": "0701200000",
+            "display": "Bohol"
+          },
+          {
+            "code": "0702200000",
+            "display": "Cebu"
+          },
+          {
+            "code": "0802600000",
+            "display": "Eastern Samar"
+          },
+          {
+            "code": "0803700000",
+            "display": "Leyte"
+          },
+          {
+            "code": "0804800000",
+            "display": "Northern Samar"
+          },
+          {
+            "code": "0806000000",
+            "display": "Samar"
+          },
+          {
+            "code": "0806400000",
+            "display": "Southern Leyte"
+          },
+          {
+            "code": "0807800000",
+            "display": "Biliran"
+          },
+          {
+            "code": "0906600000",
+            "display": "Sulu"
+          },
+          {
+            "code": "0907200000",
+            "display": "Zamboanga del Norte"
+          },
+          {
+            "code": "0907300000",
+            "display": "Zamboanga del Sur"
+          },
+          {
+            "code": "0908300000",
+            "display": "Zamboanga Sibugay"
+          },
+          {
+            "code": "1001300000",
+            "display": "Bukidnon"
+          },
+          {
+            "code": "1001800000",
+            "display": "Camiguin"
+          },
+          {
+            "code": "1003500000",
+            "display": "Lanao del Norte"
+          },
+          {
+            "code": "1004200000",
+            "display": "Misamis Occidental"
+          },
+          {
+            "code": "1004300000",
+            "display": "Misamis Oriental"
+          },
+          {
+            "code": "1102300000",
+            "display": "Davao del Norte"
+          },
+          {
+            "code": "1102400000",
+            "display": "Davao del Sur"
+          },
+          {
+            "code": "1102500000",
+            "display": "Davao Oriental"
+          },
+          {
+            "code": "1108200000",
+            "display": "Davao de Oro"
+          },
+          {
+            "code": "1108600000",
+            "display": "Davao Occidental"
+          },
+          {
+            "code": "1204700000",
+            "display": "Cotabato"
+          },
+          {
+            "code": "1206300000",
+            "display": "South Cotabato"
+          },
+          {
+            "code": "1206500000",
+            "display": "Sultan Kudarat"
+          },
+          {
+            "code": "1208000000",
+            "display": "Sarangani"
+          },
+          {
+            "code": "1600200000",
+            "display": "Agusan del Norte"
+          },
+          {
+            "code": "1600300000",
+            "display": "Agusan del Sur"
+          },
+          {
+            "code": "1606700000",
+            "display": "Surigao del Norte"
+          },
+          {
+            "code": "1606800000",
+            "display": "Surigao del Sur"
+          },
+          {
+            "code": "1608500000",
+            "display": "Dinagat Islands"
+          },
+          {
+            "code": "1900700000",
+            "display": "Basilan"
+          },
+          {
+            "code": "1903600000",
+            "display": "Lanao del Sur"
+          },
+          {
+            "code": "1907000000",
+            "display": "Tawi-Tawi"
+          },
+          {
+            "code": "1908700000",
+            "display": "Maguindanao del Norte"
+          },
+          {
+            "code": "1908800000",
+            "display": "Maguindanao del Sur"
+          }
+        ]
+      }
+    ]
+  }
+}

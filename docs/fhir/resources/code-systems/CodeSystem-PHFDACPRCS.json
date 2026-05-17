@@ -1,0 +1,123 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "PHFDACPRCS",
+  "language": "en",
+  "url": "https://verification.fda.gov.ph",
+  "version": "2026",
+  "name": "PHFDACPRCS",
+  "title": "PH FDA Certificate of Product Registration (CPR) CodeSystem",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "Registered drug products from the Philippine Food and Drug Administration (FDA). Codes correspond to Certificate of Product Registration (CPR) numbers issued by the FDA Philippines, accessible via the FDA Drug Product Verification portal.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "caseSensitive": false,
+  "hierarchyMeaning": "is-a",
+  "content": "not-present",
+  "property": [
+    {
+      "code": "productInfo",
+      "description": "Product information document",
+      "type": "string"
+    },
+    {
+      "code": "genericName",
+      "description": "Generic/INN name of the drug",
+      "type": "string"
+    },
+    {
+      "code": "dosageStrength",
+      "description": "Dosage strength/concentration",
+      "type": "string"
+    },
+    {
+      "code": "dosageForm",
+      "description": "Dosage form (e.g., Tablet, Injection)",
+      "type": "string"
+    },
+    {
+      "code": "classification",
+      "description": "Drug classification (RX, OTC, etc.)",
+      "type": "string"
+    },
+    {
+      "code": "packaging",
+      "description": "Packaging description",
+      "type": "string"
+    },
+    {
+      "code": "pharmacologicCategory",
+      "description": "Pharmacologic/therapeutic category",
+      "type": "string"
+    },
+    {
+      "code": "manufacturer",
+      "description": "Drug manufacturer",
+      "type": "string"
+    },
+    {
+      "code": "countryOfOrigin",
+      "description": "Country where manufactured",
+      "type": "string"
+    },
+    {
+      "code": "trader",
+      "description": "Trading company",
+      "type": "string"
+    },
+    {
+      "code": "importer",
+      "description": "Importing company",
+      "type": "string"
+    },
+    {
+      "code": "distributor",
+      "description": "Distributing company",
+      "type": "string"
+    },
+    {
+      "code": "applicationType",
+      "description": "Type of FDA application",
+      "type": "string"
+    },
+    {
+      "code": "issuanceDate",
+      "description": "Registration issuance date",
+      "type": "string"
+    },
+    {
+      "code": "expiryDate",
+      "description": "Registration expiry date",
+      "type": "string"
+    }
+  ],
+  "concept": [
+    {
+      "code": "PH-FDA-DRUGS",
+      "display": "Philippine FDA Registered Drug Products",
+      "definition": "Root concept for all FDA Certificate of Product Registration (CPR) registered drug products in the Philippines. Individual drug entries are identified by their CPR number (e.g., DRP-XXXXX or a numeric CPR code) and are managed externally by the Philippine FDA at https://verification.fda.gov.ph."
+    }
+  ]
+}

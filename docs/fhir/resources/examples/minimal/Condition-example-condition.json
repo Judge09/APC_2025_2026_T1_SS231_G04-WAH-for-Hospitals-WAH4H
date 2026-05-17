@@ -1,0 +1,32 @@
+{
+  "resourceType": "Condition",
+  "id": "example-condition",
+  "language": "en",
+  "text": {
+    "status": "generated"
+  },
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active",
+        "display": "Active"
+      }
+    ]
+  },
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "44054006",
+        "display": "Diabetes mellitus type 2"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/example-patient"
+  },
+  "encounter": {
+    "reference": "Encounter/example-encounter"
+  }
+}

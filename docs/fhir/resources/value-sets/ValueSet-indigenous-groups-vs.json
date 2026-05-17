@@ -1,0 +1,43 @@
+{
+  "resourceType": "ValueSet",
+  "id": "indigenous-groups-vs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/phcore/ValueSet/indigenous-groups-vs",
+  "version": "0.2.0",
+  "name": "IndigenousGroupsVS",
+  "title": "Indigenous Groups",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "A value set representing the recognized Indigenous groups to which a person may belong.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/phcore/CodeSystem/indigenous-groups-cs"
+      }
+    ]
+  }
+}

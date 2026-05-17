@@ -1,0 +1,52 @@
+{
+  "resourceType": "NamingSystem",
+  "id": "PhilSysIDNS",
+  "language": "en",
+  "text": {
+    "status": "generated"
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-NamingSystem.url",
+      "valueUri": "https://fhir-ph-core.wah.ph/phcore/NamingSystem/PhilSysIDNS"
+    },
+    {
+      "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-NamingSystem.version",
+      "valueString": "0.2.0"
+    }
+  ],
+  "name": "PhilSysID",
+  "status": "active",
+  "kind": "identifier",
+  "date": "2026-05-14",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "The National ID Number issued to all Filipino citizens and resident aliens in the Philippines, as part of the Philippine Identification System (PhilSys) program.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "uniqueId": [
+    {
+      "type": "uri",
+      "value": "http://philsys.gov.ph/fhir/Identifier/philsys-id"
+    }
+  ]
+}

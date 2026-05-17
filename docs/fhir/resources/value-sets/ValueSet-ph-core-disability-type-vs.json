@@ -1,0 +1,43 @@
+{
+  "resourceType": "ValueSet",
+  "id": "ph-core-disability-type-vs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/phcore/ValueSet/ph-core-disability-type-vs",
+  "version": "0.2.0",
+  "name": "PHCoreDisabilityTypeVS",
+  "title": "PH Core Disability Type Value Set",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "Value set for types of disability as defined by the Philippine government for PWD registration.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/phcore/CodeSystem/ph-core-disability-type-cs"
+      }
+    ]
+  }
+}

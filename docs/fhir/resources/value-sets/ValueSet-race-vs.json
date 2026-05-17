@@ -1,0 +1,337 @@
+{
+  "resourceType": "ValueSet",
+  "id": "race-vs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/ValueSet/race-vs",
+  "version": "0.2.0",
+  "name": "RaceVS",
+  "title": "Race and Ethnicity",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "All race and ethnicity codes including Philippine ethnolinguistic groups (based on PSA 2020 CPH) and broader international race categories.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "concept": [
+          {
+            "code": "RACE-PH-001",
+            "display": "Tagalog"
+          },
+          {
+            "code": "RACE-PH-002",
+            "display": "Bisaya/Binisaya"
+          },
+          {
+            "code": "RACE-PH-003",
+            "display": "Ilocano"
+          },
+          {
+            "code": "RACE-PH-004",
+            "display": "Cebuano"
+          },
+          {
+            "code": "RACE-PH-005",
+            "display": "Ilonggo (Hiligaynon)"
+          },
+          {
+            "code": "RACE-PH-006",
+            "display": "Bikol/Bicol"
+          },
+          {
+            "code": "RACE-PH-007",
+            "display": "Waray"
+          },
+          {
+            "code": "RACE-PH-008",
+            "display": "Kapampangan"
+          },
+          {
+            "code": "RACE-PH-009",
+            "display": "Pangasinan"
+          },
+          {
+            "code": "RACE-PH-010",
+            "display": "Maguindanao"
+          },
+          {
+            "code": "RACE-PH-011",
+            "display": "Maranao"
+          },
+          {
+            "code": "RACE-PH-012",
+            "display": "Tausug"
+          },
+          {
+            "code": "RACE-PH-013",
+            "display": "Sama/Bajau"
+          },
+          {
+            "code": "RACE-PH-014",
+            "display": "Yakan"
+          },
+          {
+            "code": "RACE-PH-015",
+            "display": "Igorot"
+          },
+          {
+            "code": "RACE-PH-016",
+            "display": "Aeta/Agta (Negrito)"
+          },
+          {
+            "code": "RACE-PH-017",
+            "display": "Lumad"
+          },
+          {
+            "code": "RACE-PH-018",
+            "display": "Other Philippine Ethnolinguistic Group"
+          },
+          {
+            "code": "RACE-PH-019",
+            "display": "Filipino-Chinese (Fil-Chi)"
+          },
+          {
+            "code": "RACE-PH-020",
+            "display": "Filipino-Spanish (Fil-Spanish)"
+          },
+          {
+            "code": "RACE-PH-021",
+            "display": "Filipino-American (Fil-Am)"
+          },
+          {
+            "code": "RACE-PH-022",
+            "display": "Filipino-Indian (Fil-Indian)"
+          },
+          {
+            "code": "RACE-INT-001",
+            "display": "Asian"
+          },
+          {
+            "code": "RACE-INT-002",
+            "display": "White / Caucasian"
+          },
+          {
+            "code": "RACE-INT-003",
+            "display": "Black / African"
+          },
+          {
+            "code": "RACE-INT-004",
+            "display": "Hispanic / Latino"
+          },
+          {
+            "code": "RACE-INT-005",
+            "display": "Middle Eastern / Arab"
+          },
+          {
+            "code": "RACE-INT-006",
+            "display": "Pacific Islander"
+          },
+          {
+            "code": "RACE-INT-007",
+            "display": "Mixed Race / Multiracial"
+          },
+          {
+            "code": "RACE-UNK-001",
+            "display": "Other Race / Ethnicity"
+          },
+          {
+            "code": "RACE-UNK-002",
+            "display": "Unknown / Not Stated"
+          }
+        ]
+      }
+    ]
+  },
+  "expansion": {
+    "timestamp": "2026-05-15T00:00:00+00:00",
+    "total": 31,
+    "offset": 0,
+    "parameter": [
+      {
+        "name": "version",
+        "valueUri": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs|0.2.0"
+      }
+    ],
+    "contains": [
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-001",
+        "display": "Tagalog"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-002",
+        "display": "Bisaya/Binisaya"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-003",
+        "display": "Ilocano"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-004",
+        "display": "Cebuano"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-005",
+        "display": "Ilonggo (Hiligaynon)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-006",
+        "display": "Bikol/Bicol"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-007",
+        "display": "Waray"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-008",
+        "display": "Kapampangan"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-009",
+        "display": "Pangasinan"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-010",
+        "display": "Maguindanao"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-011",
+        "display": "Maranao"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-012",
+        "display": "Tausug"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-013",
+        "display": "Sama/Bajau"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-014",
+        "display": "Yakan"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-015",
+        "display": "Igorot"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-016",
+        "display": "Aeta/Agta (Negrito)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-017",
+        "display": "Lumad"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-018",
+        "display": "Other Philippine Ethnolinguistic Group"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-019",
+        "display": "Filipino-Chinese (Fil-Chi)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-020",
+        "display": "Filipino-Spanish (Fil-Spanish)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-021",
+        "display": "Filipino-American (Fil-Am)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-PH-022",
+        "display": "Filipino-Indian (Fil-Indian)"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-001",
+        "display": "Asian"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-002",
+        "display": "White / Caucasian"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-003",
+        "display": "Black / African"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-004",
+        "display": "Hispanic / Latino"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-005",
+        "display": "Middle Eastern / Arab"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-006",
+        "display": "Pacific Islander"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-INT-007",
+        "display": "Mixed Race / Multiracial"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-UNK-001",
+        "display": "Other Race / Ethnicity"
+      },
+      {
+        "system": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+        "code": "RACE-UNK-002",
+        "display": "Unknown / Not Stated"
+      }
+    ]
+  }
+}

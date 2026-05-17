@@ -1,0 +1,6669 @@
+{
+  "resourceType": "ValueSet",
+  "id": "cities-municipalities",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/classification/psgc/ValueSet/cities-municipalities",
+  "version": "1Q-2026",
+  "name": "CitiesMunicipalities",
+  "title": "Cities, Municipalities, and Sub-Municipalities",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "All city, municipality, and sub-municipality codes from the Philippine Standard Geographic Code (PSGC) 1Q-2026, published by the Philippine Statistics Authority (PSA).",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://psa.gov.ph/classification/psgc",
+        "concept": [
+          {
+            "code": "1380100000",
+            "display": "City of Caloocan"
+          },
+          {
+            "code": "1380200000",
+            "display": "City of Las Piñas"
+          },
+          {
+            "code": "1380300000",
+            "display": "City of Makati"
+          },
+          {
+            "code": "1380400000",
+            "display": "City of Malabon"
+          },
+          {
+            "code": "1380500000",
+            "display": "City of Mandaluyong"
+          },
+          {
+            "code": "1380600000",
+            "display": "City of Manila"
+          },
+          {
+            "code": "1380601000",
+            "display": "Tondo I/II"
+          },
+          {
+            "code": "1380602000",
+            "display": "Binondo"
+          },
+          {
+            "code": "1380603000",
+            "display": "Quiapo"
+          },
+          {
+            "code": "1380604000",
+            "display": "San Nicolas"
+          },
+          {
+            "code": "1380605000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "1380606000",
+            "display": "Sampaloc"
+          },
+          {
+            "code": "1380607000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "1380608000",
+            "display": "Ermita"
+          },
+          {
+            "code": "1380609000",
+            "display": "Intramuros"
+          },
+          {
+            "code": "1380610000",
+            "display": "Malate"
+          },
+          {
+            "code": "1380611000",
+            "display": "Paco"
+          },
+          {
+            "code": "1380612000",
+            "display": "Pandacan"
+          },
+          {
+            "code": "1380613000",
+            "display": "Port Area"
+          },
+          {
+            "code": "1380614000",
+            "display": "Santa Ana"
+          },
+          {
+            "code": "1380700000",
+            "display": "City of Marikina"
+          },
+          {
+            "code": "1380800000",
+            "display": "City of Muntinlupa"
+          },
+          {
+            "code": "1380900000",
+            "display": "City of Navotas"
+          },
+          {
+            "code": "1381000000",
+            "display": "City of Parañaque"
+          },
+          {
+            "code": "1381100000",
+            "display": "Pasay City"
+          },
+          {
+            "code": "1381200000",
+            "display": "City of Pasig"
+          },
+          {
+            "code": "1381300000",
+            "display": "Quezon City"
+          },
+          {
+            "code": "1381400000",
+            "display": "City of San Juan"
+          },
+          {
+            "code": "1381500000",
+            "display": "City of Taguig"
+          },
+          {
+            "code": "1381600000",
+            "display": "City of Valenzuela"
+          },
+          {
+            "code": "1381701000",
+            "display": "Pateros"
+          },
+          {
+            "code": "1400101000",
+            "display": "Bangued"
+          },
+          {
+            "code": "1400102000",
+            "display": "Boliney"
+          },
+          {
+            "code": "1400103000",
+            "display": "Bucay"
+          },
+          {
+            "code": "1400104000",
+            "display": "Bucloc"
+          },
+          {
+            "code": "1400105000",
+            "display": "Daguioman"
+          },
+          {
+            "code": "1400106000",
+            "display": "Danglas"
+          },
+          {
+            "code": "1400107000",
+            "display": "Dolores"
+          },
+          {
+            "code": "1400108000",
+            "display": "La Paz"
+          },
+          {
+            "code": "1400109000",
+            "display": "Lacub"
+          },
+          {
+            "code": "1400110000",
+            "display": "Lagangilang"
+          },
+          {
+            "code": "1400111000",
+            "display": "Lagayan"
+          },
+          {
+            "code": "1400112000",
+            "display": "Langiden"
+          },
+          {
+            "code": "1400113000",
+            "display": "Licuan-Baay"
+          },
+          {
+            "code": "1400114000",
+            "display": "Luba"
+          },
+          {
+            "code": "1400115000",
+            "display": "Malibcong"
+          },
+          {
+            "code": "1400116000",
+            "display": "Manabo"
+          },
+          {
+            "code": "1400117000",
+            "display": "Peñarrubia"
+          },
+          {
+            "code": "1400118000",
+            "display": "Pidigan"
+          },
+          {
+            "code": "1400119000",
+            "display": "Pilar"
+          },
+          {
+            "code": "1400120000",
+            "display": "Sallapadan"
+          },
+          {
+            "code": "1400121000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "1400122000",
+            "display": "San Juan"
+          },
+          {
+            "code": "1400123000",
+            "display": "San Quintin"
+          },
+          {
+            "code": "1400124000",
+            "display": "Tayum"
+          },
+          {
+            "code": "1400125000",
+            "display": "Tineg"
+          },
+          {
+            "code": "1400126000",
+            "display": "Tubo"
+          },
+          {
+            "code": "1400127000",
+            "display": "Villaviciosa"
+          },
+          {
+            "code": "1401101000",
+            "display": "Atok"
+          },
+          {
+            "code": "1401103000",
+            "display": "Bakun"
+          },
+          {
+            "code": "1401104000",
+            "display": "Bokod"
+          },
+          {
+            "code": "1401105000",
+            "display": "Buguias"
+          },
+          {
+            "code": "1401106000",
+            "display": "Itogon"
+          },
+          {
+            "code": "1401107000",
+            "display": "Kabayan"
+          },
+          {
+            "code": "1401108000",
+            "display": "Kapangan"
+          },
+          {
+            "code": "1401109000",
+            "display": "Kibungan"
+          },
+          {
+            "code": "1401110000",
+            "display": "La Trinidad"
+          },
+          {
+            "code": "1401111000",
+            "display": "Mankayan"
+          },
+          {
+            "code": "1401112000",
+            "display": "Sablan"
+          },
+          {
+            "code": "1401113000",
+            "display": "Tuba"
+          },
+          {
+            "code": "1401114000",
+            "display": "Tublay"
+          },
+          {
+            "code": "1402701000",
+            "display": "Banaue"
+          },
+          {
+            "code": "1402702000",
+            "display": "Hungduan"
+          },
+          {
+            "code": "1402703000",
+            "display": "Kiangan"
+          },
+          {
+            "code": "1402704000",
+            "display": "Lagawe"
+          },
+          {
+            "code": "1402705000",
+            "display": "Lamut"
+          },
+          {
+            "code": "1402706000",
+            "display": "Mayoyao"
+          },
+          {
+            "code": "1402707000",
+            "display": "Alfonso Lista"
+          },
+          {
+            "code": "1402708000",
+            "display": "Aguinaldo"
+          },
+          {
+            "code": "1402709000",
+            "display": "Hingyon"
+          },
+          {
+            "code": "1402710000",
+            "display": "Tinoc"
+          },
+          {
+            "code": "1402711000",
+            "display": "Asipulo"
+          },
+          {
+            "code": "1403201000",
+            "display": "Balbalan"
+          },
+          {
+            "code": "1403206000",
+            "display": "Lubuagan"
+          },
+          {
+            "code": "1403208000",
+            "display": "Pasil"
+          },
+          {
+            "code": "1403209000",
+            "display": "Pinukpuk"
+          },
+          {
+            "code": "1403211000",
+            "display": "Rizal"
+          },
+          {
+            "code": "1403213000",
+            "display": "City of Tabuk"
+          },
+          {
+            "code": "1403214000",
+            "display": "Tanudan"
+          },
+          {
+            "code": "1403215000",
+            "display": "Tinglayan"
+          },
+          {
+            "code": "1404401000",
+            "display": "Barlig"
+          },
+          {
+            "code": "1404402000",
+            "display": "Bauko"
+          },
+          {
+            "code": "1404403000",
+            "display": "Besao"
+          },
+          {
+            "code": "1404404000",
+            "display": "Bontoc"
+          },
+          {
+            "code": "1404405000",
+            "display": "Natonin"
+          },
+          {
+            "code": "1404406000",
+            "display": "Paracelis"
+          },
+          {
+            "code": "1404407000",
+            "display": "Sabangan"
+          },
+          {
+            "code": "1404408000",
+            "display": "Sadanga"
+          },
+          {
+            "code": "1404409000",
+            "display": "Sagada"
+          },
+          {
+            "code": "1404410000",
+            "display": "Tadian"
+          },
+          {
+            "code": "1408101000",
+            "display": "Calanasan"
+          },
+          {
+            "code": "1408102000",
+            "display": "Conner"
+          },
+          {
+            "code": "1408103000",
+            "display": "Flora"
+          },
+          {
+            "code": "1408104000",
+            "display": "Kabugao"
+          },
+          {
+            "code": "1408105000",
+            "display": "Luna"
+          },
+          {
+            "code": "1408106000",
+            "display": "Pudtol"
+          },
+          {
+            "code": "1408107000",
+            "display": "Santa Marcela"
+          },
+          {
+            "code": "1430300000",
+            "display": "City of Baguio"
+          },
+          {
+            "code": "0102801000",
+            "display": "Adams"
+          },
+          {
+            "code": "0102802000",
+            "display": "Bacarra"
+          },
+          {
+            "code": "0102803000",
+            "display": "Badoc"
+          },
+          {
+            "code": "0102804000",
+            "display": "Bangui"
+          },
+          {
+            "code": "0102805000",
+            "display": "City of Batac"
+          },
+          {
+            "code": "0102806000",
+            "display": "Burgos"
+          },
+          {
+            "code": "0102807000",
+            "display": "Carasi"
+          },
+          {
+            "code": "0102808000",
+            "display": "Currimao"
+          },
+          {
+            "code": "0102809000",
+            "display": "Dingras"
+          },
+          {
+            "code": "0102810000",
+            "display": "Dumalneg"
+          },
+          {
+            "code": "0102811000",
+            "display": "Banna"
+          },
+          {
+            "code": "0102812000",
+            "display": "City of Laoag"
+          },
+          {
+            "code": "0102813000",
+            "display": "Marcos"
+          },
+          {
+            "code": "0102814000",
+            "display": "Nueva Era"
+          },
+          {
+            "code": "0102815000",
+            "display": "Pagudpud"
+          },
+          {
+            "code": "0102816000",
+            "display": "Paoay"
+          },
+          {
+            "code": "0102817000",
+            "display": "Pasuquin"
+          },
+          {
+            "code": "0102818000",
+            "display": "Piddig"
+          },
+          {
+            "code": "0102819000",
+            "display": "Pinili"
+          },
+          {
+            "code": "0102820000",
+            "display": "San Nicolas"
+          },
+          {
+            "code": "0102821000",
+            "display": "Sarrat"
+          },
+          {
+            "code": "0102822000",
+            "display": "Solsona"
+          },
+          {
+            "code": "0102823000",
+            "display": "Vintar"
+          },
+          {
+            "code": "0102901000",
+            "display": "Alilem"
+          },
+          {
+            "code": "0102902000",
+            "display": "Banayoyo"
+          },
+          {
+            "code": "0102903000",
+            "display": "Bantay"
+          },
+          {
+            "code": "0102904000",
+            "display": "Burgos"
+          },
+          {
+            "code": "0102905000",
+            "display": "Cabugao"
+          },
+          {
+            "code": "0102906000",
+            "display": "City of Candon"
+          },
+          {
+            "code": "0102907000",
+            "display": "Caoayan"
+          },
+          {
+            "code": "0102908000",
+            "display": "Cervantes"
+          },
+          {
+            "code": "0102909000",
+            "display": "Galimuyod"
+          },
+          {
+            "code": "0102910000",
+            "display": "Gregorio del Pilar"
+          },
+          {
+            "code": "0102911000",
+            "display": "Lidlidda"
+          },
+          {
+            "code": "0102912000",
+            "display": "Magsingal"
+          },
+          {
+            "code": "0102913000",
+            "display": "Nagbukel"
+          },
+          {
+            "code": "0102914000",
+            "display": "Narvacan"
+          },
+          {
+            "code": "0102915000",
+            "display": "Quirino"
+          },
+          {
+            "code": "0102916000",
+            "display": "Salcedo"
+          },
+          {
+            "code": "0102917000",
+            "display": "San Emilio"
+          },
+          {
+            "code": "0102918000",
+            "display": "San Esteban"
+          },
+          {
+            "code": "0102919000",
+            "display": "San Ildefonso"
+          },
+          {
+            "code": "0102920000",
+            "display": "San Juan"
+          },
+          {
+            "code": "0102921000",
+            "display": "San Vicente"
+          },
+          {
+            "code": "0102922000",
+            "display": "Santa"
+          },
+          {
+            "code": "0102923000",
+            "display": "Santa Catalina"
+          },
+          {
+            "code": "0102924000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "0102925000",
+            "display": "Santa Lucia"
+          },
+          {
+            "code": "0102926000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "0102927000",
+            "display": "Santiago"
+          },
+          {
+            "code": "0102928000",
+            "display": "Santo Domingo"
+          },
+          {
+            "code": "0102929000",
+            "display": "Sigay"
+          },
+          {
+            "code": "0102930000",
+            "display": "Sinait"
+          },
+          {
+            "code": "0102931000",
+            "display": "Sugpon"
+          },
+          {
+            "code": "0102932000",
+            "display": "Suyo"
+          },
+          {
+            "code": "0102933000",
+            "display": "Tagudin"
+          },
+          {
+            "code": "0102934000",
+            "display": "City of Vigan"
+          },
+          {
+            "code": "0103301000",
+            "display": "Agoo"
+          },
+          {
+            "code": "0103302000",
+            "display": "Aringay"
+          },
+          {
+            "code": "0103303000",
+            "display": "Bacnotan"
+          },
+          {
+            "code": "0103304000",
+            "display": "Bagulin"
+          },
+          {
+            "code": "0103305000",
+            "display": "Balaoan"
+          },
+          {
+            "code": "0103306000",
+            "display": "Bangar"
+          },
+          {
+            "code": "0103307000",
+            "display": "Bauang"
+          },
+          {
+            "code": "0103308000",
+            "display": "Burgos"
+          },
+          {
+            "code": "0103309000",
+            "display": "Caba"
+          },
+          {
+            "code": "0103310000",
+            "display": "Luna"
+          },
+          {
+            "code": "0103311000",
+            "display": "Naguilian"
+          },
+          {
+            "code": "0103312000",
+            "display": "Pugo"
+          },
+          {
+            "code": "0103313000",
+            "display": "Rosario"
+          },
+          {
+            "code": "0103314000",
+            "display": "City of San Fernando"
+          },
+          {
+            "code": "0103315000",
+            "display": "San Gabriel"
+          },
+          {
+            "code": "0103316000",
+            "display": "San Juan"
+          },
+          {
+            "code": "0103317000",
+            "display": "Santo Tomas"
+          },
+          {
+            "code": "0103318000",
+            "display": "Santol"
+          },
+          {
+            "code": "0103319000",
+            "display": "Sudipen"
+          },
+          {
+            "code": "0103320000",
+            "display": "Tubao"
+          },
+          {
+            "code": "0105501000",
+            "display": "Agno"
+          },
+          {
+            "code": "0105502000",
+            "display": "Aguilar"
+          },
+          {
+            "code": "0105503000",
+            "display": "City of Alaminos"
+          },
+          {
+            "code": "0105504000",
+            "display": "Alcala"
+          },
+          {
+            "code": "0105505000",
+            "display": "Anda"
+          },
+          {
+            "code": "0105506000",
+            "display": "Asingan"
+          },
+          {
+            "code": "0105507000",
+            "display": "Balungao"
+          },
+          {
+            "code": "0105508000",
+            "display": "Bani"
+          },
+          {
+            "code": "0105509000",
+            "display": "Basista"
+          },
+          {
+            "code": "0105510000",
+            "display": "Bautista"
+          },
+          {
+            "code": "0105511000",
+            "display": "Bayambang"
+          },
+          {
+            "code": "0105512000",
+            "display": "Binalonan"
+          },
+          {
+            "code": "0105513000",
+            "display": "Binmaley"
+          },
+          {
+            "code": "0105514000",
+            "display": "Bolinao"
+          },
+          {
+            "code": "0105515000",
+            "display": "Bugallon"
+          },
+          {
+            "code": "0105516000",
+            "display": "Burgos"
+          },
+          {
+            "code": "0105517000",
+            "display": "Calasiao"
+          },
+          {
+            "code": "0105518000",
+            "display": "City of Dagupan"
+          },
+          {
+            "code": "0105519000",
+            "display": "Dasol"
+          },
+          {
+            "code": "0105520000",
+            "display": "Infanta"
+          },
+          {
+            "code": "0105521000",
+            "display": "Labrador"
+          },
+          {
+            "code": "0105522000",
+            "display": "Lingayen"
+          },
+          {
+            "code": "0105523000",
+            "display": "Mabini"
+          },
+          {
+            "code": "0105524000",
+            "display": "Malasiqui"
+          },
+          {
+            "code": "0105525000",
+            "display": "Manaoag"
+          },
+          {
+            "code": "0105526000",
+            "display": "Mangaldan"
+          },
+          {
+            "code": "0105527000",
+            "display": "Mangatarem"
+          },
+          {
+            "code": "0105528000",
+            "display": "Mapandan"
+          },
+          {
+            "code": "0105529000",
+            "display": "Natividad"
+          },
+          {
+            "code": "0105530000",
+            "display": "Pozorrubio"
+          },
+          {
+            "code": "0105531000",
+            "display": "Rosales"
+          },
+          {
+            "code": "0105532000",
+            "display": "City of San Carlos"
+          },
+          {
+            "code": "0105533000",
+            "display": "San Fabian"
+          },
+          {
+            "code": "0105534000",
+            "display": "San Jacinto"
+          },
+          {
+            "code": "0105535000",
+            "display": "San Manuel"
+          },
+          {
+            "code": "0105536000",
+            "display": "San Nicolas"
+          },
+          {
+            "code": "0105537000",
+            "display": "San Quintin"
+          },
+          {
+            "code": "0105538000",
+            "display": "Santa Barbara"
+          },
+          {
+            "code": "0105539000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "0105540000",
+            "display": "Santo Tomas"
+          },
+          {
+            "code": "0105541000",
+            "display": "Sison"
+          },
+          {
+            "code": "0105542000",
+            "display": "Sual"
+          },
+          {
+            "code": "0105543000",
+            "display": "Tayug"
+          },
+          {
+            "code": "0105544000",
+            "display": "Umingan"
+          },
+          {
+            "code": "0105545000",
+            "display": "Urbiztondo"
+          },
+          {
+            "code": "0105546000",
+            "display": "City of Urdaneta"
+          },
+          {
+            "code": "0105547000",
+            "display": "Villasis"
+          },
+          {
+            "code": "0105548000",
+            "display": "Laoac"
+          },
+          {
+            "code": "0200901000",
+            "display": "Basco"
+          },
+          {
+            "code": "0200902000",
+            "display": "Itbayat"
+          },
+          {
+            "code": "0200903000",
+            "display": "Ivana"
+          },
+          {
+            "code": "0200904000",
+            "display": "Mahatao"
+          },
+          {
+            "code": "0200905000",
+            "display": "Sabtang"
+          },
+          {
+            "code": "0200906000",
+            "display": "Uyugan"
+          },
+          {
+            "code": "0201501000",
+            "display": "Abulug"
+          },
+          {
+            "code": "0201502000",
+            "display": "Alcala"
+          },
+          {
+            "code": "0201503000",
+            "display": "Allacapan"
+          },
+          {
+            "code": "0201504000",
+            "display": "Amulung"
+          },
+          {
+            "code": "0201505000",
+            "display": "Aparri"
+          },
+          {
+            "code": "0201506000",
+            "display": "Baggao"
+          },
+          {
+            "code": "0201507000",
+            "display": "Ballesteros"
+          },
+          {
+            "code": "0201508000",
+            "display": "Buguey"
+          },
+          {
+            "code": "0201509000",
+            "display": "Calayan"
+          },
+          {
+            "code": "0201510000",
+            "display": "Camalaniugan"
+          },
+          {
+            "code": "0201511000",
+            "display": "Claveria"
+          },
+          {
+            "code": "0201512000",
+            "display": "Enrile"
+          },
+          {
+            "code": "0201513000",
+            "display": "Gattaran"
+          },
+          {
+            "code": "0201514000",
+            "display": "Gonzaga"
+          },
+          {
+            "code": "0201515000",
+            "display": "Iguig"
+          },
+          {
+            "code": "0201516000",
+            "display": "Lal-Lo"
+          },
+          {
+            "code": "0201517000",
+            "display": "Lasam"
+          },
+          {
+            "code": "0201518000",
+            "display": "Pamplona"
+          },
+          {
+            "code": "0201519000",
+            "display": "Peñablanca"
+          },
+          {
+            "code": "0201520000",
+            "display": "Piat"
+          },
+          {
+            "code": "0201521000",
+            "display": "Rizal"
+          },
+          {
+            "code": "0201522000",
+            "display": "Sanchez Mira"
+          },
+          {
+            "code": "0201523000",
+            "display": "Santa Ana"
+          },
+          {
+            "code": "0201524000",
+            "display": "Santa Praxedes"
+          },
+          {
+            "code": "0201525000",
+            "display": "Santa Teresita"
+          },
+          {
+            "code": "0201526000",
+            "display": "Santo Niño"
+          },
+          {
+            "code": "0201527000",
+            "display": "Solana"
+          },
+          {
+            "code": "0201528000",
+            "display": "Tuao"
+          },
+          {
+            "code": "0201529000",
+            "display": "Tuguegarao City"
+          },
+          {
+            "code": "0203101000",
+            "display": "Alicia"
+          },
+          {
+            "code": "0203102000",
+            "display": "Angadanan"
+          },
+          {
+            "code": "0203103000",
+            "display": "Aurora"
+          },
+          {
+            "code": "0203104000",
+            "display": "Benito Soliven"
+          },
+          {
+            "code": "0203105000",
+            "display": "Burgos"
+          },
+          {
+            "code": "0203106000",
+            "display": "Cabagan"
+          },
+          {
+            "code": "0203107000",
+            "display": "Cabatuan"
+          },
+          {
+            "code": "0203108000",
+            "display": "City of Cauayan"
+          },
+          {
+            "code": "0203109000",
+            "display": "Cordon"
+          },
+          {
+            "code": "0203110000",
+            "display": "Dinapigue"
+          },
+          {
+            "code": "0203111000",
+            "display": "Divilacan"
+          },
+          {
+            "code": "0203112000",
+            "display": "Echague"
+          },
+          {
+            "code": "0203113000",
+            "display": "Gamu"
+          },
+          {
+            "code": "0203114000",
+            "display": "City of Ilagan"
+          },
+          {
+            "code": "0203115000",
+            "display": "Jones"
+          },
+          {
+            "code": "0203116000",
+            "display": "Luna"
+          },
+          {
+            "code": "0203117000",
+            "display": "Maconacon"
+          },
+          {
+            "code": "0203118000",
+            "display": "Delfin Albano"
+          },
+          {
+            "code": "0203119000",
+            "display": "Mallig"
+          },
+          {
+            "code": "0203120000",
+            "display": "Naguilian"
+          },
+          {
+            "code": "0203121000",
+            "display": "Palanan"
+          },
+          {
+            "code": "0203122000",
+            "display": "Quezon"
+          },
+          {
+            "code": "0203123000",
+            "display": "Quirino"
+          },
+          {
+            "code": "0203124000",
+            "display": "Ramon"
+          },
+          {
+            "code": "0203125000",
+            "display": "Reina Mercedes"
+          },
+          {
+            "code": "0203126000",
+            "display": "Roxas"
+          },
+          {
+            "code": "0203127000",
+            "display": "San Agustin"
+          },
+          {
+            "code": "0203128000",
+            "display": "San Guillermo"
+          },
+          {
+            "code": "0203129000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "0203130000",
+            "display": "San Manuel"
+          },
+          {
+            "code": "0203131000",
+            "display": "San Mariano"
+          },
+          {
+            "code": "0203132000",
+            "display": "San Mateo"
+          },
+          {
+            "code": "0203133000",
+            "display": "San Pablo"
+          },
+          {
+            "code": "0203134000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "0203135000",
+            "display": "City of Santiago"
+          },
+          {
+            "code": "0203136000",
+            "display": "Santo Tomas"
+          },
+          {
+            "code": "0203137000",
+            "display": "Tumauini"
+          },
+          {
+            "code": "0205001000",
+            "display": "Ambaguio"
+          },
+          {
+            "code": "0205002000",
+            "display": "Aritao"
+          },
+          {
+            "code": "0205003000",
+            "display": "Bagabag"
+          },
+          {
+            "code": "0205004000",
+            "display": "Bambang"
+          },
+          {
+            "code": "0205005000",
+            "display": "Bayombong"
+          },
+          {
+            "code": "0205006000",
+            "display": "Diadi"
+          },
+          {
+            "code": "0205007000",
+            "display": "Dupax del Norte"
+          },
+          {
+            "code": "0205008000",
+            "display": "Dupax del Sur"
+          },
+          {
+            "code": "0205009000",
+            "display": "Kasibu"
+          },
+          {
+            "code": "0205010000",
+            "display": "Kayapa"
+          },
+          {
+            "code": "0205011000",
+            "display": "Quezon"
+          },
+          {
+            "code": "0205012000",
+            "display": "Santa Fe"
+          },
+          {
+            "code": "0205013000",
+            "display": "Solano"
+          },
+          {
+            "code": "0205014000",
+            "display": "Villaverde"
+          },
+          {
+            "code": "0205015000",
+            "display": "Alfonso Castaneda"
+          },
+          {
+            "code": "0205701000",
+            "display": "Aglipay"
+          },
+          {
+            "code": "0205702000",
+            "display": "Cabarroguis"
+          },
+          {
+            "code": "0205703000",
+            "display": "Diffun"
+          },
+          {
+            "code": "0205704000",
+            "display": "Maddela"
+          },
+          {
+            "code": "0205705000",
+            "display": "Saguday"
+          },
+          {
+            "code": "0205706000",
+            "display": "Nagtipunan"
+          },
+          {
+            "code": "0300801000",
+            "display": "Abucay"
+          },
+          {
+            "code": "0300802000",
+            "display": "Bagac"
+          },
+          {
+            "code": "0300803000",
+            "display": "City of Balanga"
+          },
+          {
+            "code": "0300804000",
+            "display": "Dinalupihan"
+          },
+          {
+            "code": "0300805000",
+            "display": "Hermosa"
+          },
+          {
+            "code": "0300806000",
+            "display": "Limay"
+          },
+          {
+            "code": "0300807000",
+            "display": "Mariveles"
+          },
+          {
+            "code": "0300808000",
+            "display": "Morong"
+          },
+          {
+            "code": "0300809000",
+            "display": "Orani"
+          },
+          {
+            "code": "0300810000",
+            "display": "Orion"
+          },
+          {
+            "code": "0300811000",
+            "display": "Pilar"
+          },
+          {
+            "code": "0300812000",
+            "display": "Samal"
+          },
+          {
+            "code": "0301401000",
+            "display": "Angat"
+          },
+          {
+            "code": "0301402000",
+            "display": "Balagtas"
+          },
+          {
+            "code": "0301403000",
+            "display": "City of Baliwag"
+          },
+          {
+            "code": "0301404000",
+            "display": "Bocaue"
+          },
+          {
+            "code": "0301405000",
+            "display": "Bulacan"
+          },
+          {
+            "code": "0301406000",
+            "display": "Bustos"
+          },
+          {
+            "code": "0301407000",
+            "display": "Calumpit"
+          },
+          {
+            "code": "0301408000",
+            "display": "Guiguinto"
+          },
+          {
+            "code": "0301409000",
+            "display": "Hagonoy"
+          },
+          {
+            "code": "0301410000",
+            "display": "City of Malolos"
+          },
+          {
+            "code": "0301411000",
+            "display": "Marilao"
+          },
+          {
+            "code": "0301412000",
+            "display": "City of Meycauayan"
+          },
+          {
+            "code": "0301413000",
+            "display": "Norzagaray"
+          },
+          {
+            "code": "0301414000",
+            "display": "Obando"
+          },
+          {
+            "code": "0301415000",
+            "display": "Pandi"
+          },
+          {
+            "code": "0301416000",
+            "display": "Paombong"
+          },
+          {
+            "code": "0301417000",
+            "display": "Plaridel"
+          },
+          {
+            "code": "0301418000",
+            "display": "Pulilan"
+          },
+          {
+            "code": "0301419000",
+            "display": "San Ildefonso"
+          },
+          {
+            "code": "0301420000",
+            "display": "City of San Jose Del Monte"
+          },
+          {
+            "code": "0301421000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0301422000",
+            "display": "San Rafael"
+          },
+          {
+            "code": "0301423000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "0301424000",
+            "display": "Doña Remedios Trinidad"
+          },
+          {
+            "code": "0304901000",
+            "display": "Aliaga"
+          },
+          {
+            "code": "0304902000",
+            "display": "Bongabon"
+          },
+          {
+            "code": "0304903000",
+            "display": "City of Cabanatuan"
+          },
+          {
+            "code": "0304904000",
+            "display": "Cabiao"
+          },
+          {
+            "code": "0304905000",
+            "display": "Carranglan"
+          },
+          {
+            "code": "0304906000",
+            "display": "Cuyapo"
+          },
+          {
+            "code": "0304907000",
+            "display": "Gabaldon"
+          },
+          {
+            "code": "0304908000",
+            "display": "City of Gapan"
+          },
+          {
+            "code": "0304909000",
+            "display": "General Mamerto Natividad"
+          },
+          {
+            "code": "0304910000",
+            "display": "General Tinio"
+          },
+          {
+            "code": "0304911000",
+            "display": "Guimba"
+          },
+          {
+            "code": "0304912000",
+            "display": "Jaen"
+          },
+          {
+            "code": "0304913000",
+            "display": "Laur"
+          },
+          {
+            "code": "0304914000",
+            "display": "Licab"
+          },
+          {
+            "code": "0304915000",
+            "display": "Llanera"
+          },
+          {
+            "code": "0304916000",
+            "display": "Lupao"
+          },
+          {
+            "code": "0304917000",
+            "display": "Science City of Muñoz"
+          },
+          {
+            "code": "0304918000",
+            "display": "Nampicuan"
+          },
+          {
+            "code": "0304919000",
+            "display": "City of Palayan"
+          },
+          {
+            "code": "0304920000",
+            "display": "Pantabangan"
+          },
+          {
+            "code": "0304921000",
+            "display": "Peñaranda"
+          },
+          {
+            "code": "0304922000",
+            "display": "Quezon"
+          },
+          {
+            "code": "0304923000",
+            "display": "Rizal"
+          },
+          {
+            "code": "0304924000",
+            "display": "San Antonio"
+          },
+          {
+            "code": "0304925000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "0304926000",
+            "display": "San Jose City"
+          },
+          {
+            "code": "0304927000",
+            "display": "San Leonardo"
+          },
+          {
+            "code": "0304928000",
+            "display": "Santa Rosa"
+          },
+          {
+            "code": "0304929000",
+            "display": "Santo Domingo"
+          },
+          {
+            "code": "0304930000",
+            "display": "Talavera"
+          },
+          {
+            "code": "0304931000",
+            "display": "Talugtug"
+          },
+          {
+            "code": "0304932000",
+            "display": "Zaragoza"
+          },
+          {
+            "code": "0305402000",
+            "display": "Apalit"
+          },
+          {
+            "code": "0305403000",
+            "display": "Arayat"
+          },
+          {
+            "code": "0305404000",
+            "display": "Bacolor"
+          },
+          {
+            "code": "0305405000",
+            "display": "Candaba"
+          },
+          {
+            "code": "0305406000",
+            "display": "Floridablanca"
+          },
+          {
+            "code": "0305407000",
+            "display": "Guagua"
+          },
+          {
+            "code": "0305408000",
+            "display": "Lubao"
+          },
+          {
+            "code": "0305409000",
+            "display": "Mabalacat City"
+          },
+          {
+            "code": "0305410000",
+            "display": "Macabebe"
+          },
+          {
+            "code": "0305411000",
+            "display": "Magalang"
+          },
+          {
+            "code": "0305412000",
+            "display": "Masantol"
+          },
+          {
+            "code": "0305413000",
+            "display": "Mexico"
+          },
+          {
+            "code": "0305414000",
+            "display": "Minalin"
+          },
+          {
+            "code": "0305415000",
+            "display": "Porac"
+          },
+          {
+            "code": "0305416000",
+            "display": "City of San Fernando"
+          },
+          {
+            "code": "0305417000",
+            "display": "San Luis"
+          },
+          {
+            "code": "0305418000",
+            "display": "San Simon"
+          },
+          {
+            "code": "0305419000",
+            "display": "Santa Ana"
+          },
+          {
+            "code": "0305420000",
+            "display": "Santa Rita"
+          },
+          {
+            "code": "0305421000",
+            "display": "Sto. Tomas"
+          },
+          {
+            "code": "0305422000",
+            "display": "Sasmuan"
+          },
+          {
+            "code": "0306901000",
+            "display": "Anao"
+          },
+          {
+            "code": "0306902000",
+            "display": "Bamban"
+          },
+          {
+            "code": "0306903000",
+            "display": "Camiling"
+          },
+          {
+            "code": "0306904000",
+            "display": "Capas"
+          },
+          {
+            "code": "0306905000",
+            "display": "Concepcion"
+          },
+          {
+            "code": "0306906000",
+            "display": "Gerona"
+          },
+          {
+            "code": "0306907000",
+            "display": "La Paz"
+          },
+          {
+            "code": "0306908000",
+            "display": "Mayantoc"
+          },
+          {
+            "code": "0306909000",
+            "display": "Moncada"
+          },
+          {
+            "code": "0306910000",
+            "display": "Paniqui"
+          },
+          {
+            "code": "0306911000",
+            "display": "Pura"
+          },
+          {
+            "code": "0306912000",
+            "display": "Ramos"
+          },
+          {
+            "code": "0306913000",
+            "display": "San Clemente"
+          },
+          {
+            "code": "0306914000",
+            "display": "San Manuel"
+          },
+          {
+            "code": "0306915000",
+            "display": "Santa Ignacia"
+          },
+          {
+            "code": "0306916000",
+            "display": "City of Tarlac"
+          },
+          {
+            "code": "0306917000",
+            "display": "Victoria"
+          },
+          {
+            "code": "0306918000",
+            "display": "San Jose"
+          },
+          {
+            "code": "0307101000",
+            "display": "Botolan"
+          },
+          {
+            "code": "0307102000",
+            "display": "Cabangan"
+          },
+          {
+            "code": "0307103000",
+            "display": "Candelaria"
+          },
+          {
+            "code": "0307104000",
+            "display": "Castillejos"
+          },
+          {
+            "code": "0307105000",
+            "display": "Iba"
+          },
+          {
+            "code": "0307106000",
+            "display": "Masinloc"
+          },
+          {
+            "code": "0307108000",
+            "display": "Palauig"
+          },
+          {
+            "code": "0307109000",
+            "display": "San Antonio"
+          },
+          {
+            "code": "0307110000",
+            "display": "San Felipe"
+          },
+          {
+            "code": "0307111000",
+            "display": "San Marcelino"
+          },
+          {
+            "code": "0307112000",
+            "display": "San Narciso"
+          },
+          {
+            "code": "0307113000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "0307114000",
+            "display": "Subic"
+          },
+          {
+            "code": "0307701000",
+            "display": "Baler"
+          },
+          {
+            "code": "0307702000",
+            "display": "Casiguran"
+          },
+          {
+            "code": "0307703000",
+            "display": "Dilasag"
+          },
+          {
+            "code": "0307704000",
+            "display": "Dinalungan"
+          },
+          {
+            "code": "0307705000",
+            "display": "Dingalan"
+          },
+          {
+            "code": "0307706000",
+            "display": "Dipaculao"
+          },
+          {
+            "code": "0307707000",
+            "display": "Maria Aurora"
+          },
+          {
+            "code": "0307708000",
+            "display": "San Luis"
+          },
+          {
+            "code": "0330100000",
+            "display": "City of Angeles"
+          },
+          {
+            "code": "0331400000",
+            "display": "City of Olongapo"
+          },
+          {
+            "code": "0401001000",
+            "display": "Agoncillo"
+          },
+          {
+            "code": "0401002000",
+            "display": "Alitagtag"
+          },
+          {
+            "code": "0401003000",
+            "display": "Balayan"
+          },
+          {
+            "code": "0401004000",
+            "display": "Balete"
+          },
+          {
+            "code": "0401005000",
+            "display": "Batangas City"
+          },
+          {
+            "code": "0401006000",
+            "display": "Bauan"
+          },
+          {
+            "code": "0401007000",
+            "display": "City of Calaca"
+          },
+          {
+            "code": "0401008000",
+            "display": "Calatagan"
+          },
+          {
+            "code": "0401009000",
+            "display": "Cuenca"
+          },
+          {
+            "code": "0401010000",
+            "display": "Ibaan"
+          },
+          {
+            "code": "0401011000",
+            "display": "Laurel"
+          },
+          {
+            "code": "0401012000",
+            "display": "Lemery"
+          },
+          {
+            "code": "0401013000",
+            "display": "Lian"
+          },
+          {
+            "code": "0401014000",
+            "display": "City of Lipa"
+          },
+          {
+            "code": "0401015000",
+            "display": "Lobo"
+          },
+          {
+            "code": "0401016000",
+            "display": "Mabini"
+          },
+          {
+            "code": "0401017000",
+            "display": "Malvar"
+          },
+          {
+            "code": "0401018000",
+            "display": "Mataasnakahoy"
+          },
+          {
+            "code": "0401019000",
+            "display": "Nasugbu"
+          },
+          {
+            "code": "0401020000",
+            "display": "Padre Garcia"
+          },
+          {
+            "code": "0401021000",
+            "display": "Rosario"
+          },
+          {
+            "code": "0401022000",
+            "display": "San Jose"
+          },
+          {
+            "code": "0401023000",
+            "display": "San Juan"
+          },
+          {
+            "code": "0401024000",
+            "display": "San Luis"
+          },
+          {
+            "code": "0401025000",
+            "display": "San Nicolas"
+          },
+          {
+            "code": "0401026000",
+            "display": "San Pascual"
+          },
+          {
+            "code": "0401027000",
+            "display": "Santa Teresita"
+          },
+          {
+            "code": "0401028000",
+            "display": "City of Sto. Tomas"
+          },
+          {
+            "code": "0401029000",
+            "display": "Taal"
+          },
+          {
+            "code": "0401030000",
+            "display": "Talisay"
+          },
+          {
+            "code": "0401031000",
+            "display": "City of Tanauan"
+          },
+          {
+            "code": "0401032000",
+            "display": "Taysan"
+          },
+          {
+            "code": "0401033000",
+            "display": "Tingloy"
+          },
+          {
+            "code": "0401034000",
+            "display": "Tuy"
+          },
+          {
+            "code": "0402101000",
+            "display": "Alfonso"
+          },
+          {
+            "code": "0402102000",
+            "display": "Amadeo"
+          },
+          {
+            "code": "0402103000",
+            "display": "City of Bacoor"
+          },
+          {
+            "code": "0402104000",
+            "display": "City of Carmona"
+          },
+          {
+            "code": "0402105000",
+            "display": "City of Cavite"
+          },
+          {
+            "code": "0402106000",
+            "display": "City of Dasmariñas"
+          },
+          {
+            "code": "0402107000",
+            "display": "General Emilio Aguinaldo"
+          },
+          {
+            "code": "0402108000",
+            "display": "City of General Trias"
+          },
+          {
+            "code": "0402109000",
+            "display": "City of Imus"
+          },
+          {
+            "code": "0402110000",
+            "display": "Indang"
+          },
+          {
+            "code": "0402111000",
+            "display": "Kawit"
+          },
+          {
+            "code": "0402112000",
+            "display": "Magallanes"
+          },
+          {
+            "code": "0402113000",
+            "display": "Maragondon"
+          },
+          {
+            "code": "0402114000",
+            "display": "Mendez"
+          },
+          {
+            "code": "0402115000",
+            "display": "Naic"
+          },
+          {
+            "code": "0402116000",
+            "display": "Noveleta"
+          },
+          {
+            "code": "0402117000",
+            "display": "Rosario"
+          },
+          {
+            "code": "0402118000",
+            "display": "Silang"
+          },
+          {
+            "code": "0402119000",
+            "display": "City of Tagaytay"
+          },
+          {
+            "code": "0402120000",
+            "display": "Tanza"
+          },
+          {
+            "code": "0402121000",
+            "display": "Ternate"
+          },
+          {
+            "code": "0402122000",
+            "display": "City of Trece Martires"
+          },
+          {
+            "code": "0402123000",
+            "display": "Gen. Mariano Alvarez"
+          },
+          {
+            "code": "0403401000",
+            "display": "Alaminos"
+          },
+          {
+            "code": "0403402000",
+            "display": "Bay"
+          },
+          {
+            "code": "0403403000",
+            "display": "City of Biñan"
+          },
+          {
+            "code": "0403404000",
+            "display": "City of Cabuyao"
+          },
+          {
+            "code": "0403405000",
+            "display": "City of Calamba"
+          },
+          {
+            "code": "0403406000",
+            "display": "Calauan"
+          },
+          {
+            "code": "0403407000",
+            "display": "Cavinti"
+          },
+          {
+            "code": "0403408000",
+            "display": "Famy"
+          },
+          {
+            "code": "0403409000",
+            "display": "Kalayaan"
+          },
+          {
+            "code": "0403410000",
+            "display": "Liliw"
+          },
+          {
+            "code": "0403411000",
+            "display": "Los Baños"
+          },
+          {
+            "code": "0403412000",
+            "display": "Luisiana"
+          },
+          {
+            "code": "0403413000",
+            "display": "Lumban"
+          },
+          {
+            "code": "0403414000",
+            "display": "Mabitac"
+          },
+          {
+            "code": "0403415000",
+            "display": "Magdalena"
+          },
+          {
+            "code": "0403416000",
+            "display": "Majayjay"
+          },
+          {
+            "code": "0403417000",
+            "display": "Nagcarlan"
+          },
+          {
+            "code": "0403418000",
+            "display": "Paete"
+          },
+          {
+            "code": "0403419000",
+            "display": "Pagsanjan"
+          },
+          {
+            "code": "0403420000",
+            "display": "Pakil"
+          },
+          {
+            "code": "0403421000",
+            "display": "Pangil"
+          },
+          {
+            "code": "0403422000",
+            "display": "Pila"
+          },
+          {
+            "code": "0403423000",
+            "display": "Rizal"
+          },
+          {
+            "code": "0403424000",
+            "display": "City of San Pablo"
+          },
+          {
+            "code": "0403425000",
+            "display": "City of San Pedro"
+          },
+          {
+            "code": "0403426000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "0403427000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "0403428000",
+            "display": "City of Santa Rosa"
+          },
+          {
+            "code": "0403429000",
+            "display": "Siniloan"
+          },
+          {
+            "code": "0403430000",
+            "display": "Victoria"
+          },
+          {
+            "code": "0405601000",
+            "display": "Agdangan"
+          },
+          {
+            "code": "0405602000",
+            "display": "Alabat"
+          },
+          {
+            "code": "0405603000",
+            "display": "Atimonan"
+          },
+          {
+            "code": "0405605000",
+            "display": "Buenavista"
+          },
+          {
+            "code": "0405606000",
+            "display": "Burdeos"
+          },
+          {
+            "code": "0405607000",
+            "display": "Calauag"
+          },
+          {
+            "code": "0405608000",
+            "display": "Candelaria"
+          },
+          {
+            "code": "0405610000",
+            "display": "Catanauan"
+          },
+          {
+            "code": "0405615000",
+            "display": "Dolores"
+          },
+          {
+            "code": "0405616000",
+            "display": "General Luna"
+          },
+          {
+            "code": "0405617000",
+            "display": "General Nakar"
+          },
+          {
+            "code": "0405618000",
+            "display": "Guinayangan"
+          },
+          {
+            "code": "0405619000",
+            "display": "Gumaca"
+          },
+          {
+            "code": "0405620000",
+            "display": "Infanta"
+          },
+          {
+            "code": "0405621000",
+            "display": "Jomalig"
+          },
+          {
+            "code": "0405622000",
+            "display": "Lopez"
+          },
+          {
+            "code": "0405623000",
+            "display": "Lucban"
+          },
+          {
+            "code": "0405625000",
+            "display": "Macalelon"
+          },
+          {
+            "code": "0405627000",
+            "display": "Mauban"
+          },
+          {
+            "code": "0405628000",
+            "display": "Mulanay"
+          },
+          {
+            "code": "0405629000",
+            "display": "Padre Burgos"
+          },
+          {
+            "code": "0405630000",
+            "display": "Pagbilao"
+          },
+          {
+            "code": "0405631000",
+            "display": "Panukulan"
+          },
+          {
+            "code": "0405632000",
+            "display": "Patnanungan"
+          },
+          {
+            "code": "0405633000",
+            "display": "Perez"
+          },
+          {
+            "code": "0405634000",
+            "display": "Pitogo"
+          },
+          {
+            "code": "0405635000",
+            "display": "Plaridel"
+          },
+          {
+            "code": "0405636000",
+            "display": "Polillo"
+          },
+          {
+            "code": "0405637000",
+            "display": "Quezon"
+          },
+          {
+            "code": "0405638000",
+            "display": "Real"
+          },
+          {
+            "code": "0405639000",
+            "display": "Sampaloc"
+          },
+          {
+            "code": "0405640000",
+            "display": "San Andres"
+          },
+          {
+            "code": "0405641000",
+            "display": "San Antonio"
+          },
+          {
+            "code": "0405642000",
+            "display": "San Francisco"
+          },
+          {
+            "code": "0405644000",
+            "display": "San Narciso"
+          },
+          {
+            "code": "0405645000",
+            "display": "Sariaya"
+          },
+          {
+            "code": "0405646000",
+            "display": "Tagkawayan"
+          },
+          {
+            "code": "0405647000",
+            "display": "City of Tayabas"
+          },
+          {
+            "code": "0405648000",
+            "display": "Tiaong"
+          },
+          {
+            "code": "0405649000",
+            "display": "Unisan"
+          },
+          {
+            "code": "0405801000",
+            "display": "Angono"
+          },
+          {
+            "code": "0405802000",
+            "display": "City of Antipolo"
+          },
+          {
+            "code": "0405803000",
+            "display": "Baras"
+          },
+          {
+            "code": "0405804000",
+            "display": "Binangonan"
+          },
+          {
+            "code": "0405805000",
+            "display": "Cainta"
+          },
+          {
+            "code": "0405806000",
+            "display": "Cardona"
+          },
+          {
+            "code": "0405807000",
+            "display": "Jala-Jala"
+          },
+          {
+            "code": "0405808000",
+            "display": "Rodriguez"
+          },
+          {
+            "code": "0405809000",
+            "display": "Morong"
+          },
+          {
+            "code": "0405810000",
+            "display": "Pililla"
+          },
+          {
+            "code": "0405811000",
+            "display": "San Mateo"
+          },
+          {
+            "code": "0405812000",
+            "display": "Tanay"
+          },
+          {
+            "code": "0405813000",
+            "display": "Taytay"
+          },
+          {
+            "code": "0405814000",
+            "display": "Teresa"
+          },
+          {
+            "code": "0431200000",
+            "display": "City of Lucena"
+          },
+          {
+            "code": "1704001000",
+            "display": "Boac"
+          },
+          {
+            "code": "1704002000",
+            "display": "Buenavista"
+          },
+          {
+            "code": "1704003000",
+            "display": "Gasan"
+          },
+          {
+            "code": "1704004000",
+            "display": "Mogpog"
+          },
+          {
+            "code": "1704005000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "1704006000",
+            "display": "Torrijos"
+          },
+          {
+            "code": "1705101000",
+            "display": "Abra De Ilog"
+          },
+          {
+            "code": "1705102000",
+            "display": "Calintaan"
+          },
+          {
+            "code": "1705103000",
+            "display": "Looc"
+          },
+          {
+            "code": "1705104000",
+            "display": "Lubang"
+          },
+          {
+            "code": "1705105000",
+            "display": "Magsaysay"
+          },
+          {
+            "code": "1705106000",
+            "display": "Mamburao"
+          },
+          {
+            "code": "1705107000",
+            "display": "Paluan"
+          },
+          {
+            "code": "1705108000",
+            "display": "Rizal"
+          },
+          {
+            "code": "1705109000",
+            "display": "Sablayan"
+          },
+          {
+            "code": "1705110000",
+            "display": "San Jose"
+          },
+          {
+            "code": "1705111000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "1705201000",
+            "display": "Baco"
+          },
+          {
+            "code": "1705202000",
+            "display": "Bansud"
+          },
+          {
+            "code": "1705203000",
+            "display": "Bongabong"
+          },
+          {
+            "code": "1705204000",
+            "display": "Bulalacao"
+          },
+          {
+            "code": "1705205000",
+            "display": "City of Calapan"
+          },
+          {
+            "code": "1705206000",
+            "display": "Gloria"
+          },
+          {
+            "code": "1705207000",
+            "display": "Mansalay"
+          },
+          {
+            "code": "1705208000",
+            "display": "Naujan"
+          },
+          {
+            "code": "1705209000",
+            "display": "Pinamalayan"
+          },
+          {
+            "code": "1705210000",
+            "display": "Pola"
+          },
+          {
+            "code": "1705211000",
+            "display": "Puerto Galera"
+          },
+          {
+            "code": "1705212000",
+            "display": "Roxas"
+          },
+          {
+            "code": "1705213000",
+            "display": "San Teodoro"
+          },
+          {
+            "code": "1705214000",
+            "display": "Socorro"
+          },
+          {
+            "code": "1705215000",
+            "display": "Victoria"
+          },
+          {
+            "code": "1705301000",
+            "display": "Aborlan"
+          },
+          {
+            "code": "1705302000",
+            "display": "Agutaya"
+          },
+          {
+            "code": "1705303000",
+            "display": "Araceli"
+          },
+          {
+            "code": "1705304000",
+            "display": "Balabac"
+          },
+          {
+            "code": "1705305000",
+            "display": "Bataraza"
+          },
+          {
+            "code": "1705306000",
+            "display": "Brooke's Point"
+          },
+          {
+            "code": "1705307000",
+            "display": "Busuanga"
+          },
+          {
+            "code": "1705308000",
+            "display": "Cagayancillo"
+          },
+          {
+            "code": "1705309000",
+            "display": "Coron"
+          },
+          {
+            "code": "1705310000",
+            "display": "Cuyo"
+          },
+          {
+            "code": "1705311000",
+            "display": "Dumaran"
+          },
+          {
+            "code": "1705312000",
+            "display": "El Nido"
+          },
+          {
+            "code": "1705313000",
+            "display": "Linapacan"
+          },
+          {
+            "code": "1705314000",
+            "display": "Magsaysay"
+          },
+          {
+            "code": "1705315000",
+            "display": "Narra"
+          },
+          {
+            "code": "1705317000",
+            "display": "Quezon"
+          },
+          {
+            "code": "1705318000",
+            "display": "Roxas"
+          },
+          {
+            "code": "1705319000",
+            "display": "San Vicente"
+          },
+          {
+            "code": "1705320000",
+            "display": "Taytay"
+          },
+          {
+            "code": "1705321000",
+            "display": "Kalayaan"
+          },
+          {
+            "code": "1705322000",
+            "display": "Culion"
+          },
+          {
+            "code": "1705323000",
+            "display": "Dr. Jose P. Rizal"
+          },
+          {
+            "code": "1705324000",
+            "display": "Sofronio Española"
+          },
+          {
+            "code": "1705901000",
+            "display": "Alcantara"
+          },
+          {
+            "code": "1705902000",
+            "display": "Banton"
+          },
+          {
+            "code": "1705903000",
+            "display": "Cajidiocan"
+          },
+          {
+            "code": "1705904000",
+            "display": "Calatrava"
+          },
+          {
+            "code": "1705905000",
+            "display": "Concepcion"
+          },
+          {
+            "code": "1705906000",
+            "display": "Corcuera"
+          },
+          {
+            "code": "1705907000",
+            "display": "Looc"
+          },
+          {
+            "code": "1705908000",
+            "display": "Magdiwang"
+          },
+          {
+            "code": "1705909000",
+            "display": "Odiongan"
+          },
+          {
+            "code": "1705910000",
+            "display": "Romblon"
+          },
+          {
+            "code": "1705911000",
+            "display": "San Agustin"
+          },
+          {
+            "code": "1705912000",
+            "display": "San Andres"
+          },
+          {
+            "code": "1705913000",
+            "display": "San Fernando"
+          },
+          {
+            "code": "1705914000",
+            "display": "San Jose"
+          },
+          {
+            "code": "1705915000",
+            "display": "Santa Fe"
+          },
+          {
+            "code": "1705916000",
+            "display": "Ferrol"
+          },
+          {
+            "code": "1705917000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "1731500000",
+            "display": "City of Puerto Princesa"
+          },
+          {
+            "code": "0500501000",
+            "display": "Bacacay"
+          },
+          {
+            "code": "0500502000",
+            "display": "Camalig"
+          },
+          {
+            "code": "0500503000",
+            "display": "Daraga"
+          },
+          {
+            "code": "0500504000",
+            "display": "Guinobatan"
+          },
+          {
+            "code": "0500505000",
+            "display": "Jovellar"
+          },
+          {
+            "code": "0500506000",
+            "display": "City of Legazpi"
+          },
+          {
+            "code": "0500507000",
+            "display": "Libon"
+          },
+          {
+            "code": "0500508000",
+            "display": "City of Ligao"
+          },
+          {
+            "code": "0500509000",
+            "display": "Malilipot"
+          },
+          {
+            "code": "0500510000",
+            "display": "Malinao"
+          },
+          {
+            "code": "0500511000",
+            "display": "Manito"
+          },
+          {
+            "code": "0500512000",
+            "display": "Oas"
+          },
+          {
+            "code": "0500513000",
+            "display": "Pio Duran"
+          },
+          {
+            "code": "0500514000",
+            "display": "Polangui"
+          },
+          {
+            "code": "0500515000",
+            "display": "Rapu-Rapu"
+          },
+          {
+            "code": "0500516000",
+            "display": "Santo Domingo"
+          },
+          {
+            "code": "0500517000",
+            "display": "City of Tabaco"
+          },
+          {
+            "code": "0500518000",
+            "display": "Tiwi"
+          },
+          {
+            "code": "0501601000",
+            "display": "Basud"
+          },
+          {
+            "code": "0501602000",
+            "display": "Capalonga"
+          },
+          {
+            "code": "0501603000",
+            "display": "Daet"
+          },
+          {
+            "code": "0501604000",
+            "display": "San Lorenzo Ruiz"
+          },
+          {
+            "code": "0501605000",
+            "display": "Jose Panganiban"
+          },
+          {
+            "code": "0501606000",
+            "display": "Labo"
+          },
+          {
+            "code": "0501607000",
+            "display": "Mercedes"
+          },
+          {
+            "code": "0501608000",
+            "display": "Paracale"
+          },
+          {
+            "code": "0501609000",
+            "display": "San Vicente"
+          },
+          {
+            "code": "0501610000",
+            "display": "Santa Elena"
+          },
+          {
+            "code": "0501611000",
+            "display": "Talisay"
+          },
+          {
+            "code": "0501612000",
+            "display": "Vinzons"
+          },
+          {
+            "code": "0501701000",
+            "display": "Baao"
+          },
+          {
+            "code": "0501702000",
+            "display": "Balatan"
+          },
+          {
+            "code": "0501703000",
+            "display": "Bato"
+          },
+          {
+            "code": "0501704000",
+            "display": "Bombon"
+          },
+          {
+            "code": "0501705000",
+            "display": "Buhi"
+          },
+          {
+            "code": "0501706000",
+            "display": "Bula"
+          },
+          {
+            "code": "0501707000",
+            "display": "Cabusao"
+          },
+          {
+            "code": "0501708000",
+            "display": "Calabanga"
+          },
+          {
+            "code": "0501709000",
+            "display": "Camaligan"
+          },
+          {
+            "code": "0501710000",
+            "display": "Canaman"
+          },
+          {
+            "code": "0501711000",
+            "display": "Caramoan"
+          },
+          {
+            "code": "0501712000",
+            "display": "Del Gallego"
+          },
+          {
+            "code": "0501713000",
+            "display": "Gainza"
+          },
+          {
+            "code": "0501714000",
+            "display": "Garchitorena"
+          },
+          {
+            "code": "0501715000",
+            "display": "Goa"
+          },
+          {
+            "code": "0501716000",
+            "display": "City of Iriga"
+          },
+          {
+            "code": "0501717000",
+            "display": "Lagonoy"
+          },
+          {
+            "code": "0501718000",
+            "display": "Libmanan"
+          },
+          {
+            "code": "0501719000",
+            "display": "Lupi"
+          },
+          {
+            "code": "0501720000",
+            "display": "Magarao"
+          },
+          {
+            "code": "0501721000",
+            "display": "Milaor"
+          },
+          {
+            "code": "0501722000",
+            "display": "Minalabac"
+          },
+          {
+            "code": "0501723000",
+            "display": "Nabua"
+          },
+          {
+            "code": "0501724000",
+            "display": "City of Naga"
+          },
+          {
+            "code": "0501725000",
+            "display": "Ocampo"
+          },
+          {
+            "code": "0501726000",
+            "display": "Pamplona"
+          },
+          {
+            "code": "0501727000",
+            "display": "Pasacao"
+          },
+          {
+            "code": "0501728000",
+            "display": "Pili"
+          },
+          {
+            "code": "0501729000",
+            "display": "Presentacion"
+          },
+          {
+            "code": "0501730000",
+            "display": "Ragay"
+          },
+          {
+            "code": "0501731000",
+            "display": "Sagñay"
+          },
+          {
+            "code": "0501732000",
+            "display": "San Fernando"
+          },
+          {
+            "code": "0501733000",
+            "display": "San Jose"
+          },
+          {
+            "code": "0501734000",
+            "display": "Sipocot"
+          },
+          {
+            "code": "0501735000",
+            "display": "Siruma"
+          },
+          {
+            "code": "0501736000",
+            "display": "Tigaon"
+          },
+          {
+            "code": "0501737000",
+            "display": "Tinambac"
+          },
+          {
+            "code": "0502001000",
+            "display": "Bagamanoc"
+          },
+          {
+            "code": "0502002000",
+            "display": "Baras"
+          },
+          {
+            "code": "0502003000",
+            "display": "Bato"
+          },
+          {
+            "code": "0502004000",
+            "display": "Caramoran"
+          },
+          {
+            "code": "0502005000",
+            "display": "Gigmoto"
+          },
+          {
+            "code": "0502006000",
+            "display": "Pandan"
+          },
+          {
+            "code": "0502007000",
+            "display": "Panganiban"
+          },
+          {
+            "code": "0502008000",
+            "display": "San Andres"
+          },
+          {
+            "code": "0502009000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0502010000",
+            "display": "Viga"
+          },
+          {
+            "code": "0502011000",
+            "display": "Virac"
+          },
+          {
+            "code": "0504101000",
+            "display": "Aroroy"
+          },
+          {
+            "code": "0504102000",
+            "display": "Baleno"
+          },
+          {
+            "code": "0504103000",
+            "display": "Balud"
+          },
+          {
+            "code": "0504104000",
+            "display": "Batuan"
+          },
+          {
+            "code": "0504105000",
+            "display": "Cataingan"
+          },
+          {
+            "code": "0504106000",
+            "display": "Cawayan"
+          },
+          {
+            "code": "0504107000",
+            "display": "Claveria"
+          },
+          {
+            "code": "0504108000",
+            "display": "Dimasalang"
+          },
+          {
+            "code": "0504109000",
+            "display": "Esperanza"
+          },
+          {
+            "code": "0504110000",
+            "display": "Mandaon"
+          },
+          {
+            "code": "0504111000",
+            "display": "City of Masbate"
+          },
+          {
+            "code": "0504112000",
+            "display": "Milagros"
+          },
+          {
+            "code": "0504113000",
+            "display": "Mobo"
+          },
+          {
+            "code": "0504114000",
+            "display": "Monreal"
+          },
+          {
+            "code": "0504115000",
+            "display": "Palanas"
+          },
+          {
+            "code": "0504116000",
+            "display": "Pio V. Corpus"
+          },
+          {
+            "code": "0504117000",
+            "display": "Placer"
+          },
+          {
+            "code": "0504118000",
+            "display": "San Fernando"
+          },
+          {
+            "code": "0504119000",
+            "display": "San Jacinto"
+          },
+          {
+            "code": "0504120000",
+            "display": "San Pascual"
+          },
+          {
+            "code": "0504121000",
+            "display": "Uson"
+          },
+          {
+            "code": "0506202000",
+            "display": "Barcelona"
+          },
+          {
+            "code": "0506203000",
+            "display": "Bulan"
+          },
+          {
+            "code": "0506204000",
+            "display": "Bulusan"
+          },
+          {
+            "code": "0506205000",
+            "display": "Casiguran"
+          },
+          {
+            "code": "0506206000",
+            "display": "Castilla"
+          },
+          {
+            "code": "0506207000",
+            "display": "Donsol"
+          },
+          {
+            "code": "0506208000",
+            "display": "Gubat"
+          },
+          {
+            "code": "0506209000",
+            "display": "Irosin"
+          },
+          {
+            "code": "0506210000",
+            "display": "Juban"
+          },
+          {
+            "code": "0506211000",
+            "display": "Magallanes"
+          },
+          {
+            "code": "0506212000",
+            "display": "Matnog"
+          },
+          {
+            "code": "0506213000",
+            "display": "Pilar"
+          },
+          {
+            "code": "0506214000",
+            "display": "Prieto Diaz"
+          },
+          {
+            "code": "0506215000",
+            "display": "Santa Magdalena"
+          },
+          {
+            "code": "0506216000",
+            "display": "City of Sorsogon"
+          },
+          {
+            "code": "0600401000",
+            "display": "Altavas"
+          },
+          {
+            "code": "0600402000",
+            "display": "Balete"
+          },
+          {
+            "code": "0600403000",
+            "display": "Banga"
+          },
+          {
+            "code": "0600404000",
+            "display": "Batan"
+          },
+          {
+            "code": "0600405000",
+            "display": "Buruanga"
+          },
+          {
+            "code": "0600406000",
+            "display": "Ibajay"
+          },
+          {
+            "code": "0600407000",
+            "display": "Kalibo"
+          },
+          {
+            "code": "0600408000",
+            "display": "Lezo"
+          },
+          {
+            "code": "0600409000",
+            "display": "Libacao"
+          },
+          {
+            "code": "0600410000",
+            "display": "Madalag"
+          },
+          {
+            "code": "0600411000",
+            "display": "Makato"
+          },
+          {
+            "code": "0600412000",
+            "display": "Malay"
+          },
+          {
+            "code": "0600413000",
+            "display": "Malinao"
+          },
+          {
+            "code": "0600414000",
+            "display": "Nabas"
+          },
+          {
+            "code": "0600415000",
+            "display": "New Washington"
+          },
+          {
+            "code": "0600416000",
+            "display": "Numancia"
+          },
+          {
+            "code": "0600417000",
+            "display": "Tangalan"
+          },
+          {
+            "code": "0600601000",
+            "display": "Anini-Y"
+          },
+          {
+            "code": "0600602000",
+            "display": "Barbaza"
+          },
+          {
+            "code": "0600603000",
+            "display": "Belison"
+          },
+          {
+            "code": "0600604000",
+            "display": "Bugasong"
+          },
+          {
+            "code": "0600605000",
+            "display": "Caluya"
+          },
+          {
+            "code": "0600606000",
+            "display": "Culasi"
+          },
+          {
+            "code": "0600607000",
+            "display": "Tobias Fornier"
+          },
+          {
+            "code": "0600608000",
+            "display": "Hamtic"
+          },
+          {
+            "code": "0600609000",
+            "display": "Laua-An"
+          },
+          {
+            "code": "0600610000",
+            "display": "Libertad"
+          },
+          {
+            "code": "0600611000",
+            "display": "Pandan"
+          },
+          {
+            "code": "0600612000",
+            "display": "Patnongon"
+          },
+          {
+            "code": "0600613000",
+            "display": "San Jose"
+          },
+          {
+            "code": "0600614000",
+            "display": "San Remigio"
+          },
+          {
+            "code": "0600615000",
+            "display": "Sebaste"
+          },
+          {
+            "code": "0600616000",
+            "display": "Sibalom"
+          },
+          {
+            "code": "0600617000",
+            "display": "Tibiao"
+          },
+          {
+            "code": "0600618000",
+            "display": "Valderrama"
+          },
+          {
+            "code": "0601901000",
+            "display": "Cuartero"
+          },
+          {
+            "code": "0601902000",
+            "display": "Dao"
+          },
+          {
+            "code": "0601903000",
+            "display": "Dumalag"
+          },
+          {
+            "code": "0601904000",
+            "display": "Dumarao"
+          },
+          {
+            "code": "0601905000",
+            "display": "Ivisan"
+          },
+          {
+            "code": "0601906000",
+            "display": "Jamindan"
+          },
+          {
+            "code": "0601907000",
+            "display": "Ma-Ayon"
+          },
+          {
+            "code": "0601908000",
+            "display": "Mambusao"
+          },
+          {
+            "code": "0601909000",
+            "display": "Panay"
+          },
+          {
+            "code": "0601910000",
+            "display": "Panitan"
+          },
+          {
+            "code": "0601911000",
+            "display": "Pilar"
+          },
+          {
+            "code": "0601912000",
+            "display": "Pontevedra"
+          },
+          {
+            "code": "0601913000",
+            "display": "President Roxas"
+          },
+          {
+            "code": "0601914000",
+            "display": "City of Roxas"
+          },
+          {
+            "code": "0601915000",
+            "display": "Sapi-An"
+          },
+          {
+            "code": "0601916000",
+            "display": "Sigma"
+          },
+          {
+            "code": "0601917000",
+            "display": "Tapaz"
+          },
+          {
+            "code": "0603001000",
+            "display": "Ajuy"
+          },
+          {
+            "code": "0603002000",
+            "display": "Alimodian"
+          },
+          {
+            "code": "0603003000",
+            "display": "Anilao"
+          },
+          {
+            "code": "0603004000",
+            "display": "Badiangan"
+          },
+          {
+            "code": "0603005000",
+            "display": "Balasan"
+          },
+          {
+            "code": "0603006000",
+            "display": "Banate"
+          },
+          {
+            "code": "0603007000",
+            "display": "Barotac Nuevo"
+          },
+          {
+            "code": "0603008000",
+            "display": "Barotac Viejo"
+          },
+          {
+            "code": "0603009000",
+            "display": "Batad"
+          },
+          {
+            "code": "0603010000",
+            "display": "Bingawan"
+          },
+          {
+            "code": "0603012000",
+            "display": "Cabatuan"
+          },
+          {
+            "code": "0603013000",
+            "display": "Calinog"
+          },
+          {
+            "code": "0603014000",
+            "display": "Carles"
+          },
+          {
+            "code": "0603015000",
+            "display": "Concepcion"
+          },
+          {
+            "code": "0603016000",
+            "display": "Dingle"
+          },
+          {
+            "code": "0603017000",
+            "display": "Dueñas"
+          },
+          {
+            "code": "0603018000",
+            "display": "Dumangas"
+          },
+          {
+            "code": "0603019000",
+            "display": "Estancia"
+          },
+          {
+            "code": "0603020000",
+            "display": "Guimbal"
+          },
+          {
+            "code": "0603021000",
+            "display": "Igbaras"
+          },
+          {
+            "code": "0603023000",
+            "display": "Janiuay"
+          },
+          {
+            "code": "0603025000",
+            "display": "Lambunao"
+          },
+          {
+            "code": "0603026000",
+            "display": "Leganes"
+          },
+          {
+            "code": "0603027000",
+            "display": "Lemery"
+          },
+          {
+            "code": "0603028000",
+            "display": "Leon"
+          },
+          {
+            "code": "0603029000",
+            "display": "Maasin"
+          },
+          {
+            "code": "0603030000",
+            "display": "Miagao"
+          },
+          {
+            "code": "0603031000",
+            "display": "Mina"
+          },
+          {
+            "code": "0603032000",
+            "display": "New Lucena"
+          },
+          {
+            "code": "0603034000",
+            "display": "Oton"
+          },
+          {
+            "code": "0603035000",
+            "display": "City of Passi"
+          },
+          {
+            "code": "0603036000",
+            "display": "Pavia"
+          },
+          {
+            "code": "0603037000",
+            "display": "Pototan"
+          },
+          {
+            "code": "0603038000",
+            "display": "San Dionisio"
+          },
+          {
+            "code": "0603039000",
+            "display": "San Enrique"
+          },
+          {
+            "code": "0603040000",
+            "display": "San Joaquin"
+          },
+          {
+            "code": "0603041000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0603042000",
+            "display": "San Rafael"
+          },
+          {
+            "code": "0603043000",
+            "display": "Santa Barbara"
+          },
+          {
+            "code": "0603044000",
+            "display": "Sara"
+          },
+          {
+            "code": "0603045000",
+            "display": "Tigbauan"
+          },
+          {
+            "code": "0603046000",
+            "display": "Tubungan"
+          },
+          {
+            "code": "0603047000",
+            "display": "Zarraga"
+          },
+          {
+            "code": "0607901000",
+            "display": "Buenavista"
+          },
+          {
+            "code": "0607902000",
+            "display": "Jordan"
+          },
+          {
+            "code": "0607903000",
+            "display": "Nueva Valencia"
+          },
+          {
+            "code": "0607904000",
+            "display": "San Lorenzo"
+          },
+          {
+            "code": "0607905000",
+            "display": "Sibunag"
+          },
+          {
+            "code": "0631000000",
+            "display": "City of Iloilo"
+          },
+          {
+            "code": "1804502000",
+            "display": "City of Bago"
+          },
+          {
+            "code": "1804503000",
+            "display": "Binalbagan"
+          },
+          {
+            "code": "1804504000",
+            "display": "City of Cadiz"
+          },
+          {
+            "code": "1804505000",
+            "display": "Calatrava"
+          },
+          {
+            "code": "1804506000",
+            "display": "Candoni"
+          },
+          {
+            "code": "1804507000",
+            "display": "Cauayan"
+          },
+          {
+            "code": "1804508000",
+            "display": "Enrique B. Magalona"
+          },
+          {
+            "code": "1804509000",
+            "display": "City of Escalante"
+          },
+          {
+            "code": "1804510000",
+            "display": "City of Himamaylan"
+          },
+          {
+            "code": "1804511000",
+            "display": "Hinigaran"
+          },
+          {
+            "code": "1804512000",
+            "display": "Hinoba-an"
+          },
+          {
+            "code": "1804513000",
+            "display": "Ilog"
+          },
+          {
+            "code": "1804514000",
+            "display": "Isabela"
+          },
+          {
+            "code": "1804515000",
+            "display": "City of Kabankalan"
+          },
+          {
+            "code": "1804516000",
+            "display": "City of La Carlota"
+          },
+          {
+            "code": "1804517000",
+            "display": "La Castellana"
+          },
+          {
+            "code": "1804518000",
+            "display": "Manapla"
+          },
+          {
+            "code": "1804519000",
+            "display": "Moises Padilla"
+          },
+          {
+            "code": "1804520000",
+            "display": "Murcia"
+          },
+          {
+            "code": "1804521000",
+            "display": "Pontevedra"
+          },
+          {
+            "code": "1804522000",
+            "display": "Pulupandan"
+          },
+          {
+            "code": "1804523000",
+            "display": "City of Sagay"
+          },
+          {
+            "code": "1804524000",
+            "display": "City of San Carlos"
+          },
+          {
+            "code": "1804525000",
+            "display": "San Enrique"
+          },
+          {
+            "code": "1804526000",
+            "display": "City of Silay"
+          },
+          {
+            "code": "1804527000",
+            "display": "City of Sipalay"
+          },
+          {
+            "code": "1804528000",
+            "display": "City of Talisay"
+          },
+          {
+            "code": "1804529000",
+            "display": "Toboso"
+          },
+          {
+            "code": "1804530000",
+            "display": "Valladolid"
+          },
+          {
+            "code": "1804531000",
+            "display": "City of Victorias"
+          },
+          {
+            "code": "1804532000",
+            "display": "Salvador Benedicto"
+          },
+          {
+            "code": "1804601000",
+            "display": "Amlan"
+          },
+          {
+            "code": "1804602000",
+            "display": "Ayungon"
+          },
+          {
+            "code": "1804603000",
+            "display": "Bacong"
+          },
+          {
+            "code": "1804604000",
+            "display": "City of Bais"
+          },
+          {
+            "code": "1804605000",
+            "display": "Basay"
+          },
+          {
+            "code": "1804606000",
+            "display": "City of Bayawan"
+          },
+          {
+            "code": "1804607000",
+            "display": "Bindoy"
+          },
+          {
+            "code": "1804608000",
+            "display": "City of Canlaon"
+          },
+          {
+            "code": "1804609000",
+            "display": "Dauin"
+          },
+          {
+            "code": "1804610000",
+            "display": "City of Dumaguete"
+          },
+          {
+            "code": "1804611000",
+            "display": "City of Guihulngan"
+          },
+          {
+            "code": "1804612000",
+            "display": "Jimalalud"
+          },
+          {
+            "code": "1804613000",
+            "display": "La Libertad"
+          },
+          {
+            "code": "1804614000",
+            "display": "Mabinay"
+          },
+          {
+            "code": "1804615000",
+            "display": "Manjuyod"
+          },
+          {
+            "code": "1804616000",
+            "display": "Pamplona"
+          },
+          {
+            "code": "1804617000",
+            "display": "San Jose"
+          },
+          {
+            "code": "1804618000",
+            "display": "Santa Catalina"
+          },
+          {
+            "code": "1804619000",
+            "display": "Siaton"
+          },
+          {
+            "code": "1804620000",
+            "display": "Sibulan"
+          },
+          {
+            "code": "1804621000",
+            "display": "City of Tanjay"
+          },
+          {
+            "code": "1804622000",
+            "display": "Tayasan"
+          },
+          {
+            "code": "1804623000",
+            "display": "Valencia"
+          },
+          {
+            "code": "1804624000",
+            "display": "Vallehermoso"
+          },
+          {
+            "code": "1804625000",
+            "display": "Zamboanguita"
+          },
+          {
+            "code": "1806101000",
+            "display": "Enrique Villanueva"
+          },
+          {
+            "code": "1806102000",
+            "display": "Larena"
+          },
+          {
+            "code": "1806103000",
+            "display": "Lazi"
+          },
+          {
+            "code": "1806104000",
+            "display": "Maria"
+          },
+          {
+            "code": "1806105000",
+            "display": "San Juan"
+          },
+          {
+            "code": "1806106000",
+            "display": "Siquijor"
+          },
+          {
+            "code": "1830200000",
+            "display": "City of Bacolod"
+          },
+          {
+            "code": "0701201000",
+            "display": "Alburquerque"
+          },
+          {
+            "code": "0701202000",
+            "display": "Alicia"
+          },
+          {
+            "code": "0701203000",
+            "display": "Anda"
+          },
+          {
+            "code": "0701204000",
+            "display": "Antequera"
+          },
+          {
+            "code": "0701205000",
+            "display": "Baclayon"
+          },
+          {
+            "code": "0701206000",
+            "display": "Balilihan"
+          },
+          {
+            "code": "0701207000",
+            "display": "Batuan"
+          },
+          {
+            "code": "0701208000",
+            "display": "Bilar"
+          },
+          {
+            "code": "0701209000",
+            "display": "Buenavista"
+          },
+          {
+            "code": "0701210000",
+            "display": "Calape"
+          },
+          {
+            "code": "0701211000",
+            "display": "Candijay"
+          },
+          {
+            "code": "0701212000",
+            "display": "Carmen"
+          },
+          {
+            "code": "0701213000",
+            "display": "Catigbian"
+          },
+          {
+            "code": "0701214000",
+            "display": "Clarin"
+          },
+          {
+            "code": "0701215000",
+            "display": "Corella"
+          },
+          {
+            "code": "0701216000",
+            "display": "Cortes"
+          },
+          {
+            "code": "0701217000",
+            "display": "Dagohoy"
+          },
+          {
+            "code": "0701218000",
+            "display": "Danao"
+          },
+          {
+            "code": "0701219000",
+            "display": "Dauis"
+          },
+          {
+            "code": "0701220000",
+            "display": "Dimiao"
+          },
+          {
+            "code": "0701221000",
+            "display": "Duero"
+          },
+          {
+            "code": "0701222000",
+            "display": "Garcia Hernandez"
+          },
+          {
+            "code": "0701223000",
+            "display": "Guindulman"
+          },
+          {
+            "code": "0701224000",
+            "display": "Inabanga"
+          },
+          {
+            "code": "0701225000",
+            "display": "Jagna"
+          },
+          {
+            "code": "0701226000",
+            "display": "Getafe"
+          },
+          {
+            "code": "0701227000",
+            "display": "Lila"
+          },
+          {
+            "code": "0701228000",
+            "display": "Loay"
+          },
+          {
+            "code": "0701229000",
+            "display": "Loboc"
+          },
+          {
+            "code": "0701230000",
+            "display": "Loon"
+          },
+          {
+            "code": "0701231000",
+            "display": "Mabini"
+          },
+          {
+            "code": "0701232000",
+            "display": "Maribojoc"
+          },
+          {
+            "code": "0701233000",
+            "display": "Panglao"
+          },
+          {
+            "code": "0701234000",
+            "display": "Pilar"
+          },
+          {
+            "code": "0701235000",
+            "display": "President Carlos P. Garcia"
+          },
+          {
+            "code": "0701236000",
+            "display": "Sagbayan"
+          },
+          {
+            "code": "0701237000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "0701238000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0701239000",
+            "display": "Sevilla"
+          },
+          {
+            "code": "0701240000",
+            "display": "Sierra Bullones"
+          },
+          {
+            "code": "0701241000",
+            "display": "Sikatuna"
+          },
+          {
+            "code": "0701242000",
+            "display": "City of Tagbilaran"
+          },
+          {
+            "code": "0701243000",
+            "display": "Talibon"
+          },
+          {
+            "code": "0701244000",
+            "display": "Trinidad"
+          },
+          {
+            "code": "0701245000",
+            "display": "Tubigon"
+          },
+          {
+            "code": "0701246000",
+            "display": "Ubay"
+          },
+          {
+            "code": "0701247000",
+            "display": "Valencia"
+          },
+          {
+            "code": "0701248000",
+            "display": "Bien Unido"
+          },
+          {
+            "code": "0702201000",
+            "display": "Alcantara"
+          },
+          {
+            "code": "0702202000",
+            "display": "Alcoy"
+          },
+          {
+            "code": "0702203000",
+            "display": "Alegria"
+          },
+          {
+            "code": "0702204000",
+            "display": "Aloguinsan"
+          },
+          {
+            "code": "0702205000",
+            "display": "Argao"
+          },
+          {
+            "code": "0702206000",
+            "display": "Asturias"
+          },
+          {
+            "code": "0702207000",
+            "display": "Badian"
+          },
+          {
+            "code": "0702208000",
+            "display": "Balamban"
+          },
+          {
+            "code": "0702209000",
+            "display": "Bantayan"
+          },
+          {
+            "code": "0702210000",
+            "display": "Barili"
+          },
+          {
+            "code": "0702211000",
+            "display": "City of Bogo"
+          },
+          {
+            "code": "0702212000",
+            "display": "Boljoon"
+          },
+          {
+            "code": "0702213000",
+            "display": "Borbon"
+          },
+          {
+            "code": "0702214000",
+            "display": "City of Carcar"
+          },
+          {
+            "code": "0702215000",
+            "display": "Carmen"
+          },
+          {
+            "code": "0702216000",
+            "display": "Catmon"
+          },
+          {
+            "code": "0702218000",
+            "display": "Compostela"
+          },
+          {
+            "code": "0702219000",
+            "display": "Consolacion"
+          },
+          {
+            "code": "0702220000",
+            "display": "Cordova"
+          },
+          {
+            "code": "0702221000",
+            "display": "Daanbantayan"
+          },
+          {
+            "code": "0702222000",
+            "display": "Dalaguete"
+          },
+          {
+            "code": "0702223000",
+            "display": "Danao City"
+          },
+          {
+            "code": "0702224000",
+            "display": "Dumanjug"
+          },
+          {
+            "code": "0702225000",
+            "display": "Ginatilan"
+          },
+          {
+            "code": "0702227000",
+            "display": "Liloan"
+          },
+          {
+            "code": "0702228000",
+            "display": "Madridejos"
+          },
+          {
+            "code": "0702229000",
+            "display": "Malabuyoc"
+          },
+          {
+            "code": "0702231000",
+            "display": "Medellin"
+          },
+          {
+            "code": "0702232000",
+            "display": "Minglanilla"
+          },
+          {
+            "code": "0702233000",
+            "display": "Moalboal"
+          },
+          {
+            "code": "0702234000",
+            "display": "City of Naga"
+          },
+          {
+            "code": "0702235000",
+            "display": "Oslob"
+          },
+          {
+            "code": "0702236000",
+            "display": "Pilar"
+          },
+          {
+            "code": "0702237000",
+            "display": "Pinamungajan"
+          },
+          {
+            "code": "0702238000",
+            "display": "Poro"
+          },
+          {
+            "code": "0702239000",
+            "display": "Ronda"
+          },
+          {
+            "code": "0702240000",
+            "display": "Samboan"
+          },
+          {
+            "code": "0702241000",
+            "display": "San Fernando"
+          },
+          {
+            "code": "0702242000",
+            "display": "San Francisco"
+          },
+          {
+            "code": "0702243000",
+            "display": "San Remigio"
+          },
+          {
+            "code": "0702244000",
+            "display": "Santa Fe"
+          },
+          {
+            "code": "0702245000",
+            "display": "Santander"
+          },
+          {
+            "code": "0702246000",
+            "display": "Sibonga"
+          },
+          {
+            "code": "0702247000",
+            "display": "Sogod"
+          },
+          {
+            "code": "0702248000",
+            "display": "Tabogon"
+          },
+          {
+            "code": "0702249000",
+            "display": "Tabuelan"
+          },
+          {
+            "code": "0702250000",
+            "display": "City of Talisay"
+          },
+          {
+            "code": "0702251000",
+            "display": "City of Toledo"
+          },
+          {
+            "code": "0702252000",
+            "display": "Tuburan"
+          },
+          {
+            "code": "0702253000",
+            "display": "Tudela"
+          },
+          {
+            "code": "0730600000",
+            "display": "City of Cebu"
+          },
+          {
+            "code": "0731100000",
+            "display": "City of Lapu-Lapu"
+          },
+          {
+            "code": "0731300000",
+            "display": "City of Mandaue"
+          },
+          {
+            "code": "0802601000",
+            "display": "Arteche"
+          },
+          {
+            "code": "0802602000",
+            "display": "Balangiga"
+          },
+          {
+            "code": "0802603000",
+            "display": "Balangkayan"
+          },
+          {
+            "code": "0802604000",
+            "display": "City of Borongan"
+          },
+          {
+            "code": "0802605000",
+            "display": "Can-Avid"
+          },
+          {
+            "code": "0802606000",
+            "display": "Dolores"
+          },
+          {
+            "code": "0802607000",
+            "display": "General Macarthur"
+          },
+          {
+            "code": "0802608000",
+            "display": "Giporlos"
+          },
+          {
+            "code": "0802609000",
+            "display": "Guiuan"
+          },
+          {
+            "code": "0802610000",
+            "display": "Hernani"
+          },
+          {
+            "code": "0802611000",
+            "display": "Jipapad"
+          },
+          {
+            "code": "0802612000",
+            "display": "Lawaan"
+          },
+          {
+            "code": "0802613000",
+            "display": "Llorente"
+          },
+          {
+            "code": "0802614000",
+            "display": "Maslog"
+          },
+          {
+            "code": "0802615000",
+            "display": "Maydolong"
+          },
+          {
+            "code": "0802616000",
+            "display": "Mercedes"
+          },
+          {
+            "code": "0802617000",
+            "display": "Oras"
+          },
+          {
+            "code": "0802618000",
+            "display": "Quinapondan"
+          },
+          {
+            "code": "0802619000",
+            "display": "Salcedo"
+          },
+          {
+            "code": "0802620000",
+            "display": "San Julian"
+          },
+          {
+            "code": "0802621000",
+            "display": "San Policarpo"
+          },
+          {
+            "code": "0802622000",
+            "display": "Sulat"
+          },
+          {
+            "code": "0802623000",
+            "display": "Taft"
+          },
+          {
+            "code": "0803701000",
+            "display": "Abuyog"
+          },
+          {
+            "code": "0803702000",
+            "display": "Alangalang"
+          },
+          {
+            "code": "0803703000",
+            "display": "Albuera"
+          },
+          {
+            "code": "0803705000",
+            "display": "Babatngon"
+          },
+          {
+            "code": "0803706000",
+            "display": "Barugo"
+          },
+          {
+            "code": "0803707000",
+            "display": "Bato"
+          },
+          {
+            "code": "0803708000",
+            "display": "City of Baybay"
+          },
+          {
+            "code": "0803710000",
+            "display": "Burauen"
+          },
+          {
+            "code": "0803713000",
+            "display": "Calubian"
+          },
+          {
+            "code": "0803714000",
+            "display": "Capoocan"
+          },
+          {
+            "code": "0803715000",
+            "display": "Carigara"
+          },
+          {
+            "code": "0803717000",
+            "display": "Dagami"
+          },
+          {
+            "code": "0803718000",
+            "display": "Dulag"
+          },
+          {
+            "code": "0803719000",
+            "display": "Hilongos"
+          },
+          {
+            "code": "0803720000",
+            "display": "Hindang"
+          },
+          {
+            "code": "0803721000",
+            "display": "Inopacan"
+          },
+          {
+            "code": "0803722000",
+            "display": "Isabel"
+          },
+          {
+            "code": "0803723000",
+            "display": "Jaro"
+          },
+          {
+            "code": "0803724000",
+            "display": "Javier"
+          },
+          {
+            "code": "0803725000",
+            "display": "Julita"
+          },
+          {
+            "code": "0803726000",
+            "display": "Kananga"
+          },
+          {
+            "code": "0803728000",
+            "display": "La Paz"
+          },
+          {
+            "code": "0803729000",
+            "display": "Leyte"
+          },
+          {
+            "code": "0803730000",
+            "display": "Macarthur"
+          },
+          {
+            "code": "0803731000",
+            "display": "Mahaplag"
+          },
+          {
+            "code": "0803733000",
+            "display": "Matag-Ob"
+          },
+          {
+            "code": "0803734000",
+            "display": "Matalom"
+          },
+          {
+            "code": "0803735000",
+            "display": "Mayorga"
+          },
+          {
+            "code": "0803736000",
+            "display": "Merida"
+          },
+          {
+            "code": "0803738000",
+            "display": "Ormoc City"
+          },
+          {
+            "code": "0803739000",
+            "display": "Palo"
+          },
+          {
+            "code": "0803740000",
+            "display": "Palompon"
+          },
+          {
+            "code": "0803741000",
+            "display": "Pastrana"
+          },
+          {
+            "code": "0803742000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "0803743000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0803744000",
+            "display": "Santa Fe"
+          },
+          {
+            "code": "0803745000",
+            "display": "Tabango"
+          },
+          {
+            "code": "0803746000",
+            "display": "Tabontabon"
+          },
+          {
+            "code": "0803748000",
+            "display": "Tanauan"
+          },
+          {
+            "code": "0803749000",
+            "display": "Tolosa"
+          },
+          {
+            "code": "0803750000",
+            "display": "Tunga"
+          },
+          {
+            "code": "0803751000",
+            "display": "Villaba"
+          },
+          {
+            "code": "0804801000",
+            "display": "Allen"
+          },
+          {
+            "code": "0804802000",
+            "display": "Biri"
+          },
+          {
+            "code": "0804803000",
+            "display": "Bobon"
+          },
+          {
+            "code": "0804804000",
+            "display": "Capul"
+          },
+          {
+            "code": "0804805000",
+            "display": "Catarman"
+          },
+          {
+            "code": "0804806000",
+            "display": "Catubig"
+          },
+          {
+            "code": "0804807000",
+            "display": "Gamay"
+          },
+          {
+            "code": "0804808000",
+            "display": "Laoang"
+          },
+          {
+            "code": "0804809000",
+            "display": "Lapinig"
+          },
+          {
+            "code": "0804810000",
+            "display": "Las Navas"
+          },
+          {
+            "code": "0804811000",
+            "display": "Lavezares"
+          },
+          {
+            "code": "0804812000",
+            "display": "Mapanas"
+          },
+          {
+            "code": "0804813000",
+            "display": "Mondragon"
+          },
+          {
+            "code": "0804814000",
+            "display": "Palapag"
+          },
+          {
+            "code": "0804815000",
+            "display": "Pambujan"
+          },
+          {
+            "code": "0804816000",
+            "display": "Rosario"
+          },
+          {
+            "code": "0804817000",
+            "display": "San Antonio"
+          },
+          {
+            "code": "0804818000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "0804819000",
+            "display": "San Jose"
+          },
+          {
+            "code": "0804820000",
+            "display": "San Roque"
+          },
+          {
+            "code": "0804821000",
+            "display": "San Vicente"
+          },
+          {
+            "code": "0804822000",
+            "display": "Silvino Lobos"
+          },
+          {
+            "code": "0804823000",
+            "display": "Victoria"
+          },
+          {
+            "code": "0804824000",
+            "display": "Lope De Vega"
+          },
+          {
+            "code": "0806001000",
+            "display": "Almagro"
+          },
+          {
+            "code": "0806002000",
+            "display": "Basey"
+          },
+          {
+            "code": "0806003000",
+            "display": "City of Calbayog"
+          },
+          {
+            "code": "0806004000",
+            "display": "Calbiga"
+          },
+          {
+            "code": "0806005000",
+            "display": "City of Catbalogan"
+          },
+          {
+            "code": "0806006000",
+            "display": "Daram"
+          },
+          {
+            "code": "0806007000",
+            "display": "Gandara"
+          },
+          {
+            "code": "0806008000",
+            "display": "Hinabangan"
+          },
+          {
+            "code": "0806009000",
+            "display": "Jiabong"
+          },
+          {
+            "code": "0806010000",
+            "display": "Marabut"
+          },
+          {
+            "code": "0806011000",
+            "display": "Matuguinao"
+          },
+          {
+            "code": "0806012000",
+            "display": "Motiong"
+          },
+          {
+            "code": "0806013000",
+            "display": "Pinabacdao"
+          },
+          {
+            "code": "0806014000",
+            "display": "San Jose De Buan"
+          },
+          {
+            "code": "0806015000",
+            "display": "San Sebastian"
+          },
+          {
+            "code": "0806016000",
+            "display": "Santa Margarita"
+          },
+          {
+            "code": "0806017000",
+            "display": "Santa Rita"
+          },
+          {
+            "code": "0806018000",
+            "display": "Santo Niño"
+          },
+          {
+            "code": "0806019000",
+            "display": "Talalora"
+          },
+          {
+            "code": "0806020000",
+            "display": "Tarangnan"
+          },
+          {
+            "code": "0806021000",
+            "display": "Villareal"
+          },
+          {
+            "code": "0806022000",
+            "display": "Paranas"
+          },
+          {
+            "code": "0806023000",
+            "display": "Zumarraga"
+          },
+          {
+            "code": "0806024000",
+            "display": "Tagapul-An"
+          },
+          {
+            "code": "0806025000",
+            "display": "San Jorge"
+          },
+          {
+            "code": "0806026000",
+            "display": "Pagsanghan"
+          },
+          {
+            "code": "0806401000",
+            "display": "Anahawan"
+          },
+          {
+            "code": "0806402000",
+            "display": "Bontoc"
+          },
+          {
+            "code": "0806403000",
+            "display": "Hinunangan"
+          },
+          {
+            "code": "0806404000",
+            "display": "Hinundayan"
+          },
+          {
+            "code": "0806405000",
+            "display": "Libagon"
+          },
+          {
+            "code": "0806406000",
+            "display": "Liloan"
+          },
+          {
+            "code": "0806407000",
+            "display": "City of Maasin"
+          },
+          {
+            "code": "0806408000",
+            "display": "Macrohon"
+          },
+          {
+            "code": "0806409000",
+            "display": "Malitbog"
+          },
+          {
+            "code": "0806410000",
+            "display": "Padre Burgos"
+          },
+          {
+            "code": "0806411000",
+            "display": "Pintuyan"
+          },
+          {
+            "code": "0806412000",
+            "display": "Saint Bernard"
+          },
+          {
+            "code": "0806413000",
+            "display": "San Francisco"
+          },
+          {
+            "code": "0806414000",
+            "display": "San Juan"
+          },
+          {
+            "code": "0806415000",
+            "display": "San Ricardo"
+          },
+          {
+            "code": "0806416000",
+            "display": "Silago"
+          },
+          {
+            "code": "0806417000",
+            "display": "Sogod"
+          },
+          {
+            "code": "0806418000",
+            "display": "Tomas Oppus"
+          },
+          {
+            "code": "0806419000",
+            "display": "Limasawa"
+          },
+          {
+            "code": "0807801000",
+            "display": "Almeria"
+          },
+          {
+            "code": "0807802000",
+            "display": "Biliran"
+          },
+          {
+            "code": "0807803000",
+            "display": "Cabucgayan"
+          },
+          {
+            "code": "0807804000",
+            "display": "Caibiran"
+          },
+          {
+            "code": "0807805000",
+            "display": "Culaba"
+          },
+          {
+            "code": "0807806000",
+            "display": "Kawayan"
+          },
+          {
+            "code": "0807807000",
+            "display": "Maripipi"
+          },
+          {
+            "code": "0807808000",
+            "display": "Naval"
+          },
+          {
+            "code": "0831600000",
+            "display": "City of Tacloban"
+          },
+          {
+            "code": "0906601000",
+            "display": "Indanan"
+          },
+          {
+            "code": "0906602000",
+            "display": "Jolo"
+          },
+          {
+            "code": "0906603000",
+            "display": "Kalingalan Caluang"
+          },
+          {
+            "code": "0906604000",
+            "display": "Luuk"
+          },
+          {
+            "code": "0906605000",
+            "display": "Maimbung"
+          },
+          {
+            "code": "0906606000",
+            "display": "Hadji Panglima Tahil"
+          },
+          {
+            "code": "0906607000",
+            "display": "Old Panamao"
+          },
+          {
+            "code": "0906608000",
+            "display": "Pangutaran"
+          },
+          {
+            "code": "0906609000",
+            "display": "Parang"
+          },
+          {
+            "code": "0906610000",
+            "display": "Pata"
+          },
+          {
+            "code": "0906611000",
+            "display": "Patikul"
+          },
+          {
+            "code": "0906612000",
+            "display": "Siasi"
+          },
+          {
+            "code": "0906613000",
+            "display": "Talipao"
+          },
+          {
+            "code": "0906614000",
+            "display": "Tapul"
+          },
+          {
+            "code": "0906615000",
+            "display": "Tongkil"
+          },
+          {
+            "code": "0906616000",
+            "display": "Panglima Estino"
+          },
+          {
+            "code": "0906617000",
+            "display": "Lugus"
+          },
+          {
+            "code": "0906618000",
+            "display": "Pandami"
+          },
+          {
+            "code": "0906619000",
+            "display": "Omar"
+          },
+          {
+            "code": "0907201000",
+            "display": "City of Dapitan"
+          },
+          {
+            "code": "0907202000",
+            "display": "City of Dipolog"
+          },
+          {
+            "code": "0907203000",
+            "display": "Katipunan"
+          },
+          {
+            "code": "0907204000",
+            "display": "La Libertad"
+          },
+          {
+            "code": "0907205000",
+            "display": "Labason"
+          },
+          {
+            "code": "0907206000",
+            "display": "Liloy"
+          },
+          {
+            "code": "0907207000",
+            "display": "Manukan"
+          },
+          {
+            "code": "0907208000",
+            "display": "Mutia"
+          },
+          {
+            "code": "0907209000",
+            "display": "Piñan"
+          },
+          {
+            "code": "0907210000",
+            "display": "Polanco"
+          },
+          {
+            "code": "0907211000",
+            "display": "Pres. Manuel A. Roxas"
+          },
+          {
+            "code": "0907212000",
+            "display": "Rizal"
+          },
+          {
+            "code": "0907213000",
+            "display": "Salug"
+          },
+          {
+            "code": "0907214000",
+            "display": "Sergio Osmeña Sr."
+          },
+          {
+            "code": "0907215000",
+            "display": "Siayan"
+          },
+          {
+            "code": "0907216000",
+            "display": "Sibuco"
+          },
+          {
+            "code": "0907217000",
+            "display": "Sibutad"
+          },
+          {
+            "code": "0907218000",
+            "display": "Sindangan"
+          },
+          {
+            "code": "0907219000",
+            "display": "Siocon"
+          },
+          {
+            "code": "0907220000",
+            "display": "Sirawai"
+          },
+          {
+            "code": "0907221000",
+            "display": "Tampilisan"
+          },
+          {
+            "code": "0907222000",
+            "display": "Jose Dalman"
+          },
+          {
+            "code": "0907223000",
+            "display": "Gutalac"
+          },
+          {
+            "code": "0907224000",
+            "display": "Baliguian"
+          },
+          {
+            "code": "0907225000",
+            "display": "Godod"
+          },
+          {
+            "code": "0907226000",
+            "display": "Leon T. Postigo"
+          },
+          {
+            "code": "0907227000",
+            "display": "Kalawit"
+          },
+          {
+            "code": "0907302000",
+            "display": "Aurora"
+          },
+          {
+            "code": "0907303000",
+            "display": "Bayog"
+          },
+          {
+            "code": "0907305000",
+            "display": "Dimataling"
+          },
+          {
+            "code": "0907306000",
+            "display": "Dinas"
+          },
+          {
+            "code": "0907307000",
+            "display": "Dumalinao"
+          },
+          {
+            "code": "0907308000",
+            "display": "Dumingag"
+          },
+          {
+            "code": "0907311000",
+            "display": "Kumalarang"
+          },
+          {
+            "code": "0907312000",
+            "display": "Labangan"
+          },
+          {
+            "code": "0907313000",
+            "display": "Lapuyan"
+          },
+          {
+            "code": "0907315000",
+            "display": "Mahayag"
+          },
+          {
+            "code": "0907317000",
+            "display": "Margosatubig"
+          },
+          {
+            "code": "0907318000",
+            "display": "Midsalip"
+          },
+          {
+            "code": "0907319000",
+            "display": "Molave"
+          },
+          {
+            "code": "0907322000",
+            "display": "City of Pagadian"
+          },
+          {
+            "code": "0907323000",
+            "display": "Ramon Magsaysay"
+          },
+          {
+            "code": "0907324000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "0907325000",
+            "display": "San Pablo"
+          },
+          {
+            "code": "0907327000",
+            "display": "Tabina"
+          },
+          {
+            "code": "0907328000",
+            "display": "Tambulig"
+          },
+          {
+            "code": "0907330000",
+            "display": "Tukuran"
+          },
+          {
+            "code": "0907333000",
+            "display": "Lakewood"
+          },
+          {
+            "code": "0907337000",
+            "display": "Josefina"
+          },
+          {
+            "code": "0907338000",
+            "display": "Pitogo"
+          },
+          {
+            "code": "0907340000",
+            "display": "Sominot"
+          },
+          {
+            "code": "0907341000",
+            "display": "Vincenzo A. Sagun"
+          },
+          {
+            "code": "0907343000",
+            "display": "Guipos"
+          },
+          {
+            "code": "0907344000",
+            "display": "Tigbao"
+          },
+          {
+            "code": "0908301000",
+            "display": "Alicia"
+          },
+          {
+            "code": "0908302000",
+            "display": "Buug"
+          },
+          {
+            "code": "0908303000",
+            "display": "Diplahan"
+          },
+          {
+            "code": "0908304000",
+            "display": "Imelda"
+          },
+          {
+            "code": "0908305000",
+            "display": "Ipil"
+          },
+          {
+            "code": "0908306000",
+            "display": "Kabasalan"
+          },
+          {
+            "code": "0908307000",
+            "display": "Mabuhay"
+          },
+          {
+            "code": "0908308000",
+            "display": "Malangas"
+          },
+          {
+            "code": "0908309000",
+            "display": "Naga"
+          },
+          {
+            "code": "0908310000",
+            "display": "Olutanga"
+          },
+          {
+            "code": "0908311000",
+            "display": "Payao"
+          },
+          {
+            "code": "0908312000",
+            "display": "Roseller Lim"
+          },
+          {
+            "code": "0908313000",
+            "display": "Siay"
+          },
+          {
+            "code": "0908314000",
+            "display": "Talusan"
+          },
+          {
+            "code": "0908315000",
+            "display": "Titay"
+          },
+          {
+            "code": "0908316000",
+            "display": "Tungawan"
+          },
+          {
+            "code": "0990101000",
+            "display": "City of Isabela"
+          },
+          {
+            "code": "0931700000",
+            "display": "City of Zamboanga"
+          },
+          {
+            "code": "1001301000",
+            "display": "Baungon"
+          },
+          {
+            "code": "1001302000",
+            "display": "Damulog"
+          },
+          {
+            "code": "1001303000",
+            "display": "Dangcagan"
+          },
+          {
+            "code": "1001304000",
+            "display": "Don Carlos"
+          },
+          {
+            "code": "1001305000",
+            "display": "Impasug-ong"
+          },
+          {
+            "code": "1001306000",
+            "display": "Kadingilan"
+          },
+          {
+            "code": "1001307000",
+            "display": "Kalilangan"
+          },
+          {
+            "code": "1001308000",
+            "display": "Kibawe"
+          },
+          {
+            "code": "1001309000",
+            "display": "Kitaotao"
+          },
+          {
+            "code": "1001310000",
+            "display": "Lantapan"
+          },
+          {
+            "code": "1001311000",
+            "display": "Libona"
+          },
+          {
+            "code": "1001312000",
+            "display": "City of Malaybalay"
+          },
+          {
+            "code": "1001313000",
+            "display": "Malitbog"
+          },
+          {
+            "code": "1001314000",
+            "display": "Manolo Fortich"
+          },
+          {
+            "code": "1001315000",
+            "display": "Maramag"
+          },
+          {
+            "code": "1001316000",
+            "display": "Pangantucan"
+          },
+          {
+            "code": "1001317000",
+            "display": "Quezon"
+          },
+          {
+            "code": "1001318000",
+            "display": "San Fernando"
+          },
+          {
+            "code": "1001319000",
+            "display": "Sumilao"
+          },
+          {
+            "code": "1001320000",
+            "display": "Talakag"
+          },
+          {
+            "code": "1001321000",
+            "display": "City of Valencia"
+          },
+          {
+            "code": "1001322000",
+            "display": "Cabanglasan"
+          },
+          {
+            "code": "1001801000",
+            "display": "Catarman"
+          },
+          {
+            "code": "1001802000",
+            "display": "Guinsiliban"
+          },
+          {
+            "code": "1001803000",
+            "display": "Mahinog"
+          },
+          {
+            "code": "1001804000",
+            "display": "Mambajao"
+          },
+          {
+            "code": "1001805000",
+            "display": "Sagay"
+          },
+          {
+            "code": "1003501000",
+            "display": "Bacolod"
+          },
+          {
+            "code": "1003502000",
+            "display": "Baloi"
+          },
+          {
+            "code": "1003503000",
+            "display": "Baroy"
+          },
+          {
+            "code": "1003505000",
+            "display": "Kapatagan"
+          },
+          {
+            "code": "1003506000",
+            "display": "Sultan Naga Dimaporo"
+          },
+          {
+            "code": "1003507000",
+            "display": "Kauswagan"
+          },
+          {
+            "code": "1003508000",
+            "display": "Kolambugan"
+          },
+          {
+            "code": "1003509000",
+            "display": "Lala"
+          },
+          {
+            "code": "1003510000",
+            "display": "Linamon"
+          },
+          {
+            "code": "1003511000",
+            "display": "Magsaysay"
+          },
+          {
+            "code": "1003512000",
+            "display": "Maigo"
+          },
+          {
+            "code": "1003513000",
+            "display": "Matungao"
+          },
+          {
+            "code": "1003514000",
+            "display": "Munai"
+          },
+          {
+            "code": "1003515000",
+            "display": "Nunungan"
+          },
+          {
+            "code": "1003516000",
+            "display": "Pantao Ragat"
+          },
+          {
+            "code": "1003517000",
+            "display": "Poona Piagapo"
+          },
+          {
+            "code": "1003518000",
+            "display": "Salvador"
+          },
+          {
+            "code": "1003519000",
+            "display": "Sapad"
+          },
+          {
+            "code": "1003520000",
+            "display": "Tagoloan"
+          },
+          {
+            "code": "1003521000",
+            "display": "Tangcal"
+          },
+          {
+            "code": "1003522000",
+            "display": "Tubod"
+          },
+          {
+            "code": "1003523000",
+            "display": "Pantar"
+          },
+          {
+            "code": "1004201000",
+            "display": "Aloran"
+          },
+          {
+            "code": "1004202000",
+            "display": "Baliangao"
+          },
+          {
+            "code": "1004203000",
+            "display": "Bonifacio"
+          },
+          {
+            "code": "1004204000",
+            "display": "Calamba"
+          },
+          {
+            "code": "1004205000",
+            "display": "Clarin"
+          },
+          {
+            "code": "1004206000",
+            "display": "Concepcion"
+          },
+          {
+            "code": "1004207000",
+            "display": "Jimenez"
+          },
+          {
+            "code": "1004208000",
+            "display": "Lopez Jaena"
+          },
+          {
+            "code": "1004209000",
+            "display": "City of Oroquieta"
+          },
+          {
+            "code": "1004210000",
+            "display": "City of Ozamiz"
+          },
+          {
+            "code": "1004211000",
+            "display": "Panaon"
+          },
+          {
+            "code": "1004212000",
+            "display": "Plaridel"
+          },
+          {
+            "code": "1004213000",
+            "display": "Sapang Dalaga"
+          },
+          {
+            "code": "1004214000",
+            "display": "Sinacaban"
+          },
+          {
+            "code": "1004215000",
+            "display": "City of Tangub"
+          },
+          {
+            "code": "1004216000",
+            "display": "Tudela"
+          },
+          {
+            "code": "1004217000",
+            "display": "Don Victoriano Chiongbian"
+          },
+          {
+            "code": "1004301000",
+            "display": "Alubijid"
+          },
+          {
+            "code": "1004302000",
+            "display": "Balingasag"
+          },
+          {
+            "code": "1004303000",
+            "display": "Balingoan"
+          },
+          {
+            "code": "1004304000",
+            "display": "Binuangan"
+          },
+          {
+            "code": "1004306000",
+            "display": "Claveria"
+          },
+          {
+            "code": "1004307000",
+            "display": "City of El Salvador"
+          },
+          {
+            "code": "1004308000",
+            "display": "City of Gingoog"
+          },
+          {
+            "code": "1004309000",
+            "display": "Gitagum"
+          },
+          {
+            "code": "1004310000",
+            "display": "Initao"
+          },
+          {
+            "code": "1004311000",
+            "display": "Jasaan"
+          },
+          {
+            "code": "1004312000",
+            "display": "Kinoguitan"
+          },
+          {
+            "code": "1004313000",
+            "display": "Lagonglong"
+          },
+          {
+            "code": "1004314000",
+            "display": "Laguindingan"
+          },
+          {
+            "code": "1004315000",
+            "display": "Libertad"
+          },
+          {
+            "code": "1004316000",
+            "display": "Lugait"
+          },
+          {
+            "code": "1004317000",
+            "display": "Magsaysay"
+          },
+          {
+            "code": "1004318000",
+            "display": "Manticao"
+          },
+          {
+            "code": "1004319000",
+            "display": "Medina"
+          },
+          {
+            "code": "1004320000",
+            "display": "Naawan"
+          },
+          {
+            "code": "1004321000",
+            "display": "Opol"
+          },
+          {
+            "code": "1004322000",
+            "display": "Salay"
+          },
+          {
+            "code": "1004323000",
+            "display": "Sugbongcogon"
+          },
+          {
+            "code": "1004324000",
+            "display": "Tagoloan"
+          },
+          {
+            "code": "1004325000",
+            "display": "Talisayan"
+          },
+          {
+            "code": "1004326000",
+            "display": "Villanueva"
+          },
+          {
+            "code": "1030500000",
+            "display": "City of Cagayan De Oro"
+          },
+          {
+            "code": "1030900000",
+            "display": "City of Iligan"
+          },
+          {
+            "code": "1102301000",
+            "display": "Asuncion"
+          },
+          {
+            "code": "1102303000",
+            "display": "Carmen"
+          },
+          {
+            "code": "1102305000",
+            "display": "Kapalong"
+          },
+          {
+            "code": "1102314000",
+            "display": "New Corella"
+          },
+          {
+            "code": "1102315000",
+            "display": "City of Panabo"
+          },
+          {
+            "code": "1102317000",
+            "display": "Island Garden City of Samal"
+          },
+          {
+            "code": "1102318000",
+            "display": "Santo Tomas"
+          },
+          {
+            "code": "1102319000",
+            "display": "City of Tagum"
+          },
+          {
+            "code": "1102322000",
+            "display": "Talaingod"
+          },
+          {
+            "code": "1102323000",
+            "display": "Braulio E. Dujali"
+          },
+          {
+            "code": "1102324000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "1102401000",
+            "display": "Bansalan"
+          },
+          {
+            "code": "1102403000",
+            "display": "City of Digos"
+          },
+          {
+            "code": "1102404000",
+            "display": "Hagonoy"
+          },
+          {
+            "code": "1102406000",
+            "display": "Kiblawan"
+          },
+          {
+            "code": "1102407000",
+            "display": "Magsaysay"
+          },
+          {
+            "code": "1102408000",
+            "display": "Malalag"
+          },
+          {
+            "code": "1102410000",
+            "display": "Matanao"
+          },
+          {
+            "code": "1102411000",
+            "display": "Padada"
+          },
+          {
+            "code": "1102412000",
+            "display": "Santa Cruz"
+          },
+          {
+            "code": "1102414000",
+            "display": "Sulop"
+          },
+          {
+            "code": "1102501000",
+            "display": "Baganga"
+          },
+          {
+            "code": "1102502000",
+            "display": "Banaybanay"
+          },
+          {
+            "code": "1102503000",
+            "display": "Boston"
+          },
+          {
+            "code": "1102504000",
+            "display": "Caraga"
+          },
+          {
+            "code": "1102505000",
+            "display": "Cateel"
+          },
+          {
+            "code": "1102506000",
+            "display": "Governor Generoso"
+          },
+          {
+            "code": "1102507000",
+            "display": "Lupon"
+          },
+          {
+            "code": "1102508000",
+            "display": "Manay"
+          },
+          {
+            "code": "1102509000",
+            "display": "City of Mati"
+          },
+          {
+            "code": "1102510000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "1102511000",
+            "display": "Tarragona"
+          },
+          {
+            "code": "1108201000",
+            "display": "Compostela"
+          },
+          {
+            "code": "1108202000",
+            "display": "Laak"
+          },
+          {
+            "code": "1108203000",
+            "display": "Mabini"
+          },
+          {
+            "code": "1108204000",
+            "display": "Maco"
+          },
+          {
+            "code": "1108205000",
+            "display": "Maragusan"
+          },
+          {
+            "code": "1108206000",
+            "display": "Mawab"
+          },
+          {
+            "code": "1108207000",
+            "display": "Monkayo"
+          },
+          {
+            "code": "1108208000",
+            "display": "Montevista"
+          },
+          {
+            "code": "1108209000",
+            "display": "Nabunturan"
+          },
+          {
+            "code": "1108210000",
+            "display": "New Bataan"
+          },
+          {
+            "code": "1108211000",
+            "display": "Pantukan"
+          },
+          {
+            "code": "1108601000",
+            "display": "Don Marcelino"
+          },
+          {
+            "code": "1108602000",
+            "display": "Jose Abad Santos"
+          },
+          {
+            "code": "1108603000",
+            "display": "Malita"
+          },
+          {
+            "code": "1108604000",
+            "display": "Santa Maria"
+          },
+          {
+            "code": "1108605000",
+            "display": "Sarangani"
+          },
+          {
+            "code": "1130700000",
+            "display": "City of Davao"
+          },
+          {
+            "code": "1204701000",
+            "display": "Alamada"
+          },
+          {
+            "code": "1204702000",
+            "display": "Carmen"
+          },
+          {
+            "code": "1204703000",
+            "display": "Kabacan"
+          },
+          {
+            "code": "1204704000",
+            "display": "City of Kidapawan"
+          },
+          {
+            "code": "1204705000",
+            "display": "Libungan"
+          },
+          {
+            "code": "1204706000",
+            "display": "Magpet"
+          },
+          {
+            "code": "1204707000",
+            "display": "Makilala"
+          },
+          {
+            "code": "1204708000",
+            "display": "Matalam"
+          },
+          {
+            "code": "1204709000",
+            "display": "Midsayap"
+          },
+          {
+            "code": "1204710000",
+            "display": "M'Lang"
+          },
+          {
+            "code": "1204711000",
+            "display": "Pigkawayan"
+          },
+          {
+            "code": "1204712000",
+            "display": "Pikit"
+          },
+          {
+            "code": "1204713000",
+            "display": "President Roxas"
+          },
+          {
+            "code": "1204714000",
+            "display": "Tulunan"
+          },
+          {
+            "code": "1204715000",
+            "display": "Antipas"
+          },
+          {
+            "code": "1204716000",
+            "display": "Banisilan"
+          },
+          {
+            "code": "1204717000",
+            "display": "Aleosan"
+          },
+          {
+            "code": "1204718000",
+            "display": "Arakan"
+          },
+          {
+            "code": "1206302000",
+            "display": "Banga"
+          },
+          {
+            "code": "1206306000",
+            "display": "City of Koronadal"
+          },
+          {
+            "code": "1206311000",
+            "display": "Norala"
+          },
+          {
+            "code": "1206312000",
+            "display": "Polomolok"
+          },
+          {
+            "code": "1206313000",
+            "display": "Surallah"
+          },
+          {
+            "code": "1206314000",
+            "display": "Tampakan"
+          },
+          {
+            "code": "1206315000",
+            "display": "Tantangan"
+          },
+          {
+            "code": "1206316000",
+            "display": "T'Boli"
+          },
+          {
+            "code": "1206317000",
+            "display": "Tupi"
+          },
+          {
+            "code": "1206318000",
+            "display": "Santo Niño"
+          },
+          {
+            "code": "1206319000",
+            "display": "Lake Sebu"
+          },
+          {
+            "code": "1206501000",
+            "display": "Bagumbayan"
+          },
+          {
+            "code": "1206502000",
+            "display": "Columbio"
+          },
+          {
+            "code": "1206503000",
+            "display": "Esperanza"
+          },
+          {
+            "code": "1206504000",
+            "display": "Isulan"
+          },
+          {
+            "code": "1206505000",
+            "display": "Kalamansig"
+          },
+          {
+            "code": "1206506000",
+            "display": "Lebak"
+          },
+          {
+            "code": "1206507000",
+            "display": "Lutayan"
+          },
+          {
+            "code": "1206508000",
+            "display": "Lambayong"
+          },
+          {
+            "code": "1206509000",
+            "display": "Palimbang"
+          },
+          {
+            "code": "1206510000",
+            "display": "President Quirino"
+          },
+          {
+            "code": "1206511000",
+            "display": "City of Tacurong"
+          },
+          {
+            "code": "1206512000",
+            "display": "Sen. Ninoy Aquino"
+          },
+          {
+            "code": "1208001000",
+            "display": "Alabel"
+          },
+          {
+            "code": "1208002000",
+            "display": "Glan"
+          },
+          {
+            "code": "1208003000",
+            "display": "Kiamba"
+          },
+          {
+            "code": "1208004000",
+            "display": "Maasim"
+          },
+          {
+            "code": "1208005000",
+            "display": "Maitum"
+          },
+          {
+            "code": "1208006000",
+            "display": "Malapatan"
+          },
+          {
+            "code": "1208007000",
+            "display": "Malungon"
+          },
+          {
+            "code": "1230800000",
+            "display": "City of General Santos"
+          },
+          {
+            "code": "1600201000",
+            "display": "Buenavista"
+          },
+          {
+            "code": "1600203000",
+            "display": "City of Cabadbaran"
+          },
+          {
+            "code": "1600204000",
+            "display": "Carmen"
+          },
+          {
+            "code": "1600205000",
+            "display": "Jabonga"
+          },
+          {
+            "code": "1600206000",
+            "display": "Kitcharao"
+          },
+          {
+            "code": "1600207000",
+            "display": "Las Nieves"
+          },
+          {
+            "code": "1600208000",
+            "display": "Magallanes"
+          },
+          {
+            "code": "1600209000",
+            "display": "Nasipit"
+          },
+          {
+            "code": "1600210000",
+            "display": "Santiago"
+          },
+          {
+            "code": "1600211000",
+            "display": "Tubay"
+          },
+          {
+            "code": "1600212000",
+            "display": "Remedios T. Romualdez"
+          },
+          {
+            "code": "1600301000",
+            "display": "City of Bayugan"
+          },
+          {
+            "code": "1600302000",
+            "display": "Bunawan"
+          },
+          {
+            "code": "1600303000",
+            "display": "Esperanza"
+          },
+          {
+            "code": "1600304000",
+            "display": "La Paz"
+          },
+          {
+            "code": "1600305000",
+            "display": "Loreto"
+          },
+          {
+            "code": "1600306000",
+            "display": "Prosperidad"
+          },
+          {
+            "code": "1600307000",
+            "display": "Rosario"
+          },
+          {
+            "code": "1600308000",
+            "display": "San Francisco"
+          },
+          {
+            "code": "1600309000",
+            "display": "San Luis"
+          },
+          {
+            "code": "1600310000",
+            "display": "Santa Josefa"
+          },
+          {
+            "code": "1600311000",
+            "display": "Talacogon"
+          },
+          {
+            "code": "1600312000",
+            "display": "Trento"
+          },
+          {
+            "code": "1600313000",
+            "display": "Veruela"
+          },
+          {
+            "code": "1600314000",
+            "display": "Sibagat"
+          },
+          {
+            "code": "1606701000",
+            "display": "Alegria"
+          },
+          {
+            "code": "1606702000",
+            "display": "Bacuag"
+          },
+          {
+            "code": "1606704000",
+            "display": "Burgos"
+          },
+          {
+            "code": "1606706000",
+            "display": "Claver"
+          },
+          {
+            "code": "1606707000",
+            "display": "Dapa"
+          },
+          {
+            "code": "1606708000",
+            "display": "Del Carmen"
+          },
+          {
+            "code": "1606710000",
+            "display": "General Luna"
+          },
+          {
+            "code": "1606711000",
+            "display": "Gigaquit"
+          },
+          {
+            "code": "1606714000",
+            "display": "Mainit"
+          },
+          {
+            "code": "1606715000",
+            "display": "Malimono"
+          },
+          {
+            "code": "1606716000",
+            "display": "Pilar"
+          },
+          {
+            "code": "1606717000",
+            "display": "Placer"
+          },
+          {
+            "code": "1606718000",
+            "display": "San Benito"
+          },
+          {
+            "code": "1606719000",
+            "display": "San Francisco"
+          },
+          {
+            "code": "1606720000",
+            "display": "San Isidro"
+          },
+          {
+            "code": "1606721000",
+            "display": "Santa Monica"
+          },
+          {
+            "code": "1606722000",
+            "display": "Sison"
+          },
+          {
+            "code": "1606723000",
+            "display": "Socorro"
+          },
+          {
+            "code": "1606724000",
+            "display": "City of Surigao"
+          },
+          {
+            "code": "1606725000",
+            "display": "Tagana-An"
+          },
+          {
+            "code": "1606727000",
+            "display": "Tubod"
+          },
+          {
+            "code": "1606801000",
+            "display": "Barobo"
+          },
+          {
+            "code": "1606802000",
+            "display": "Bayabas"
+          },
+          {
+            "code": "1606803000",
+            "display": "City of Bislig"
+          },
+          {
+            "code": "1606804000",
+            "display": "Cagwait"
+          },
+          {
+            "code": "1606805000",
+            "display": "Cantilan"
+          },
+          {
+            "code": "1606806000",
+            "display": "Carmen"
+          },
+          {
+            "code": "1606807000",
+            "display": "Carrascal"
+          },
+          {
+            "code": "1606808000",
+            "display": "Cortes"
+          },
+          {
+            "code": "1606809000",
+            "display": "Hinatuan"
+          },
+          {
+            "code": "1606810000",
+            "display": "Lanuza"
+          },
+          {
+            "code": "1606811000",
+            "display": "Lianga"
+          },
+          {
+            "code": "1606812000",
+            "display": "Lingig"
+          },
+          {
+            "code": "1606813000",
+            "display": "Madrid"
+          },
+          {
+            "code": "1606814000",
+            "display": "Marihatag"
+          },
+          {
+            "code": "1606815000",
+            "display": "San Agustin"
+          },
+          {
+            "code": "1606816000",
+            "display": "San Miguel"
+          },
+          {
+            "code": "1606817000",
+            "display": "Tagbina"
+          },
+          {
+            "code": "1606818000",
+            "display": "Tago"
+          },
+          {
+            "code": "1606819000",
+            "display": "City of Tandag"
+          },
+          {
+            "code": "1608501000",
+            "display": "Basilisa"
+          },
+          {
+            "code": "1608502000",
+            "display": "Cagdianao"
+          },
+          {
+            "code": "1608503000",
+            "display": "Dinagat"
+          },
+          {
+            "code": "1608504000",
+            "display": "Libjo"
+          },
+          {
+            "code": "1608505000",
+            "display": "Loreto"
+          },
+          {
+            "code": "1608506000",
+            "display": "San Jose"
+          },
+          {
+            "code": "1608507000",
+            "display": "Tubajon"
+          },
+          {
+            "code": "1630400000",
+            "display": "City of Butuan"
+          },
+          {
+            "code": "1900702000",
+            "display": "City of Lamitan"
+          },
+          {
+            "code": "1900703000",
+            "display": "Lantawan"
+          },
+          {
+            "code": "1900704000",
+            "display": "Maluso"
+          },
+          {
+            "code": "1900705000",
+            "display": "Sumisip"
+          },
+          {
+            "code": "1900706000",
+            "display": "Tipo-Tipo"
+          },
+          {
+            "code": "1900707000",
+            "display": "Tuburan"
+          },
+          {
+            "code": "1900708000",
+            "display": "Akbar"
+          },
+          {
+            "code": "1900709000",
+            "display": "Al-Barka"
+          },
+          {
+            "code": "1900710000",
+            "display": "Hadji Mohammad Ajul"
+          },
+          {
+            "code": "1900711000",
+            "display": "Ungkaya Pukan"
+          },
+          {
+            "code": "1900712000",
+            "display": "Hadji Muhtamad"
+          },
+          {
+            "code": "1900713000",
+            "display": "Tabuan-Lasa"
+          },
+          {
+            "code": "1903601000",
+            "display": "Bacolod-Kalawi"
+          },
+          {
+            "code": "1903602000",
+            "display": "Balabagan"
+          },
+          {
+            "code": "1903603000",
+            "display": "Balindong"
+          },
+          {
+            "code": "1903604000",
+            "display": "Bayang"
+          },
+          {
+            "code": "1903605000",
+            "display": "Binidayan"
+          },
+          {
+            "code": "1903606000",
+            "display": "Bubong"
+          },
+          {
+            "code": "1903607000",
+            "display": "Butig"
+          },
+          {
+            "code": "1903609000",
+            "display": "Ganassi"
+          },
+          {
+            "code": "1903610000",
+            "display": "Kapai"
+          },
+          {
+            "code": "1903611000",
+            "display": "Lumba-Bayabao"
+          },
+          {
+            "code": "1903612000",
+            "display": "Lumbatan"
+          },
+          {
+            "code": "1903613000",
+            "display": "Madalum"
+          },
+          {
+            "code": "1903614000",
+            "display": "Madamba"
+          },
+          {
+            "code": "1903615000",
+            "display": "Malabang"
+          },
+          {
+            "code": "1903616000",
+            "display": "Marantao"
+          },
+          {
+            "code": "1903617000",
+            "display": "City of Marawi"
+          },
+          {
+            "code": "1903618000",
+            "display": "Masiu"
+          },
+          {
+            "code": "1903619000",
+            "display": "Mulondo"
+          },
+          {
+            "code": "1903620000",
+            "display": "Pagayawan"
+          },
+          {
+            "code": "1903621000",
+            "display": "Piagapo"
+          },
+          {
+            "code": "1903622000",
+            "display": "Poona Bayabao"
+          },
+          {
+            "code": "1903623000",
+            "display": "Pualas"
+          },
+          {
+            "code": "1903624000",
+            "display": "Ditsaan-Ramain"
+          },
+          {
+            "code": "1903625000",
+            "display": "Saguiaran"
+          },
+          {
+            "code": "1903626000",
+            "display": "Tamparan"
+          },
+          {
+            "code": "1903627000",
+            "display": "Taraka"
+          },
+          {
+            "code": "1903628000",
+            "display": "Tubaran"
+          },
+          {
+            "code": "1903629000",
+            "display": "Tugaya"
+          },
+          {
+            "code": "1903630000",
+            "display": "Wao"
+          },
+          {
+            "code": "1903631000",
+            "display": "Marogong"
+          },
+          {
+            "code": "1903632000",
+            "display": "Calanogas"
+          },
+          {
+            "code": "1903633000",
+            "display": "Buadiposo-Buntong"
+          },
+          {
+            "code": "1903634000",
+            "display": "Maguing"
+          },
+          {
+            "code": "1903635000",
+            "display": "Picong"
+          },
+          {
+            "code": "1903636000",
+            "display": "Lumbayanague"
+          },
+          {
+            "code": "1903637000",
+            "display": "Amai Manabilang"
+          },
+          {
+            "code": "1903638000",
+            "display": "Tagoloan II"
+          },
+          {
+            "code": "1903639000",
+            "display": "Kapatagan"
+          },
+          {
+            "code": "1903640000",
+            "display": "Sultan Dumalondong"
+          },
+          {
+            "code": "1903641000",
+            "display": "Lumbaca-Unayan"
+          },
+          {
+            "code": "1907001000",
+            "display": "Panglima Sugala"
+          },
+          {
+            "code": "1907002000",
+            "display": "Bongao"
+          },
+          {
+            "code": "1907003000",
+            "display": "Mapun"
+          },
+          {
+            "code": "1907004000",
+            "display": "Simunul"
+          },
+          {
+            "code": "1907005000",
+            "display": "Sitangkai"
+          },
+          {
+            "code": "1907006000",
+            "display": "South Ubian"
+          },
+          {
+            "code": "1907007000",
+            "display": "Tandubas"
+          },
+          {
+            "code": "1907008000",
+            "display": "Turtle Islands"
+          },
+          {
+            "code": "1907009000",
+            "display": "Languyan"
+          },
+          {
+            "code": "1907010000",
+            "display": "Sapa-Sapa"
+          },
+          {
+            "code": "1907011000",
+            "display": "Sibutu"
+          },
+          {
+            "code": "1908701000",
+            "display": "Barira"
+          },
+          {
+            "code": "1908702000",
+            "display": "Buldon"
+          },
+          {
+            "code": "1908703000",
+            "display": "City of Cotabato"
+          },
+          {
+            "code": "1908704000",
+            "display": "Datu Blah T. Sinsuat"
+          },
+          {
+            "code": "1908705000",
+            "display": "Datu Odin Sinsuat"
+          },
+          {
+            "code": "1908706000",
+            "display": "Kabuntalan"
+          },
+          {
+            "code": "1908707000",
+            "display": "Matanog"
+          },
+          {
+            "code": "1908708000",
+            "display": "Northern Kabuntalan"
+          },
+          {
+            "code": "1908709000",
+            "display": "Parang"
+          },
+          {
+            "code": "1908710000",
+            "display": "Sultan Kudarat"
+          },
+          {
+            "code": "1908711000",
+            "display": "Sultan Mastura"
+          },
+          {
+            "code": "1908712000",
+            "display": "Talitay"
+          },
+          {
+            "code": "1908713000",
+            "display": "Upi"
+          },
+          {
+            "code": "1908801000",
+            "display": "Ampatuan"
+          },
+          {
+            "code": "1908802000",
+            "display": "Buluan"
+          },
+          {
+            "code": "1908803000",
+            "display": "Datu Abdullah Sangki"
+          },
+          {
+            "code": "1908804000",
+            "display": "Datu Anggal Midtimbang"
+          },
+          {
+            "code": "1908805000",
+            "display": "Datu Hoffer Ampatuan"
+          },
+          {
+            "code": "1908806000",
+            "display": "Datu Paglas"
+          },
+          {
+            "code": "1908807000",
+            "display": "Datu Piang"
+          },
+          {
+            "code": "1908808000",
+            "display": "Datu Salibo"
+          },
+          {
+            "code": "1908809000",
+            "display": "Datu Saudi Ampatuan"
+          },
+          {
+            "code": "1908810000",
+            "display": "Datu Unsay"
+          },
+          {
+            "code": "1908811000",
+            "display": "Gen. S.K. Pendatun"
+          },
+          {
+            "code": "1908812000",
+            "display": "Guindulungan"
+          },
+          {
+            "code": "1908813000",
+            "display": "Mamasapano"
+          },
+          {
+            "code": "1908814000",
+            "display": "Mangudadatu"
+          },
+          {
+            "code": "1908815000",
+            "display": "Pagagawan"
+          },
+          {
+            "code": "1908816000",
+            "display": "Pagalungan"
+          },
+          {
+            "code": "1908817000",
+            "display": "Paglat"
+          },
+          {
+            "code": "1908818000",
+            "display": "Pandag"
+          },
+          {
+            "code": "1908819000",
+            "display": "Rajah Buayan"
+          },
+          {
+            "code": "1908820000",
+            "display": "Shariff Aguak"
+          },
+          {
+            "code": "1908821000",
+            "display": "Shariff Saydona Mustapha"
+          },
+          {
+            "code": "1908822000",
+            "display": "South Upi"
+          },
+          {
+            "code": "1908823000",
+            "display": "Sultan Sa Barongis"
+          },
+          {
+            "code": "1908824000",
+            "display": "Talayan"
+          },
+          {
+            "code": "1999901000",
+            "display": "Kapalawan"
+          },
+          {
+            "code": "1999902000",
+            "display": "Old Kaabakan"
+          },
+          {
+            "code": "1999903000",
+            "display": "Kadayangan"
+          },
+          {
+            "code": "1999904000",
+            "display": "Nabalawag"
+          },
+          {
+            "code": "1999905000",
+            "display": "Pahamuddin"
+          },
+          {
+            "code": "1999906000",
+            "display": "Malidegao"
+          },
+          {
+            "code": "1999907000",
+            "display": "Ligawasan"
+          },
+          {
+            "code": "1999908000",
+            "display": "Tugunan"
+          }
+        ]
+      }
+    ]
+  }
+}

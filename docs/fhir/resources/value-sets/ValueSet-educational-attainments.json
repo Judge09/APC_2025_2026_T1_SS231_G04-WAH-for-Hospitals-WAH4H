@@ -1,0 +1,148 @@
+{
+  "resourceType": "ValueSet",
+  "id": "educational-attainments",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/classification/psced/ValueSet/educational-attainments",
+  "version": "2017",
+  "name": "EducationalAttainments",
+  "title": "Educational Attainments",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "All categories of educational attainment levels in the Philippines, based on the 2017 Philippine Standard Classification of Education (PSCED) published by the Philippine Statistics Authority (PSA). Covers PSCED Levels 0 through 8 plus No Grade Completed.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "concept": [
+          {
+            "code": "C201300",
+            "display": "No Grade Completed"
+          },
+          {
+            "code": "C201301",
+            "display": "Early Childhood Education"
+          },
+          {
+            "code": "C201302",
+            "display": "Primary Education"
+          },
+          {
+            "code": "C201303",
+            "display": "Lower Secondary Education"
+          },
+          {
+            "code": "C201304",
+            "display": "Upper Secondary Education"
+          },
+          {
+            "code": "C201305",
+            "display": "Post-Secondary Non-Tertiary Education"
+          },
+          {
+            "code": "C201306",
+            "display": "Short-Cycle Tertiary Education"
+          },
+          {
+            "code": "C201307",
+            "display": "Bachelor's Degree or Equivalent"
+          },
+          {
+            "code": "C201308",
+            "display": "Master's Degree or Equivalent"
+          },
+          {
+            "code": "C201309",
+            "display": "Doctoral Degree or Equivalent"
+          }
+        ]
+      }
+    ]
+  },
+  "expansion": {
+    "timestamp": "2017-01-01T00:00:00+00:00",
+    "total": 10,
+    "offset": 0,
+    "parameter": [
+      {
+        "name": "version",
+        "valueUri": "https://psa.gov.ph/classification/psced/level|2017"
+      }
+    ],
+    "contains": [
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201300",
+        "display": "No Grade Completed"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201301",
+        "display": "Early Childhood Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201302",
+        "display": "Primary Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201303",
+        "display": "Lower Secondary Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201304",
+        "display": "Upper Secondary Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201305",
+        "display": "Post-Secondary Non-Tertiary Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201306",
+        "display": "Short-Cycle Tertiary Education"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201307",
+        "display": "Bachelor's Degree or Equivalent"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201308",
+        "display": "Master's Degree or Equivalent"
+      },
+      {
+        "system": "https://psa.gov.ph/classification/psced/level",
+        "code": "C201309",
+        "display": "Doctoral Degree or Equivalent"
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "resourceType": "Medication",
+  "id": "example-medication",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-medication"
+    ]
+  },
+  "language": "en",
+  "text": {
+    "status": "generated"
+  }
+}

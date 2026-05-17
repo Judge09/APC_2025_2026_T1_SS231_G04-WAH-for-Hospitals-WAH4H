@@ -1,0 +1,43 @@
+{
+  "resourceType": "Practitioner",
+  "id": "example-practitioner",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-practitioner"
+    ]
+  },
+  "language": "en",
+  "text": {
+    "status": "generated"
+  },
+  "name": [
+    {
+      "family": "Santos",
+      "given": ["Maria", "Clara"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+63-912-345-6789",
+      "use": "mobile"
+    },
+    {
+      "system": "email",
+      "value": "maria.santos@example.ph",
+      "use": "work"
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "line": ["1234 Mabini Street"],
+      "city": "Manila",
+      "state": "NCR",
+      "postalCode": "1000",
+      "country": "PH"
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-05-15"
+}

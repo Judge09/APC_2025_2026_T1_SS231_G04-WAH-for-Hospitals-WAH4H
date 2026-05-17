@@ -1,0 +1,196 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "race-cs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/CodeSystem/race-cs",
+  "version": "0.2.0",
+  "name": "RaceCS",
+  "title": "Race and Ethnicity Code System",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "Classification of race and ethnicity for use in the Philippine health information system. Philippine ethnolinguistic groups are based on the 2020 Census of Population and Housing (CPH) published by the Philippine Statistics Authority (PSA). Broader international race categories are included for patients of foreign origin.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 31,
+  "concept": [
+    {
+      "code": "RACE-PH-001",
+      "display": "Tagalog",
+      "definition": "Member of the Tagalog ethnolinguistic group, predominantly from Metro Manila, CALABARZON, and Central Luzon. Largest ethnic group in the Philippines at 26.0% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-002",
+      "display": "Bisaya/Binisaya",
+      "definition": "Member of the Bisaya/Binisaya (Visayan) ethnolinguistic group. The second largest group at 14.3% of the 2020 household population (PSA 2020 CPH). Includes various Visayan subgroups."
+    },
+    {
+      "code": "RACE-PH-003",
+      "display": "Ilocano",
+      "definition": "Member of the Ilocano ethnolinguistic group, predominantly from the Ilocos Region, Cagayan Valley, and CAR. Comprises 8.0% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-004",
+      "display": "Cebuano",
+      "definition": "Member of the Cebuano ethnolinguistic group, predominantly from Central Visayas, parts of Eastern Visayas, and Mindanao. Comprises 8.0% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-005",
+      "display": "Ilonggo (Hiligaynon)",
+      "definition": "Member of the Hiligaynon/Ilonggo ethnolinguistic group, predominantly from Western Visayas (Iloilo, Negros Occidental, Panay). Comprises 7.9% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-006",
+      "display": "Bikol/Bicol",
+      "definition": "Member of the Bikol/Bicol ethnolinguistic group, predominantly from the Bicol Region (Regions V). Comprises 6.5% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-007",
+      "display": "Waray",
+      "definition": "Member of the Waray ethnolinguistic group, predominantly from Eastern Visayas (Samar, Leyte). Comprises 3.8% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-008",
+      "display": "Kapampangan",
+      "definition": "Member of the Kapampangan ethnolinguistic group, predominantly from Pampanga and Tarlac in Central Luzon. Comprises 3.0% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-009",
+      "display": "Pangasinan",
+      "definition": "Member of the Pangasinan ethnolinguistic group, predominantly from Pangasinan province. Comprises 1.9% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-010",
+      "display": "Maguindanao",
+      "definition": "Member of the Maguindanao ethnolinguistic group, predominantly from Maguindanao province in BARMM. Comprises 1.9% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "RACE-PH-011",
+      "display": "Maranao",
+      "definition": "Member of the Maranao ethnolinguistic group (People of the Lake), predominantly from Lanao del Sur and Lanao del Norte in Mindanao. One of the major Moro groups."
+    },
+    {
+      "code": "RACE-PH-012",
+      "display": "Tausug",
+      "definition": "Member of the Tausug ethnolinguistic group, predominantly from the Sulu Archipelago (Sulu, Tawi-Tawi). One of the major Moro groups."
+    },
+    {
+      "code": "RACE-PH-013",
+      "display": "Sama/Bajau",
+      "definition": "Member of the Sama-Bajau ethnolinguistic group, predominantly from coastal areas of Mindanao and the Sulu Archipelago."
+    },
+    {
+      "code": "RACE-PH-014",
+      "display": "Yakan",
+      "definition": "Member of the Yakan ethnolinguistic group, predominantly from Basilan island in BARMM."
+    },
+    {
+      "code": "RACE-PH-015",
+      "display": "Igorot",
+      "definition": "Member of the Igorot peoples, a collective term for various indigenous highland groups of the Cordillera Administrative Region (CAR), including Bontoc, Ibaloi, Ifugao, Kalinga, and Kankanaey."
+    },
+    {
+      "code": "RACE-PH-016",
+      "display": "Aeta/Agta (Negrito)",
+      "definition": "Member of the Aeta, Agta, or other Negrito indigenous groups, among the earliest inhabitants of the Philippine archipelago. Found in scattered locations across Luzon and some Visayan islands."
+    },
+    {
+      "code": "RACE-PH-017",
+      "display": "Lumad",
+      "definition": "Member of the Lumad peoples, a collective term for non-Muslim indigenous groups of Mindanao, including B'laan, Bagobo, Higaonon, Mandaya, Manobo, Subanen, T'boli, and Teduray."
+    },
+    {
+      "code": "RACE-PH-018",
+      "display": "Other Philippine Ethnolinguistic Group",
+      "definition": "Member of another Philippine ethnolinguistic group not separately listed. The Philippines has over 175 recognized ethnolinguistic communities."
+    },
+    {
+      "code": "RACE-PH-019",
+      "display": "Filipino-Chinese (Fil-Chi)",
+      "definition": "Filipino of Chinese descent (Tsinoy). One of the largest foreign-origin communities in the Philippines, predominantly of Hokkien/Fujian origin."
+    },
+    {
+      "code": "RACE-PH-020",
+      "display": "Filipino-Spanish (Fil-Spanish)",
+      "definition": "Filipino of Spanish descent or mestizo of Spanish-Filipino ancestry."
+    },
+    {
+      "code": "RACE-PH-021",
+      "display": "Filipino-American (Fil-Am)",
+      "definition": "Filipino of American descent or mestizo of American-Filipino ancestry."
+    },
+    {
+      "code": "RACE-PH-022",
+      "display": "Filipino-Indian (Fil-Indian)",
+      "definition": "Filipino of Indian descent, predominantly of Sindhi or Punjabi origin."
+    },
+    {
+      "code": "RACE-INT-001",
+      "display": "Asian",
+      "definition": "Person of Asian origin or descent, not elsewhere classified in the Philippine ethnolinguistic groups."
+    },
+    {
+      "code": "RACE-INT-002",
+      "display": "White / Caucasian",
+      "definition": "Person of White or Caucasian origin or descent, including European, North American, Australian, and Middle Eastern ancestry."
+    },
+    {
+      "code": "RACE-INT-003",
+      "display": "Black / African",
+      "definition": "Person of Black or African origin or descent."
+    },
+    {
+      "code": "RACE-INT-004",
+      "display": "Hispanic / Latino",
+      "definition": "Person of Hispanic or Latino origin or descent, from Spanish-speaking countries in Latin America or Spain."
+    },
+    {
+      "code": "RACE-INT-005",
+      "display": "Middle Eastern / Arab",
+      "definition": "Person of Middle Eastern or Arab origin or descent."
+    },
+    {
+      "code": "RACE-INT-006",
+      "display": "Pacific Islander",
+      "definition": "Person of Pacific Islander origin or descent, from Polynesia, Micronesia, or Melanesia (excluding Philippines)."
+    },
+    {
+      "code": "RACE-INT-007",
+      "display": "Mixed Race / Multiracial",
+      "definition": "Person of two or more racial or ethnic backgrounds not captured by a single category."
+    },
+    {
+      "code": "RACE-UNK-001",
+      "display": "Other Race / Ethnicity",
+      "definition": "Race or ethnicity not captured by any other category in this classification."
+    },
+    {
+      "code": "RACE-UNK-002",
+      "display": "Unknown / Not Stated",
+      "definition": "Race or ethnicity is unknown, not stated, or not recorded."
+    }
+  ]
+}

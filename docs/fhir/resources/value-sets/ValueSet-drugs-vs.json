@@ -1,0 +1,43 @@
+{
+  "resourceType": "ValueSet",
+  "id": "drugs-vs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/classification/fda/ValueSet/drugs-vs",
+  "version": "2026",
+  "name": "DrugsVS",
+  "title": "Drugs",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "This value set includes all drug or medicament substance codes and pharmaceutical/biologic products registered under a Certificate of Product Registration (CPR) issued by the Philippine Food and Drug Administration (FDA). Codes are sourced from the FDA Drug Product Verification portal at https://verification.fda.gov.ph.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "https://verification.fda.gov.ph"
+      }
+    ]
+  }
+}

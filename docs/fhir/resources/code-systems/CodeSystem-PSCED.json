@@ -1,0 +1,91 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "PSCED",
+  "language": "en",
+  "url": "https://psa.gov.ph/classification/psced/level",
+  "version": "2017",
+  "name": "PSCED",
+  "title": "Philippine Standard Classification of Education",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "Philippine Standard Classification of Education (PSCED) 2017, published by the Philippine Statistics Authority (PSA) and approved under PSA Board Resolution No. 13, Series of 2017. Classifies educational attainment levels from No Grade Completed through Doctoral level education, aligned with the 2011 UNESCO International Standard Classification of Education (ISCED).",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 10,
+  "concept": [
+    {
+      "code": "C201300",
+      "display": "No Grade Completed",
+      "definition": "No formal education attained. The individual has not completed any level of the formal educational system."
+    },
+    {
+      "code": "C201301",
+      "display": "Early Childhood Education",
+      "definition": "PSCED Level 0. Early childhood education programs that support early child development and prepare young children for entry into primary education. Equivalent to pre-school, kindergarten, and nursery programs. Typically for children aged 0 to 5 years."
+    },
+    {
+      "code": "C201302",
+      "display": "Primary Education",
+      "definition": "PSCED Level 1. Primary education programs providing basic skills in reading, writing, and mathematics along with foundational knowledge in other subjects. Covers Grades 1 to 6 (Elementary) under the Philippine K to 12 curriculum."
+    },
+    {
+      "code": "C201303",
+      "display": "Lower Secondary Education",
+      "definition": "PSCED Level 2. Lower secondary education programs building on primary education, providing a foundation for lifelong learning. Covers Grades 7 to 10 (Junior High School) under the Philippine K to 12 curriculum."
+    },
+    {
+      "code": "C201304",
+      "display": "Upper Secondary Education",
+      "definition": "PSCED Level 3. Upper secondary education programs providing subject-based or skills-based learning. Covers Grades 11 to 12 (Senior High School) under the Philippine K to 12 curriculum, including Academic, TVL, Arts and Design, and Sports tracks."
+    },
+    {
+      "code": "C201305",
+      "display": "Post-Secondary Non-Tertiary Education",
+      "definition": "PSCED Level 4. Post-secondary non-tertiary education programs typically technical-vocational in nature, leading to National Certificates (NC) I, II, or III under TESDA. These programs build on upper secondary education and prepare individuals for labor market entry or progression to tertiary education."
+    },
+    {
+      "code": "C201306",
+      "display": "Short-Cycle Tertiary Education",
+      "definition": "PSCED Level 5. Short-cycle tertiary education or equivalent programs, typically leading to TESDA National Certificate IV (NC IV) or a Diploma. These programs are more complex than post-secondary non-tertiary programs and may provide credit toward bachelor level programs."
+    },
+    {
+      "code": "C201307",
+      "display": "Bachelor's Degree or Equivalent",
+      "definition": "PSCED Level 6. Bachelor level education or equivalent programs offered by higher education institutions. Includes bachelor's degrees and professional degrees (e.g., MD, LLB before reforms). Typically requires 4 to 5 years of full-time study after upper secondary education."
+    },
+    {
+      "code": "C201308",
+      "display": "Master's Degree or Equivalent",
+      "definition": "PSCED Level 7. Master level education or equivalent programs providing advanced academic or professional knowledge and skills. Includes master's degrees and post-baccalaureate professional degrees. Typically requires 1 to 2 years of full-time study after a bachelor's degree."
+    },
+    {
+      "code": "C201309",
+      "display": "Doctoral Degree or Equivalent",
+      "definition": "PSCED Level 8. Doctoral level education or equivalent programs designed to lead to an advanced research qualification. Includes Doctor of Philosophy (PhD) and equivalent research doctorates. Typically requires at least 3 years of full-time study after a master's degree."
+    }
+  ]
+}

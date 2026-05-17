@@ -1,0 +1,141 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "religion-cs",
+  "language": "en",
+  "url": "https://fhir-ph-core.wah.ph/CodeSystem/religion-cs",
+  "version": "0.2.0",
+  "name": "ReligionCS",
+  "title": "Religion Code System",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-05-14T10:00:00+08:00",
+  "publisher": "Wireless Access for Health (WAH)",
+  "contact": [
+    {
+      "name": "Wireless Access for Health (WAH)",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://wah.ph"
+        }
+      ]
+    }
+  ],
+  "description": "Classification of religious affiliations for use in the Philippine health information system. Categories are based on the 2020 Census of Population and Housing (CPH) religious affiliation classifications published by the Philippine Statistics Authority (PSA), supplemented with additional categories for completeness.",
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "PH",
+          "display": "Philippines"
+        }
+      ]
+    }
+  ],
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 20,
+  "concept": [
+    {
+      "code": "REL-001",
+      "display": "Roman Catholic",
+      "definition": "Member of the Roman Catholic Church, the largest religious group in the Philippines comprising 78.8% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-002",
+      "display": "Iglesia ni Cristo",
+      "definition": "Member of the Iglesia ni Cristo (INC), a Christian denomination founded in the Philippines in 1914. Comprises 2.6% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-003",
+      "display": "Seventh Day Adventist",
+      "definition": "Member of the Seventh-day Adventist Church. Comprises 0.8% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-004",
+      "display": "Aglipay (Iglesia Filipina Independiente)",
+      "definition": "Member of the Aglipayan Church, also known as the Philippine Independent Church (Iglesia Filipina Independiente). Comprises 0.8% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-005",
+      "display": "Bible Baptist Church",
+      "definition": "Member of a Bible Baptist Church congregation. Comprises 0.5% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-006",
+      "display": "United Church of Christ in the Philippines",
+      "definition": "Member of the United Church of Christ in the Philippines (UCCP). Comprises 0.4% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-007",
+      "display": "Jehovah's Witness",
+      "definition": "Member of the Jehovah's Witnesses religious organization. Comprises 0.4% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-008",
+      "display": "Church of Christ",
+      "definition": "Member of the Church of Christ. Comprises 0.4% of the 2020 household population (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-009",
+      "display": "Episcopal Church in the Philippines",
+      "definition": "Member of the Episcopal Church in the Philippines, an Anglican denomination."
+    },
+    {
+      "code": "REL-010",
+      "display": "Assemblies of God",
+      "definition": "Member of the Assemblies of God, a Pentecostal Christian denomination."
+    },
+    {
+      "code": "REL-011",
+      "display": "Church of Jesus Christ of Latter-day Saints",
+      "definition": "Member of the Church of Jesus Christ of Latter-day Saints (LDS Church/Mormon)."
+    },
+    {
+      "code": "REL-012",
+      "display": "Members Church of God International",
+      "definition": "Member of the Members Church of God International (Ang Dating Daan), a Christian denomination founded in the Philippines."
+    },
+    {
+      "code": "REL-013",
+      "display": "Christianity (Other)",
+      "definition": "Identifies as Christian but does not belong to a specific denomination listed, or belongs to another Christian denomination not separately enumerated."
+    },
+    {
+      "code": "REL-014",
+      "display": "Islam",
+      "definition": "Follower of Islam. The second largest religion in the Philippines comprising 6.4% of the 2020 household population, predominantly in BARMM and parts of Mindanao (PSA 2020 CPH)."
+    },
+    {
+      "code": "REL-015",
+      "display": "Buddhism",
+      "definition": "Follower of Buddhism. A minority religion in the Philippines, predominantly among Filipino-Chinese communities."
+    },
+    {
+      "code": "REL-016",
+      "display": "Hinduism",
+      "definition": "Follower of Hinduism. A minority religion in the Philippines."
+    },
+    {
+      "code": "REL-017",
+      "display": "Indigenous/Tribal Religion",
+      "definition": "Practitioner of indigenous, tribal, or animist religious traditions, including those of various indigenous peoples (Lumad, Igorot, Aeta, and other highland groups) in the Philippines."
+    },
+    {
+      "code": "REL-018",
+      "display": "Other Religion",
+      "definition": "Identifies with a religion or belief system not separately listed in this classification."
+    },
+    {
+      "code": "REL-019",
+      "display": "No Religion / None",
+      "definition": "Does not identify with any religion or religious affiliation."
+    },
+    {
+      "code": "REL-020",
+      "display": "Unknown / Not Stated",
+      "definition": "Religious affiliation is unknown, not stated, or not recorded."
+    }
+  ]
+}

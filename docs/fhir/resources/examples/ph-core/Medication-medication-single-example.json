@@ -1,0 +1,32 @@
+{
+  "resourceType": "Medication",
+  "id": "medication-single-example",
+  "meta": {
+    "profile": [
+      "https://fhir-ph-core.wah.ph/phcore/StructureDefinition/ph-core-medication"
+    ]
+  },
+  "language": "en",
+  "text": {
+    "status": "generated"
+  },
+  "code": {
+    "coding": [
+      {
+        "system": "https://verification.fda.gov.ph",
+        "code": "DRP-10144",
+        "display": "Twinact"
+      }
+    ],
+    "text": "Twinact 40mg/5mg tablet"
+  },
+  "form": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "385055001",
+        "display": "Tablet"
+      }
+    ]
+  }
+}
