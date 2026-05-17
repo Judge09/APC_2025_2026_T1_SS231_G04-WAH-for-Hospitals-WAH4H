@@ -8,6 +8,15 @@ from datetime import datetime, timezone, date, timedelta
 
 import requests
 
+from patients.psgc_data import (
+    PSGC_CITY_BY_CODE,
+    PSGC_PROVINCE,
+    PSGC_PROVINCE_SHORT,
+    PSGC_REGION,
+    PSGC_REGION_SHORT,
+    PSGC_SYSTEM,
+)
+
 logger = logging.getLogger(__name__)
 
 URL = "https://wah4pc.echosphere.cfd"
@@ -51,118 +60,11 @@ _HL7_MARITAL_STATUS: dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# PSGC lookup tables
+# PSGC lookup tables — imported from patients/psgc_data.py
+# Complete national coverage: 1,435 cities/municipalities, 82 provinces, 18 regions.
+# All codes are 10-digit PSGC format as required by PH Core FHIR R4.
+# System URI: https://psa.gov.ph/classification/psgc
 # ---------------------------------------------------------------------------
-
-# City / municipality  — DB stores the 10-digit codes from addressData.json.
-# Display names use the national-registry "Name City" format (not "City of Name").
-_PSGC_CITY: dict[str, str] = {
-    "1380100000": "Caloocan City",
-    "1380200000": "Las Piñas City",
-    "1380300000": "Makati City",
-    "1380400000": "Malabon City",
-    "1380500000": "Mandaluyong City",
-    "1380600000": "Manila",           # Manila does not append "City" per PSA
-    "1380700000": "Marikina City",
-    "1380800000": "Muntinlupa City",
-    "1380900000": "Navotas City",
-    "1381000000": "Parañaque City",
-    "1381100000": "Pasay City",
-    "1381200000": "Pasig City",
-    "1381300000": "Quezon City",
-    "1381400000": "San Juan City",
-    "1381500000": "Taguig City",
-    "1381600000": "Valenzuela City",
-    "1381701000": "Pateros",          # municipality — no "City" suffix
-    # Central Luzon samples
-    "0310600000": "San Fernando City",
-    "0318200000": "Angeles City",
-    "0307400000": "Mabalacat City",
-}
-
-# Province / district codes
-_PSGC_PROVINCE: dict[str, str] = {
-    "NCR, All District": "NCR, All District",
-    "PAMP": "Pampanga",
-    "BUL":  "Bulacan",
-    "ZMB":  "Zambales",
-}
-
-# Region display names keyed on the short alphabetic code stored in the DB.
-_PSGC_REGION: dict[str, str] = {
-    "NCR":   "National Capital Region",
-    "CAR":   "Cordillera Administrative Region",
-    "I":     "Ilocos Region",
-    "II":    "Cagayan Valley",
-    "III":   "Central Luzon",
-    "IVA":   "CALABARZON",
-    "IVB":   "MIMAROPA",
-    "V":     "Bicol Region",
-    "VI":    "Western Visayas",
-    "VII":   "Central Visayas",
-    "VIII":  "Eastern Visayas",
-    "IX":    "Zamboanga Peninsula",
-    "X":     "Northern Mindanao",
-    "XI":    "Davao Region",
-    "XII":   "SOCCSKSARGEN",
-    "XIII":  "Caraga",
-    "BARMM": "Bangsamoro Autonomous Region in Muslim Mindanao",
-}
-
-# ---------------------------------------------------------------------------
-# 10-digit frontend code → 9-digit PSA PSGC code for city/municipality.
-# The addressData.json uses a 10-digit numbering system; the WAH4PC gateway
-# requires the official PSA 9-digit PSGC codes.
-# Source: PSA PSGC 2023 publication.
-# Codes annotated "confirmed" were verified against the Working-Version JSON.
-# All others should be cross-checked against the PSA PSGC release if errors
-# are encountered on the target system.
-# ---------------------------------------------------------------------------
-_PSGC_CITY_9: dict[str, str] = {
-    # NCR ─────────────────────────────────────────────────────────────────
-    "1380100000": "133701000",  # City of Caloocan
-    "1380200000": "137602000",  # City of Las Piñas
-    "1380300000": "137603000",  # City of Makati
-    "1380400000": "137604000",  # City of Malabon
-    "1380500000": "133800000",  # City of Mandaluyong
-    "1380600000": "133900000",  # City of Manila
-    "1380700000": "137607000",  # City of Marikina
-    "1380800000": "137608000",  # City of Muntinlupa
-    "1380900000": "137609000",  # City of Navotas
-    "1381000000": "137610000",  # City of Parañaque
-    "1381100000": "137605000",  # Pasay City — CONFIRMED (Working-Version JSON)
-    "1381200000": "137611000",  # City of Pasig
-    "1381300000": "133700000",  # Quezon City
-    "1381400000": "137612000",  # City of San Juan
-    "1381500000": "137613000",  # City of Taguig
-    "1381600000": "137614000",  # City of Valenzuela
-    "1381701000": "137615000",  # Pateros
-    # Central Luzon ────────────────────────────────────────────────────────
-    "0310600000": "035403000",  # City of San Fernando (Pampanga)
-    "0318200000": "035401000",  # City of Angeles
-    "0307400000": "035404000",  # Mabalacat City
-}
-
-# PSA 9-digit PSGC numeric codes for each region (used in valueCoding.code).
-_PSGC_REGION_CODE: dict[str, str] = {
-    "NCR":   "130000000",
-    "CAR":   "140000000",
-    "I":     "010000000",
-    "II":    "020000000",
-    "III":   "030000000",
-    "IVA":   "040000000",
-    "IVB":   "170000000",
-    "V":     "050000000",
-    "VI":    "060000000",
-    "VII":   "070000000",
-    "VIII":  "080000000",
-    "IX":    "090000000",
-    "X":     "100000000",
-    "XI":    "110000000",
-    "XII":   "120000000",
-    "XIII":  "160000000",
-    "BARMM": "190000000",
-}
 
 # ---------------------------------------------------------------------------
 # CodeableConcept code tables
@@ -347,30 +249,25 @@ def _slug(text: str) -> str:
 
 
 def _barangay_psgc_code(city_psgc_10: str | None, barangay_name: str | None) -> str | None:
-    """Return a 9-digit code for a barangay, or None if the city is unknown.
+    """Return a 10-digit PSGC code for a barangay, or None if city code is absent.
 
-    Strategy (in priority order):
-    1. "Barangay N" — exact derivation: city_9[:6] + N.zfill(3)
-       e.g. city "137605000" + "Barangay 17"  →  "137605017"
-    2. Named barangay — deterministic 3-digit suffix via CRC32 of the name:
-       city_9[:6] + (crc32(name) % 1000).zfill(3)
-       e.g. city "137613000" + "Palingon"  →  "137613NNN"
-       This keeps the extension structurally valid and 9 digits.
-       NOTE: the suffix is NOT an official PSA code; update _PSGC_CITY_9 or
-       add a named barangay lookup dict when the PSA PSGC file is available.
+    10-digit PSGC structure: <7-digit city prefix><3-digit barangay suffix>
+
+    Strategy:
+    1. "Barangay N" — exact derivation: city[:7] + N.zfill(3)
+       e.g. city "1380300000" + "Barangay 17" → "1380300017"
+    2. Named barangay — deterministic suffix via adler32 of the name (stable
+       across processes). NOT an official PSA code; replace with a full
+       barangay ValueSet when PSA publishes one.
     """
     if not city_psgc_10 or not barangay_name:
         return None
-    city_9 = _PSGC_CITY_9.get(city_psgc_10)
-    if not city_9:
-        return None
-    # Numbered barangay — exact
+    prefix = city_psgc_10[:7]
     m = re.fullmatch(r"Barangay (\d+)", barangay_name)
     if m:
-        return city_9[:6] + str(int(m.group(1))).zfill(3)
-    # Named barangay — deterministic (zlib.adler32 is stable across processes)
+        return prefix + str(int(m.group(1))).zfill(3)
     suffix = zlib.adler32(barangay_name.encode("utf-8")) % 1000
-    return city_9[:6] + str(suffix).zfill(3)
+    return prefix + str(suffix).zfill(3)
 
 
 def _clean(d: dict) -> dict:
@@ -782,51 +679,62 @@ def patient_to_fhir(patient):
     # 8. Address — top-level city as display name + PSGC extension array
     # ------------------------------------------------------------------
     if patient.address_line or patient.address_city:
-        city_display = _PSGC_CITY.get(patient.address_city, patient.address_city) \
+        city_display = PSGC_CITY_BY_CODE.get(patient.address_city, patient.address_city) \
                        if patient.address_city else None
 
         # Build the PSGC extension array
         addr_extensions = []
 
-        # 8a. Region — only emit when a proper 9-digit PSA numeric code is known.
-        # System: https://psa.gov.ph/classification/psgc (PSA PSGC)
+        # 8a. Region — 10-digit PSGC code from short code (NCR, III, etc.)
         if patient.address_state:
-            region_code = _PSGC_REGION_CODE.get(patient.address_state)
+            region_code = PSGC_REGION_SHORT.get(patient.address_state) \
+                          or PSGC_REGION.get(patient.address_state)
             if region_code:
-                region_display = _PSGC_REGION.get(patient.address_state, patient.address_state)
+                region_display = patient.address_state
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/region",
                     "valueCoding": {
-                        "system":  "https://psa.gov.ph/classification/psgc",
+                        "system":  PSGC_SYSTEM,
                         "code":    region_code,
                         "display": region_display,
                     },
                 })
 
-        # 8b. City-municipality — emit 9-digit PSA code only.
-        # The DB stores a 10-digit frontend code; _PSGC_CITY_9 converts it.
-        if patient.address_city:
-            city_9 = _PSGC_CITY_9.get(patient.address_city)
-            if city_9:
+        # 8b. Province — 10-digit PSGC code; skip for NCR (no province level).
+        if patient.address_district:
+            prov_code = PSGC_PROVINCE_SHORT.get(patient.address_district) \
+                        or PSGC_PROVINCE.get(patient.address_district)
+            if prov_code:  # empty string for NCR All District → skipped
+                prov_display = patient.address_district
                 addr_extensions.append({
-                    "url": f"{_URN_EXT}/city-municipality",
+                    "url": f"{_URN_EXT}/province",
                     "valueCoding": {
-                        "system":  "https://psa.gov.ph/classification/psgc",
-                        "code":    city_9,
-                        "display": city_display or patient.address_city,
+                        "system":  PSGC_SYSTEM,
+                        "code":    prov_code,
+                        "display": prov_display,
                     },
                 })
 
-        # 8c. Barangay — only emit when a real numeric PSGC code is available.
-        # "Barangay N" names → code derived as city_prefix[:7] + N.zfill(3).
-        # Named barangays have no derivable code and are excluded entirely.
+        # 8c. City-municipality — 10-digit PSGC code stored directly in DB.
+        if patient.address_city:
+            addr_extensions.append({
+                "url": f"{_URN_EXT}/city-municipality",
+                "valueCoding": {
+                    "system":  PSGC_SYSTEM,
+                    "code":    patient.address_city,
+                    "display": city_display or patient.address_city,
+                },
+            })
+
+        # 8d. Barangay — 10-digit PSGC code derived from city prefix + barangay number.
+        # Named barangays get a deterministic (non-official) suffix.
         if patient.address_line:
             bgy_code = _barangay_psgc_code(patient.address_city, patient.address_line)
             if bgy_code:
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/barangay",
                     "valueCoding": {
-                        "system":  "https://psa.gov.ph/classification/psgc",
+                        "system":  PSGC_SYSTEM,
                         "code":    bgy_code,
                         "display": patient.address_line,
                     },
@@ -837,6 +745,8 @@ def patient_to_fhir(patient):
             "type":       "physical",
             "line":       [patient.address_line] if patient.address_line else None,
             "city":       city_display,
+            "district":   patient.address_district or None,
+            "state":      patient.address_state or None,
             "postalCode": patient.address_postal_code,
             "country":    "PH",    # ISO 3166-1 alpha-2 — never free-text
         })
@@ -2956,32 +2866,43 @@ def organization_to_fhir(org) -> dict:
     # 5. Address with PSGC extensions
     if org.address_line or org.address_city:
         city_display = (
-            _PSGC_CITY.get(org.address_city, org.address_city)
+            PSGC_CITY_BY_CODE.get(org.address_city, org.address_city)
             if org.address_city else None
         )
         addr_extensions = []
         if org.address_state:
-            region_code = _PSGC_REGION_CODE.get(org.address_state)
+            region_code = PSGC_REGION_SHORT.get(org.address_state) \
+                          or PSGC_REGION.get(org.address_state)
             if region_code:
                 addr_extensions.append({
                     "url": f"{_URN_EXT}/region",
                     "valueCoding": {
-                        "system":  f"{_URN_CS}/PSGC",
+                        "system":  PSGC_SYSTEM,
                         "code":    region_code,
-                        "display": _PSGC_REGION.get(org.address_state, org.address_state),
+                        "display": org.address_state,
+                    },
+                })
+        if org.address_district:
+            prov_code = PSGC_PROVINCE_SHORT.get(org.address_district) \
+                        or PSGC_PROVINCE.get(org.address_district)
+            if prov_code:
+                addr_extensions.append({
+                    "url": f"{_URN_EXT}/province",
+                    "valueCoding": {
+                        "system":  PSGC_SYSTEM,
+                        "code":    prov_code,
+                        "display": org.address_district,
                     },
                 })
         if org.address_city:
-            city_9 = _PSGC_CITY_9.get(org.address_city)
-            if city_9:
-                addr_extensions.append({
-                    "url": f"{_URN_EXT}/city-municipality",
-                    "valueCoding": {
-                        "system":  f"{_URN_CS}/PSGC",
-                        "code":    city_9,
-                        "display": city_display or org.address_city,
-                    },
-                })
+            addr_extensions.append({
+                "url": f"{_URN_EXT}/city-municipality",
+                "valueCoding": {
+                    "system":  PSGC_SYSTEM,
+                    "code":    org.address_city,
+                    "display": city_display or org.address_city,
+                },
+            })
         addr = _clean({
             "use":        "work",
             "type":       "physical",
