@@ -93,7 +93,11 @@
       "Bash(chmod +x /tmp/extract_naming_systems.sh)",
       "Bash(/tmp/extract_naming_systems.sh)",
       "Bash(chmod +x /tmp/extract_valuesets.sh)",
-      "Bash(/tmp/extract_valuesets.sh)"
+      "Bash(/tmp/extract_valuesets.sh)",
+      "Bash(jq -r '.url' docs/fhir/resources/structure-definitions/extensions/*.json)",
+      "Bash(jq -r '.uniqueId[].value' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/docs/fhir/resources/naming-systems/*.json)",
+      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H add wah4h-backend/core/fhir_utils.py wah4h-backend/patients/api/views.py wah4h-backend/patients/wah4pc.py)",
+      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H add wah4h-backend/patients/wah4pc.py wah4h-backend/fhir_roundtrip_test.py wah4h-backend/samples/fhir/)"
     ]
   }
 }
