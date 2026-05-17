@@ -1288,7 +1288,7 @@ def webhook_process_query(request):
             # ----------------------------------------------------------------
             if not patient:
                 response_data = {'error': 'Patient not found'}
-                response_status = 'REJECTED'
+                response_status = 'FAILED'
             elif requested_resource == 'Encounter':
                 from admission.models import Encounter as EncounterModel
                 enc_qs = EncounterModel.objects.filter(
