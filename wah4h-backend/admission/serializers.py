@@ -336,14 +336,23 @@ class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
         fields = [
-            'procedure_id', 'identifier', 'status', 'code_code', 'code_display',
-            'category_code', 'category_display', 'subject_id', 'patient_id', 'patient_summary',
-            'encounter', 'performed_datetime', 'performed_period_start', 
-            'performed_period_end', 'body_site_code', 'body_site_display',
-            'outcome_code', 'outcome_display', 'note', 'performers', 
+            'procedure_id', 'identifier', 'status',
+            'status_reason_code', 'status_reason_display',
+            'code_code', 'code_display',
+            'category_code', 'category_display',
+            'subject_id', 'patient_id', 'patient_summary',
+            'encounter',
+            'performed_datetime', 'performed_period_start', 'performed_period_end', 'performed_string',
+            'reason_code_code', 'reason_code_display',
+            'body_site_code', 'body_site_display',
+            'outcome_code', 'outcome_display',
+            'complication_code', 'complication_display',
+            'follow_up_code', 'follow_up_display',
+            'used_code_code', 'used_code_display',
+            'note', 'performers',
             'location_id', 'recorder_id', 'asserter_id', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['procedure_id', 'identifier', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['procedure_id', 'identifier', 'created_at', 'updated_at']
         extra_kwargs = {
             'subject_id': {'required': False},
             'encounter': {'required': False},

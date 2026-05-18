@@ -1,6 +1,6 @@
 
 import api from './api';
-import { VitalSign, ClinicalNote, DietaryOrder, HistoryEvent } from '../types/monitoring';
+import { VitalSign, ClinicalNote, DietaryOrder, HistoryEvent, Procedure } from '../types/monitoring';
 // LabRequest and LabResult removed - use laboratoryService.ts for lab operations
 
 // Define the backend Observation interface
@@ -328,6 +328,31 @@ class MonitoringService {
     // LABORATORY REQUEST METHODS REMOVED
     // Use laboratoryService.ts instead for all laboratory operations
     // Laboratory requests should use DiagnosticReport model, not Observation
+
+    /* -----------------------------------------------------------------------
+       PROCEDURE METHODS  — /api/admission/procedures/
+    ----------------------------------------------------------------------- */
+
+    async fetchProcedures(encounterId: number): Promise<Procedure[]> {
+        const response = await api.get('/api/admission/procedures/', {
+            params: { encounter_id: encounterId },
+        });
+        return response.data.results ?? response.data;
+    }
+
+    async createProcedure(data: Partial<Procedure>): Promise<Procedure> {
+        const response = await api.post('/api/admission/procedures/', data);
+        return response.data;
+    }
+
+    async updateProcedure(identifier: string, data: Partial<Procedure>): Promise<Procedure> {
+        const response = await api.patch(`/api/admission/procedures/${identifier}/`, data);
+        return response.data;
+    }
+
+    async deleteProcedure(identifier: string): Promise<void> {
+        await api.delete(`/api/admission/procedures/${identifier}/`);
+    }
 }
 
 export default new MonitoringService();

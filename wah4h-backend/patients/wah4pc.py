@@ -1444,8 +1444,7 @@ def procedure_to_fhir(model):
     from accounts.models import Location
 
     patient_fhir_id, patient_display = _patient_ref(model.subject_id)
-    recorder   = _practitioner_ref(model.recorder_id)
-    performer  = _practitioner_ref(model.performer_actor_id)
+    recorder = _practitioner_ref(model.recorder_id)
 
     location_display = None
     if model.location_id:
@@ -1469,6 +1468,14 @@ def procedure_to_fhir(model):
         },
     }
 
+    # statusReason — why the procedure was not performed
+    status_reason_text = model.status_reason_display or model.status_reason_code
+    if status_reason_text:
+        fhir["statusReason"] = {
+            "text": status_reason_text,
+            "coding": [{"code": model.status_reason_code or "", "display": status_reason_text}],
+        }
+
     # code (SNOMED)
     if model.code_code or model.code_display:
         fhir["code"] = {
@@ -1491,9 +1498,18 @@ def procedure_to_fhir(model):
             }],
         }
 
-    # performedDateTime
+    # performed[x] — dateTime takes priority; fall back to period
     if model.performed_datetime:
         fhir["performedDateTime"] = format_fhir_datetime(model.performed_datetime)
+    elif model.performed_period_start or model.performed_period_end:
+        period = {}
+        if model.performed_period_start:
+            period["start"] = model.performed_period_start.isoformat()
+        if model.performed_period_end:
+            period["end"] = model.performed_period_end.isoformat()
+        fhir["performedPeriod"] = period
+    elif model.performed_string:
+        fhir["performedString"] = model.performed_string
 
     # note
     if model.note:
@@ -1529,13 +1545,56 @@ def procedure_to_fhir(model):
     if complication_text:
         fhir["complication"] = [{"text": complication_text}]
 
+    # followUp
+    follow_up_text = model.follow_up_display or model.follow_up_code
+    if follow_up_text:
+        fhir["followUp"] = [{
+            "text": follow_up_text,
+            "coding": [{"code": model.follow_up_code or "", "display": follow_up_text}],
+        }]
+
+    # usedCode — materials/devices used
+    used_code_text = model.used_code_display or model.used_code_code
+    if used_code_text:
+        fhir["usedCode"] = [{
+            "text": used_code_text,
+            "coding": [{"code": model.used_code_code or "", "display": used_code_text}],
+        }]
+
     # recorder
     if recorder:
         fhir["recorder"] = recorder
 
-    # performer — FHIR Procedure.performer is an array of actor objects
-    if performer:
-        fhir["performer"] = [{"actor": performer}]
+    # performer — iterate ProcedurePerformer junction table for multi-performer support
+    performers_qs = model.performers.all()
+    if performers_qs.exists():
+        fhir_performers = []
+        for perf in performers_qs:
+            actor_ref = _practitioner_ref(perf.performer_actor_id)
+            if not actor_ref:
+                continue
+            entry = {"actor": actor_ref}
+            func_text = perf.performer_function_display or perf.performer_function_code
+            if func_text:
+                entry["function"] = {
+                    "text": func_text,
+                    "coding": [{"code": perf.performer_function_code or "", "display": func_text}],
+                }
+            fhir_performers.append(entry)
+        if fhir_performers:
+            fhir["performer"] = fhir_performers
+    elif model.performer_actor_id:
+        # fall back to the denormalized field if no junction records exist
+        actor_ref = _practitioner_ref(model.performer_actor_id)
+        if actor_ref:
+            entry = {"actor": actor_ref}
+            func_text = model.performer_function_display or model.performer_function_code
+            if func_text:
+                entry["function"] = {
+                    "text": func_text,
+                    "coding": [{"code": model.performer_function_code or "", "display": func_text}],
+                }
+            fhir["performer"] = [entry]
 
     return fhir
 

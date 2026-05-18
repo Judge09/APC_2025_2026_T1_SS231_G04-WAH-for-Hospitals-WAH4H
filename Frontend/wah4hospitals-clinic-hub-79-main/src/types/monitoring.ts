@@ -45,6 +45,70 @@ export interface DietaryOrder {
 }
 
 /* =========================
+   PROCEDURES (FHIR R4 / PHCore)
+   ========================= */
+export type ProcedureStatus =
+    | 'preparation' | 'in-progress' | 'not-done' | 'on-hold'
+    | 'stopped' | 'completed' | 'entered-in-error' | 'unknown';
+
+export interface ProcedurePerformer {
+    procedure_performer_id: number;
+    performer_actor_id?: number;
+    performer_function_code?: string;
+    performer_function_display?: string;
+    performer_on_behalf_of_id?: number;
+    practitioner_summary?: {
+        practitioner_id: number;
+        full_name: string;
+        first_name: string;
+        last_name: string;
+        role: string;
+    } | null;
+}
+
+export interface Procedure {
+    procedure_id: number;
+    identifier: string;
+    status: ProcedureStatus;
+    status_reason_code?: string;
+    status_reason_display?: string;
+    category_code?: string;
+    category_display?: string;
+    code_code?: string;
+    code_display?: string;
+    subject_id: number;
+    encounter: number;
+    performed_datetime?: string;
+    performed_period_start?: string;
+    performed_period_end?: string;
+    performed_string?: string;
+    reason_code_code?: string;
+    reason_code_display?: string;
+    body_site_code?: string;
+    body_site_display?: string;
+    outcome_code?: string;
+    outcome_display?: string;
+    complication_code?: string;
+    complication_display?: string;
+    follow_up_code?: string;
+    follow_up_display?: string;
+    used_code_code?: string;
+    used_code_display?: string;
+    note?: string;
+    performers?: ProcedurePerformer[];
+    location_id?: number;
+    recorder_id?: number;
+    asserter_id?: number;
+    patient_summary?: {
+        id: number;
+        patient_id: string;
+        full_name: string;
+    } | null;
+    created_at: string;
+    updated_at: string;
+}
+
+/* =========================
    HISTORY / TIMELINE
    ========================= */
 export interface HistoryEvent {

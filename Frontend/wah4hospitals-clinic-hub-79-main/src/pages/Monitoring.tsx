@@ -13,6 +13,7 @@ import {
   LabRequest,
   LabResult,
   MedicationRequest,
+  Procedure,
 } from '../types/monitoring';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VitalSignsTab } from '@/components/monitoring/VitalSignsTab';
@@ -21,6 +22,7 @@ import { DietaryTab } from '@/components/monitoring/DietaryTab';
 import { HistoryTab } from '@/components/monitoring/HistoryTab';
 import { MedicationRequestTab } from '@/components/monitoring/MedicationRequestTab';
 import { LaboratoryTab } from '@/components/monitoring/LaboratoryTab';
+import { ProcedureTab } from '@/components/monitoring/ProcedureTab';
 import { admissionService } from '@/services/admissionService';
 import monitoringService from '@/services/monitoringService';
 import laboratoryService from '@/services/laboratoryService';  // For lab requests/results
@@ -36,6 +38,7 @@ const Monitoring: React.FC = () => {
   const [dietary, setDietary] = useState<DietaryOrder | null>(null);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [labRequests, setLabRequests] = useState<LabRequest[]>([]);
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'Stable' | 'Critical'>('all');
@@ -137,9 +140,46 @@ const Monitoring: React.FC = () => {
         setLabRequests([]);
       }
 
-      setHistory([]);
+      // Fetch procedures for this encounter
+      let fetchedProcedures: Procedure[] = [];
+      try {
+        fetchedProcedures = await monitoringService.fetchProcedures(adm.id);
+        setProcedures(fetchedProcedures);
+      } catch {
+        setProcedures([]);
+      }
+
+      // Populate history timeline with procedure events
+      const procedureEvents: HistoryEvent[] = fetchedProcedures.map(p => ({
+        id: p.procedure_id.toString(),
+        admissionId: p.encounter.toString(),
+        dateTime: p.performed_datetime || p.performed_period_start || p.created_at,
+        category: 'Procedure' as const,
+        description: p.code_display || p.code_code || 'Procedure',
+        details: p.note,
+      }));
+      setHistory(procedureEvents);
     } catch (err) {
       console.error('Error fetching admission details:', err);
+    }
+  };
+
+  const handleRefreshProcedures = async () => {
+    if (!selectedAdmission) return;
+    try {
+      const fetched = await monitoringService.fetchProcedures(selectedAdmission.id);
+      setProcedures(fetched);
+      const events: HistoryEvent[] = fetched.map(p => ({
+        id: p.procedure_id.toString(),
+        admissionId: p.encounter.toString(),
+        dateTime: p.performed_datetime || p.performed_period_start || p.created_at,
+        category: 'Procedure' as const,
+        description: p.code_display || p.code_code || 'Procedure',
+        details: p.note,
+      }));
+      setHistory(events);
+    } catch {
+      // silently ignore refresh errors
     }
   };
 
@@ -502,7 +542,7 @@ const Monitoring: React.FC = () => {
             <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
               <Tabs defaultValue="vitals" className="w-full">
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 mb-6 sticky top-0 z-10">
-                  <TabsList className="grid w-full grid-cols-4 bg-transparent gap-1">
+                  <TabsList className="grid w-full grid-cols-5 bg-transparent gap-1">
                     <TabsTrigger
                       value="vitals"
                       className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
@@ -515,7 +555,6 @@ const Monitoring: React.FC = () => {
                     >
                       Clinical Notes
                     </TabsTrigger>
-
                     <TabsTrigger
                       value="laboratory"
                       className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
@@ -528,7 +567,12 @@ const Monitoring: React.FC = () => {
                     >
                       Medication
                     </TabsTrigger>
-
+                    <TabsTrigger
+                      value="procedures"
+                      className="data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md transition-all"
+                    >
+                      Procedures
+                    </TabsTrigger>
                   </TabsList>
                 </div>
 
@@ -585,6 +629,14 @@ const Monitoring: React.FC = () => {
                   />
                 </TabsContent>
 
+                <TabsContent value="procedures">
+                  <ProcedureTab
+                    procedures={procedures}
+                    encounterId={selectedAdmission.id}
+                    patientId={selectedAdmission.patientId}
+                    onRefresh={handleRefreshProcedures}
+                  />
+                </TabsContent>
 
               </Tabs>
             </div>
