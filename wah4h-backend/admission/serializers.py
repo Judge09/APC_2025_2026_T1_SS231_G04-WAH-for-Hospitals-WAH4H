@@ -224,7 +224,7 @@ class EncounterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Remove patient_id from validated_data before creating model instance
         validated_data.pop('patient_id', None)
-        
+
         # Extract location components
         ward = validated_data.pop('ward', None)
         room = validated_data.pop('room', None)
@@ -237,11 +237,14 @@ class EncounterSerializer(serializers.ModelSerializer):
         # Prepare location status
         if ward or room or bed:
             validated_data['location_status'] = f"{ward or ''}|{room or ''}|{bed or ''}"
+            # Derive location_ids from ward/room/bed if frontend didn't send them
+            if not validated_data.get('location_ids'):
+                validated_data['location_ids'] = [x for x in [ward, room, bed] if x]
 
         # Default status for new encounters if not provided
         if not validated_data.get('status'):
             validated_data['status'] = 'in-progress'
-        
+
         return super().create(validated_data)
 
     @transaction.atomic
@@ -254,12 +257,16 @@ class EncounterSerializer(serializers.ModelSerializer):
         if ward is not None or room is not None or bed is not None:
             current_status = (instance.location_status or "||").split('|')
             while len(current_status) < 3: current_status.append('')
-            
+
             w = ward if ward is not None else current_status[0]
             r = room if room is not None else current_status[1]
             b = bed if bed is not None else current_status[2]
-            
+
             validated_data['location_status'] = f"{w}|{r}|{b}"
+
+            # Keep location_ids in sync with the resolved ward/room/bed components
+            if not validated_data.get('location_ids'):
+                validated_data['location_ids'] = [x for x in [w, r, b] if x]
 
         return super().update(instance, validated_data)
 
