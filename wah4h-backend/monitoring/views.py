@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Observation, ChargeItem, ChargeItemDefinition
@@ -8,6 +9,7 @@ from .serializers import (
     ChargeItemSerializer,
     ChargeItemDefinitionSerializer
 )
+from patients.wah4pc import observation_to_fhir, observations_to_bundle
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -67,13 +69,21 @@ class ObservationViewSet(viewsets.ModelViewSet):
         'observation_id'
     ]
     ordering = ['-effective_datetime']  # Default: Most recent first
-    
+
     search_fields = [
         'code',
         'category',
         'interpretation',
         'note'
     ]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response(observations_to_bundle(queryset))
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(observation_to_fhir(instance))
 
 
 class ChargeItemViewSet(viewsets.ModelViewSet):

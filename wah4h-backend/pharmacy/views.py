@@ -12,6 +12,7 @@ from .serializers import (
     MedicationAdministrationSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from patients.wah4pc import medicationrequest_to_fhir, medicationrequests_to_bundle
 
 logger = logging.getLogger(__name__)
 
@@ -51,18 +52,12 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
-        """
-        Optimized list view with manual pre-fetching to solve N+1 problem.
-        """
         queryset = self.filter_queryset(self.get_queryset())
+        return Response(medicationrequests_to_bundle(queryset))
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True, context=self._get_prefetch_context(page))
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True, context=self._get_prefetch_context(queryset))
-        return Response(serializer.data)
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(medicationrequest_to_fhir(instance))
 
     def _get_prefetch_context(self, queryset):
         """

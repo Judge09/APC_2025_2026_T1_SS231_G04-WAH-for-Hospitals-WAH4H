@@ -1778,7 +1778,7 @@ def encounter_to_fhir(model):
         hosp["dischargeDisposition"] = {"text": model.discharge_disposition}
     if model.pre_admission_identifier:
         hosp["preAdmissionIdentifier"] = {
-            "system": f"https://wah4h.echosphere.cfd/fhir/identifier/encounter",
+            "system": "https://wah4pc-gateway.wah.ph/fhir/identifier/encounter",
             "value":  model.pre_admission_identifier,
         }
     if hosp:
@@ -3723,7 +3723,7 @@ def appointment_to_fhir(model) -> dict:
         "resourceType": "Appointment",
         "id": resource_id,
         "meta": {
-            "profile":     [f"{_URN_EXT}/ph-core-appointment"],
+            "profile":     ["http://hl7.org/fhir/StructureDefinition/Appointment"],
             "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
         },
         "status": model.status,
@@ -3841,6 +3841,15 @@ def appointment_to_fhir(model) -> dict:
         fhir["basedOn"] = [{"reference": f"Encounter/{model.resulting_encounter_id}"}]
 
     return {k: v for k, v in fhir.items() if v is not None}
+
+
+def appointments_to_bundle(queryset) -> dict:
+    """Wrap an Appointment queryset as a FHIR collection Bundle."""
+    return {
+        "resourceType": "Bundle",
+        "type":         "collection",
+        "entry":        [{"resource": appointment_to_fhir(appt)} for appt in queryset],
+    }
 
 
 # =============================================================================

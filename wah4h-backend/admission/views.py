@@ -28,6 +28,11 @@ from admission.serializers import (
     SlotSerializer,
     AppointmentSerializer,
 )
+from patients.wah4pc import (
+    encounter_to_fhir, encounters_to_bundle,
+    procedure_to_fhir, procedures_to_bundle,
+    appointment_to_fhir, appointments_to_bundle,
+)
 
 class EncounterViewSet(viewsets.ModelViewSet):
     """
@@ -59,6 +64,14 @@ class EncounterViewSet(viewsets.ModelViewSet):
         if self.action == 'discharge':
             return EncounterDischargeSerializer
         return EncounterSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response(encounters_to_bundle(queryset))
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(encounter_to_fhir(instance))
 
     @action(detail=True, methods=['post'])
     def discharge(self, request, identifier=None):
@@ -289,8 +302,16 @@ class ProcedureViewSet(viewsets.ModelViewSet):
         
         if encounter_id:
             queryset = queryset.filter(encounter__encounter_id=encounter_id)
-        
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response(procedures_to_bundle(queryset))
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(procedure_to_fhir(instance))
 
     def perform_create(self, serializer):
         """
@@ -451,6 +472,14 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if date_to:
             qs = qs.filter(end__lte=date_to)
         return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return Response(appointments_to_bundle(queryset))
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(appointment_to_fhir(instance))
 
     # ------------------------------------------------------------------ #
     # Status-transition actions                                            #
