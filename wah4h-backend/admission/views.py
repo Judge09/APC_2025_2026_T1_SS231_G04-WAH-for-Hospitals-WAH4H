@@ -67,13 +67,16 @@ class EncounterViewSet(viewsets.ModelViewSet):
             return EncounterDischargeSerializer
         return EncounterSerializer
 
-    def list(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], url_path='fhir')
+    def fhir_list(self, request):
+        """Return all encounters as a FHIR Bundle (for external FHIR consumers)."""
         queryset = self.filter_queryset(self.get_queryset())
         return Response(encounters_to_bundle(queryset))
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return Response(encounter_to_fhir(instance))
+    @action(detail=True, methods=['get'], url_path='fhir')
+    def fhir_detail(self, request, identifier=None):
+        """Return a single encounter as a FHIR Encounter resource."""
+        return Response(encounter_to_fhir(self.get_object()))
 
     @action(detail=True, methods=['post'])
     def discharge(self, request, identifier=None):
@@ -307,13 +310,16 @@ class ProcedureViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def list(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], url_path='fhir')
+    def fhir_list(self, request):
+        """Return all procedures as a FHIR Bundle (for external FHIR consumers)."""
         queryset = self.filter_queryset(self.get_queryset())
         return Response(procedures_to_bundle(queryset))
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return Response(procedure_to_fhir(instance))
+    @action(detail=True, methods=['get'], url_path='fhir')
+    def fhir_detail(self, request, identifier=None):
+        """Return a single procedure as a FHIR Procedure resource."""
+        return Response(procedure_to_fhir(self.get_object()))
 
     def perform_create(self, serializer):
         """
@@ -475,13 +481,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(end__lte=date_to)
         return qs
 
-    def list(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], url_path='fhir')
+    def fhir_list(self, request):
+        """Return all appointments as a FHIR Bundle (for external FHIR consumers)."""
         queryset = self.filter_queryset(self.get_queryset())
         return Response(appointments_to_bundle(queryset))
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return Response(appointment_to_fhir(instance))
+    @action(detail=True, methods=['get'], url_path='fhir')
+    def fhir_detail(self, request, identifier=None):
+        """Return a single appointment as a FHIR Appointment resource."""
+        return Response(appointment_to_fhir(self.get_object()))
 
     # ------------------------------------------------------------------ #
     # Status-transition actions                                            #

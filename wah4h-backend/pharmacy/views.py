@@ -52,12 +52,27 @@ class MedicationRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
+        """Optimized list view with manual pre-fetching to solve N+1 problem."""
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context=self._get_prefetch_context(page))
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True, context=self._get_prefetch_context(queryset))
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='fhir')
+    def fhir_list(self, request):
+        """Return medication requests as a FHIR Bundle (for external FHIR consumers)."""
         queryset = self.filter_queryset(self.get_queryset())
         return Response(medicationrequests_to_bundle(queryset))
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return Response(medicationrequest_to_fhir(instance))
+    @action(detail=True, methods=['get'], url_path='fhir')
+    def fhir_detail(self, request, pk=None):
+        """Return a single medication request as a FHIR MedicationRequest resource."""
+        return Response(medicationrequest_to_fhir(self.get_object()))
 
     def _get_prefetch_context(self, queryset):
         """

@@ -77,13 +77,16 @@ class ObservationViewSet(viewsets.ModelViewSet):
         'note'
     ]
 
-    def list(self, request, *args, **kwargs):
+    @action(detail=False, methods=['get'], url_path='fhir')
+    def fhir_list(self, request):
+        """Return observations as a FHIR Bundle (for external FHIR consumers)."""
         queryset = self.filter_queryset(self.get_queryset())
         return Response(observations_to_bundle(queryset))
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        return Response(observation_to_fhir(instance))
+    @action(detail=True, methods=['get'], url_path='fhir')
+    def fhir_detail(self, request, pk=None):
+        """Return a single observation as a FHIR Observation resource."""
+        return Response(observation_to_fhir(self.get_object()))
 
 
 class ChargeItemViewSet(viewsets.ModelViewSet):
