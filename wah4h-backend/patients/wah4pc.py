@@ -1224,16 +1224,6 @@ def immunization_to_fhir(model):
         else str(uuid.uuid4())
     )
 
-    # Patient reference uses the same deterministic UUID strategy as patient_to_fhir
-    patient_pk = model.patient_id
-    patient_fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"patient:{patient_pk}"))
-
-    # Patient display name (patient is select_related on the queryset)
-    patient_obj = model.patient if hasattr(model, '_state') else None
-    try:
-        patient_display = f"{model.patient.first_name or ''} {model.patient.last_name or ''}".strip()
-    except Exception:
-        patient_display = ""
 
     vaccine_display = _VACCINE_CODE_MAP.get(
         model.vaccine_code,
@@ -1256,10 +1246,7 @@ def immunization_to_fhir(model):
                 "display": vaccine_display,
             }]
         },
-        "patient": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "patient": _subject_block(model.patient_id),
     }
 
     # Identifier — include the local DB PK so the frontend can resolve edits/deletes
@@ -1429,6 +1416,35 @@ def _patient_ref(subject_id):
         return str(uuid.uuid4()), ""
 
 
+def _subject_block(patient_id) -> dict:
+    """Build a FHIR Reference dict for a patient subject/patient field.
+
+    Includes the PhilHealth ID as a Reference.identifier so cross-provider
+    systems (e.g. WAH4Patient) can match the patient by PhilHealth number
+    even when they don't recognise our internal deterministic UUID.
+    """
+    if not patient_id:
+        return {"reference": f"Patient/{uuid.uuid4()}"}
+    from patients.models import Patient
+    try:
+        patient = Patient.objects.get(id=patient_id)
+        fhir_id = str(uuid.uuid5(uuid.NAMESPACE_OID, f"patient:{patient.id}"))
+        full_name = " ".join(
+            p for p in [patient.first_name, patient.middle_name, patient.last_name] if p
+        )
+        block: dict = {"reference": f"Patient/{fhir_id}"}
+        if full_name:
+            block["display"] = full_name
+        if patient.philhealth_id:
+            block["identifier"] = {
+                "system": "https://philhealth.gov.ph",
+                "value": patient.philhealth_id,
+            }
+        return block
+    except Patient.DoesNotExist:
+        return {"reference": f"Patient/{uuid.uuid4()}"}
+
+
 def procedure_to_fhir(model):
     """Convert an Admission Procedure instance to a PH Core FHIR Procedure resource.
 
@@ -1443,7 +1459,6 @@ def procedure_to_fhir(model):
     """
     from accounts.models import Location
 
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
     recorder = _practitioner_ref(model.recorder_id)
 
     location_display = None
@@ -1462,10 +1477,7 @@ def procedure_to_fhir(model):
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
         "status": model.status,
-        "subject": {
-            "display":   patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": _subject_block(model.subject_id),
     }
 
     # statusReason — why the procedure was not performed
@@ -1631,8 +1643,6 @@ def encounter_to_fhir(model):
     """
     from accounts.models import Location
 
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
-
     # Participant (practitioner)
     participant_fhir = None
     if model.participant_individual_id:
@@ -1682,11 +1692,7 @@ def encounter_to_fhir(model):
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
         "status": model.status,
-        "subject": {
-            "type":      "Patient",
-            "display":   patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": {**_subject_block(model.subject_id), "type": "Patient"},
     }
 
     # class — single Coding per FHIR R4 (not a CodeableConcept)
@@ -2058,7 +2064,6 @@ _ICD10_SYSTEM = "http://hl7.org/fhir/sid/icd-10-cm"
 
 def condition_to_fhir(model):
     """Convert a local Condition instance to a PH Core FHIR Condition resource."""
-    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
     pk = getattr(model, "condition_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"condition:{pk}"))
@@ -2071,10 +2076,7 @@ def condition_to_fhir(model):
             "profile": [f"{_URN_EXT}/ph-core-condition"],
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
-        "subject": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": _subject_block(model.patient_id),
     }
     if model.identifier:
         fhir["identifier"] = [{"value": model.identifier}]
@@ -2211,7 +2213,6 @@ _SNOMED_SYSTEM = "http://snomed.info/sct"
 
 def allergy_to_fhir(model):
     """Convert a local AllergyIntolerance instance to a PH Core FHIR AllergyIntolerance resource."""
-    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
     pk = getattr(model, "allergy_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"allergy:{pk}"))
@@ -2224,10 +2225,7 @@ def allergy_to_fhir(model):
             "profile": [f"{_URN_EXT}/ph-core-allergyintolerance"],
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
-        "patient": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "patient": _subject_block(model.patient_id),
     }
     if model.identifier:
         fhir["identifier"] = [{"value": model.identifier}]
@@ -2414,7 +2412,6 @@ _OBS_INTERPRETATION_CODE_MAP: dict[str, str] = {
 
 def observation_to_fhir(model):
     """Convert a local Observation instance to a PH Core FHIR Observation resource."""
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
     pk = getattr(model, "observation_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"observation:{pk}"))
@@ -2427,10 +2424,7 @@ def observation_to_fhir(model):
             "profile": [f"{_URN_EXT}/ph-core-observation"],
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
-        "subject": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": _subject_block(model.subject_id),
     }
     if model.identifier:
         fhir["identifier"] = [{"value": model.identifier}]
@@ -2620,7 +2614,6 @@ _MEDICATION_SYSTEM = "https://verification.fda.gov.ph"   # Philippine FDA drug r
 
 def medicationrequest_to_fhir(model):
     """Convert a local MedicationRequest instance to a PH Core FHIR MedicationRequest resource."""
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
     pk = getattr(model, "medication_request_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"medicationrequest:{pk}"))
@@ -2634,10 +2627,7 @@ def medicationrequest_to_fhir(model):
             "profile": [f"{_URN_EXT}/ph-core-medicationrequest"],
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
-        "subject": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": _subject_block(model.subject_id),
     }
     if model.identifier:
         fhir["identifier"] = [{"value": model.identifier}]
@@ -2792,7 +2782,6 @@ def push_medicationrequest(target_id, mr_model, idempotency_key=None):
 
 def diagnosticreport_to_fhir(model):
     """Convert a local DiagnosticReport instance to a PH Core FHIR DiagnosticReport resource."""
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
     pk = getattr(model, "diagnostic_report_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"diagnosticreport:{pk}"))
@@ -2805,10 +2794,7 @@ def diagnosticreport_to_fhir(model):
             "profile": [f"{_URN_EXT}/ph-core-diagnosticreport"],
             "lastUpdated": _meta_last_updated(model.updated_at),
         },
-        "subject": {
-            "display": patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "subject": _subject_block(model.subject_id),
     }
     if model.identifier:
         fhir["identifier"] = [{"value": model.identifier}]
@@ -3338,8 +3324,6 @@ def claim_to_fhir(model) -> dict:
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"claim:{pk}"))
         if pk is not None else str(uuid.uuid4())
     )
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
-
     fhir: dict = {
         "resourceType": "Claim",
         "id": resource_id,
@@ -3349,10 +3333,7 @@ def claim_to_fhir(model) -> dict:
         },
         "status": model.status or "active",
         "use":    model.use or "claim",
-        "patient": {
-            "display":   patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "patient": _subject_block(model.subject_id),
         "created": format_fhir_datetime(model.created) if model.created else format_fhir_datetime(model.created_at),
     }
 
@@ -3491,8 +3472,6 @@ def claimresponse_to_fhir(model) -> dict:
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"claimresponse:{pk}"))
         if pk is not None else str(uuid.uuid4())
     )
-    patient_fhir_id, patient_display = _patient_ref(model.subject_id)
-
     fhir: dict = {
         "resourceType": "ClaimResponse",
         "id": resource_id,
@@ -3502,10 +3481,7 @@ def claimresponse_to_fhir(model) -> dict:
         },
         "status":  model.status or "active",
         "use":     model.use or "claim",
-        "patient": {
-            "display":   patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "patient": _subject_block(model.subject_id),
         "created": format_fhir_datetime(model.created) if model.created else format_fhir_datetime(model.created_at),
         "outcome": model.outcome or "complete",
     }
@@ -3717,8 +3693,6 @@ def appointment_to_fhir(model) -> dict:
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"appointment:{pk}"))
         if pk is not None else str(uuid.uuid4())
     )
-    patient_fhir_id, patient_display = _patient_ref(model.patient_id)
-
     fhir: dict = {
         "resourceType": "Appointment",
         "id": resource_id,
@@ -3797,10 +3771,7 @@ def appointment_to_fhir(model) -> dict:
     participants = []
 
     patient_part: dict = {
-        "actor": {
-            "display":   patient_display,
-            "reference": f"Patient/{patient_fhir_id}",
-        },
+        "actor": _subject_block(model.patient_id),
         "required": "required",
         "status": model.patient_participation_status or "accepted",
     }
