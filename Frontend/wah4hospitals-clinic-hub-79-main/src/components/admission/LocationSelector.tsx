@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Label } from '@/components/ui/label';
 
 interface LocationSelectorProps {
   locations: any;
@@ -32,14 +31,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   const wards = useMemo(() => {
     if (!value?.building || !locations) return [];
-    const wings = locations.wings[value.building] || [];
-    return wings.flatMap((wing: any) => locations.wards[wing.code] || []);
+    return locations.wards?.[value.building] || [];
   }, [value?.building, locations]);
 
   const rooms = useMemo(() => {
     if (!value?.ward || !locations) return [];
-    const corridors = locations.corridors[value.ward] || [];
-    return corridors.flatMap((c: any) => locations.rooms[c.code] || []);
+    return locations.rooms?.[value.ward] || [];
   }, [value?.ward, locations]);
 
   const beds = useMemo(() => {
@@ -49,11 +46,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
     return Array.from({ length: roomObj.beds }, (_, i) => {
       const code = String.fromCharCode(65 + i);
-      const isOccupied = admissions?.some(a =>
-        a.status === 'in-progress' &&
-        a.location?.room === value.room &&
-        a.location?.bed === code
-      );
+      // location_status stored as "ward|room|bed" on each encounter
+      const isOccupied = admissions?.some(a => {
+        const parts = (a.location_status || '').split('|');
+        return a.status === 'in-progress' && parts[1] === value.room && parts[2] === code;
+      });
       return { code, status: isOccupied ? 'occupied' : 'available' };
     });
   }, [value?.room, rooms, admissions]);
@@ -108,8 +105,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           >
             <option value="">Select Room...</option>
             {rooms.map((r: any) => {
-              // Calculate real occupancy for decorator
-              const occCount = admissions?.filter(a => a.status === 'in-progress' && a.location?.room === r.code).length || 0;
+              // location_status stored as "ward|room|bed" on each encounter
+              const occCount = admissions?.filter(a => {
+                const parts = (a.location_status || '').split('|');
+                return a.status === 'in-progress' && parts[1] === r.code;
+              }).length || 0;
               return (
                 <option key={r.code} value={r.code}>
                   {r.name} ({occCount}/{r.beds} Occupied)
