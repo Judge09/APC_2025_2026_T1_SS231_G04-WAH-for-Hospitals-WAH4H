@@ -10,6 +10,9 @@ on:
       - 2026_Quibin_final_merge/interops_to_system
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
