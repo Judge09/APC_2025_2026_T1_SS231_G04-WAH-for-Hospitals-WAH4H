@@ -122,11 +122,13 @@ class EncounterViewSet(viewsets.ModelViewSet):
             loc_by_parent.setdefault(key, []).append(l)
 
         # Types treated as intermediate pass-through nodes (not wards or rooms)
-        PASS_THROUGH = {'wi', 'si', 'bu', 'co', 'ha'}
-        BED_TYPES    = {'bd'}
+        # physical_type codes that are never a top-level building
+        ROOM_LEAF_TYPES  = frozenset({'ro', 'bd', 'co', 'ha'})
+        PASS_THROUGH     = frozenset({'wi', 'si', 'bu', 'co', 'ha'})
+        BED_TYPES        = frozenset({'bd'})
 
         def collect_wards(parent_id_str):
-            """Return all non-pass-through children under parent, recursing through pass-throughs."""
+            """Return ward-level children, recursing through intermediate (pass-through) nodes."""
             result = []
             for child in loc_by_parent.get(parent_id_str, []):
                 ptype = (child.physical_type_code or '').lower()
@@ -146,7 +148,7 @@ class EncounterViewSet(viewsets.ModelViewSet):
             return result
 
         def collect_rooms(ward_id_str):
-            """Return all room-type children under a ward, recursing through pass-throughs."""
+            """Return room-level children, recursing through pass-through nodes."""
             result = []
             for child in loc_by_parent.get(ward_id_str, []):
                 ptype = (child.physical_type_code or '').lower()
@@ -170,6 +172,11 @@ class EncounterViewSet(viewsets.ModelViewSet):
         data: dict = {"buildings": [], "wards": {}, "rooms": {}}
 
         for b in loc_by_parent.get(None, []):
+            # Skip room/bed/corridor nodes that ended up at the top level — they are
+            # not buildings and would break the cascade if treated as one.
+            if (b.physical_type_code or '').lower() in ROOM_LEAF_TYPES:
+                continue
+
             b_id = str(b.location_id)
             data["buildings"].append({"code": b_id, "name": b.name or f"Building {b_id}"})
 
