@@ -32,7 +32,9 @@ from patients.wah4pc import (
     encounter_to_fhir, encounters_to_bundle,
     procedure_to_fhir, procedures_to_bundle,
     appointment_to_fhir, appointments_to_bundle,
+    request_appointment,
 )
+from patients.models import WAH4PCTransaction
 
 class EncounterViewSet(viewsets.ModelViewSet):
     """
@@ -589,3 +591,69 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 'philhealth': p.philhealth_id,
             })
         return Response(results, status=status.HTTP_200_OK)
+
+    # ------------------------------------------------------------------ #
+    # WAH4PC gateway — fetch appointments from WAH4Patient mobile app     #
+    # ------------------------------------------------------------------ #
+
+    @action(detail=False, methods=['post'], url_path='wah4pc/fetch')
+    def wah4pc_fetch(self, request):
+        """
+        Request appointment data for a patient from the WAH4PC gateway
+        (i.e. appointments booked via the WAH4Patient mobile app).
+
+        Body:
+            targetProviderId  — UUID of the provider / gateway node to query
+            philHealthId      — Patient's PhilHealth ID to look up
+            reason            — (optional) human-readable reason string
+            notes             — (optional) extra notes
+
+        Returns 202 with { transactionId, ... } on success.
+        The gateway delivers the FHIR Appointment Bundle asynchronously via
+        the webhook at /api/patients/wah4pc/webhook/receive-push/, which will
+        import the appointments into the local database automatically.
+        """
+        target_id = request.data.get('targetProviderId')
+        philhealth_id = request.data.get('philHealthId')
+        if not target_id or not philhealth_id:
+            return Response(
+                {'error': 'targetProviderId and philHealthId are required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reason = request.data.get('reason', 'Appointment sync from WAH4Patient')
+        notes = request.data.get('notes')
+        result = request_appointment(target_id, philhealth_id, reason=reason, notes=notes)
+
+        if 'error' in result:
+            return Response(
+                {'error': result['error']},
+                status=result.get('status_code', 500),
+            )
+
+        _data = result.get('data') or {}
+        txn_id = (
+            result.get('transactionId') or
+            result.get('id') or
+            _data.get('transactionId') or
+            _data.get('id')
+        )
+        idempotency_key = result.get('idempotency_key')
+
+        if not txn_id:
+            return Response(
+                {'error': 'Gateway did not return a transaction ID. Check credentials or try again.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        WAH4PCTransaction.objects.get_or_create(
+            transaction_id=txn_id,
+            defaults={
+                'type':               'fetch',
+                'status':             'PENDING',
+                'target_provider_id': target_id,
+                'idempotency_key':    idempotency_key,
+            },
+        )
+
+        return Response({**result, 'transactionId': txn_id}, status=status.HTTP_202_ACCEPTED)

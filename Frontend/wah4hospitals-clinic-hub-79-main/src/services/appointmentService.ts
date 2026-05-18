@@ -88,6 +88,31 @@ export const appointmentService = {
     }
   },
 
+  // ── WAH4PC gateway — fetch from WAH4Patient mobile app ───────────────────
+
+  /**
+   * Request appointments for a patient from the WAH4PC gateway.
+   * Mirrors the patient fetch flow: returns a transactionId immediately;
+   * the gateway delivers the FHIR Appointment Bundle asynchronously via
+   * webhook, which auto-imports appointments into the local system.
+   */
+  async fetchFromGateway(
+    targetProviderId: string,
+    philHealthId: string,
+    options?: { reason?: string; notes?: string },
+  ): Promise<{ transactionId: string; [key: string]: unknown }> {
+    const { data } = await api.post(
+      '/api/admission/appointments/wah4pc/fetch/',
+      {
+        targetProviderId,
+        philHealthId,
+        ...(options?.reason ? { reason: options.reason } : {}),
+        ...(options?.notes  ? { notes:  options.notes  } : {}),
+      },
+    );
+    return data;
+  },
+
   // ── Schedules ─────────────────────────────────────────────────────────────
 
   async getSchedules(params?: Record<string, string>): Promise<Schedule[]> {

@@ -3852,6 +3852,142 @@ def appointments_to_bundle(queryset) -> dict:
     }
 
 
+def request_appointment(target_id, philhealth_id, idempotency_key=None, reason=None, notes=None):
+    """Request appointment data for a patient from another provider via the WAH4PC gateway.
+
+    Mirrors request_patient — sends to /api/v1/fhir/request/Appointment with
+    the patient's PhilHealth ID as the lookup identifier.
+
+    Returns:
+        dict: Gateway response (contains 'transactionId') on success,
+              or {'error': ..., 'status_code': ...} on failure.
+    """
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+
+    last_retryable_result = None
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/request/Appointment",
+                headers={
+                    "X-API-Key":       api_key,
+                    "X-Provider-ID":   provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "requesterId": provider_id,
+                    "targetId":    target_id,
+                    "patientIdentifiers": [
+                        {
+                            "system": "http://philhealth.gov.ph/fhir/Identifier/philhealth-id",
+                            "value":  philhealth_id,
+                        }
+                    ],
+                    "reason": reason,
+                    "notes":  notes,
+                },
+                timeout=30,
+            )
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code":     response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+            if response.status_code >= 400:
+                return {
+                    "error": (
+                        response.json().get("error", "Unknown error")
+                        if response.text else "Unknown error"
+                    ),
+                    "status_code":     response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+        except requests.RequestException as e:
+            return {
+                "error":           f"Network error: {str(e)}",
+                "status_code":     500,
+                "idempotency_key": idempotency_key,
+            }
+    return last_retryable_result
+
+
+def import_appointment_from_fhir(fhir_data, patient):
+    """Parse a FHIR Appointment payload and upsert into the local Appointment model.
+
+    Upsert key: identifier value (unique in DB).
+    Maps FHIR participant[].actor to patient_id; maps serviceType, specialty,
+    appointmentType codings to their flat code/display fields.
+    """
+    from admission.models import Appointment
+
+    ids = fhir_data.get("identifier", [])
+    identifier = ids[0].get("value") if ids else f"import-{uuid.uuid4()}"
+
+    def _parse_dt(val):
+        if not val:
+            return None
+        try:
+            from dateutil.parser import parse as _parse
+            return _parse(val)
+        except Exception:
+            return None
+
+    service_types = fhir_data.get("serviceType") or []
+    svc_coding = ((service_types[0].get("coding") or [{}])[0]) if service_types else {}
+
+    appt_type = fhir_data.get("appointmentType") or {}
+    appt_coding = (appt_type.get("coding") or [{}])[0]
+
+    specialties = fhir_data.get("specialty") or []
+    spec_coding = ((specialties[0].get("coding") or [{}])[0]) if specialties else {}
+
+    reason_codes = fhir_data.get("reasonCode") or []
+    reason_text = reason_codes[0].get("text") if reason_codes else None
+
+    patient_part_status = next(
+        (p.get("status") for p in (fhir_data.get("participant") or [])
+         if (p.get("actor") or {}).get("reference", "").startswith("Patient/")),
+        None,
+    )
+
+    fields = {k: v for k, v in {
+        "patient_id":                   patient.id,
+        "status":                       fhir_data.get("status", "pending"),
+        "start":                        _parse_dt(fhir_data.get("start")),
+        "end":                          _parse_dt(fhir_data.get("end")),
+        "minutes_duration":             fhir_data.get("minutesDuration"),
+        "description":                  fhir_data.get("description"),
+        "comment":                      fhir_data.get("comment"),
+        "patient_instruction":          fhir_data.get("patientInstruction"),
+        "service_type_code":            svc_coding.get("code"),
+        "service_type_display":         svc_coding.get("display"),
+        "specialty_code":               spec_coding.get("code"),
+        "specialty_display":            spec_coding.get("display"),
+        "appointment_type_code":        appt_coding.get("code"),
+        "appointment_type_display":     appt_coding.get("display"),
+        "reason_code":                  reason_text,
+        "priority":                     fhir_data.get("priority"),
+        "patient_participation_status": patient_part_status,
+    }.items() if v is not None}
+
+    obj, _ = Appointment.objects.update_or_create(identifier=identifier, defaults=fields)
+    return obj
+
+
 # =============================================================================
 # PRACTITIONER — FHIR R4 / PHCore R4
 # =============================================================================

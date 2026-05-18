@@ -36,6 +36,7 @@ from patients.wah4pc import (
     observations_to_bundle, import_observation_from_fhir, push_observation,
     medicationrequests_to_bundle, import_medicationrequest_from_fhir, push_medicationrequest,
     diagnosticreports_to_bundle, import_diagnosticreport_from_fhir, push_diagnosticreport,
+    import_appointment_from_fhir, request_appointment,
     gateway_get_transaction,
 )
 from patients.models import Patient, WAH4PCTransaction
@@ -1114,6 +1115,8 @@ def webhook_receive_push(request):
                     import_medicationrequest_from_fhir(data, related_patient)
                 elif resource_type == 'DiagnosticReport':
                     import_diagnosticreport_from_fhir(data, related_patient)
+                elif resource_type == 'Appointment':
+                    import_appointment_from_fhir(data, related_patient)
         except Exception:
             logger.exception('[WAH4PC] Failed to upsert %s (txn=%s) — storing raw payload.', resource_type, txn_id)
 
