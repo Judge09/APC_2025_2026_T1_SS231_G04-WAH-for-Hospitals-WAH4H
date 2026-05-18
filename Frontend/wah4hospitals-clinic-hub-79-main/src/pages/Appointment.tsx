@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus, RefreshCw, Search, Calendar, LayoutGrid, List,
   Clock, User, Stethoscope, Trash2, CalendarClock, Edit,
+  TableProperties,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { appointmentService } from '@/services/appointmentService';
 import { BookAppointmentModal } from '@/components/appointment/BookAppointmentModal';
 import { AppointmentDetailsModal } from '@/components/appointment/AppointmentDetailsModal';
 import { ScheduleManagementModal } from '@/components/appointment/ScheduleManagementModal';
+import { AppointmentCalendarView } from '@/components/appointment/AppointmentCalendarView';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -112,6 +114,7 @@ const AppointmentPage: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'appointments' | 'schedules'>('appointments');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('booked');
@@ -288,57 +291,89 @@ const AppointmentPage: React.FC = () => {
 
             {/* Toolbar */}
             <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-white sticky top-0 z-10">
-              {/* Status filters */}
-              <div className="flex gap-2 p-1 bg-slate-50 rounded-lg flex-wrap">
-                {[
-                  { key: 'booked',    label: 'Booked' },
-                  { key: 'arrived',   label: 'Arrived' },
-                  { key: 'fulfilled', label: 'Fulfilled' },
-                  { key: 'cancelled', label: 'Cancelled' },
-                  { key: 'all',       label: 'All' },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setStatusFilter(tab.key)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-md uppercase transition-all ${
-                      statusFilter === tab.key
-                        ? 'bg-blue-100 text-blue-800 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Search + date */}
-              <div className="flex gap-3 flex-wrap">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                  <Input
-                    placeholder="Search patient or ID..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10 w-56 bg-slate-50 border-slate-200 focus:bg-white transition-all"
-                  />
+              {/* Status filters — only in list mode */}
+              {viewMode === 'list' && (
+                <div className="flex gap-2 p-1 bg-slate-50 rounded-lg flex-wrap">
+                  {[
+                    { key: 'booked',    label: 'Booked' },
+                    { key: 'arrived',   label: 'Arrived' },
+                    { key: 'fulfilled', label: 'Fulfilled' },
+                    { key: 'cancelled', label: 'Cancelled' },
+                    { key: 'all',       label: 'All' },
+                  ].map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setStatusFilter(tab.key)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md uppercase transition-all ${
+                        statusFilter === tab.key
+                          ? 'bg-blue-100 text-blue-800 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
-                <Input
-                  type="date"
-                  value={dateFilter}
-                  onChange={e => setDateFilter(e.target.value)}
-                  className="w-40 bg-slate-50 border-slate-200 text-sm"
-                  title="Filter by date"
-                />
-                {dateFilter && (
-                  <Button variant="ghost" size="sm" onClick={() => setDateFilter('')} className="text-slate-400 text-xs h-9">
-                    Clear date
-                  </Button>
+              )}
+
+              {/* Right side: search + date (list only) + view toggle */}
+              <div className="flex gap-3 flex-wrap items-center ml-auto">
+                {viewMode === 'list' && (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <Input
+                        placeholder="Search patient or ID..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="pl-10 w-56 bg-slate-50 border-slate-200 focus:bg-white transition-all"
+                      />
+                    </div>
+                    <Input
+                      type="date"
+                      value={dateFilter}
+                      onChange={e => setDateFilter(e.target.value)}
+                      className="w-40 bg-slate-50 border-slate-200 text-sm"
+                      title="Filter by date"
+                    />
+                    {dateFilter && (
+                      <Button variant="ghost" size="sm" onClick={() => setDateFilter('')} className="text-slate-400 text-xs h-9">
+                        Clear date
+                      </Button>
+                    )}
+                  </>
                 )}
+
+                {/* View mode toggle */}
+                <div className="flex gap-1 p-1 bg-slate-100 rounded-lg">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    title="List view"
+                    className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    <TableProperties className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('calendar')}
+                    title="Calendar view"
+                    className={`p-1.5 rounded transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            {/* Table — list view only */}
+            {viewMode === 'calendar' ? (
+              <div className="p-4">
+                <AppointmentCalendarView
+                  appointments={appointments}
+                  onSelectAppointment={openDetails}
+                />
+              </div>
+            ) : null}
+            <div className={`overflow-x-auto ${viewMode === 'calendar' ? 'hidden' : ''}`}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-500 font-semibold text-xs border-b border-slate-100">
                   <tr>
