@@ -138,10 +138,10 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Identifier */}
           <FormField
-            label="Identifier *"
-            error={errors.identifier}
+            label="Identifier (auto-generated)"
             {...register('identifier')}
-            placeholder="e.g., COND-12345"
+            readOnly
+            className="bg-gray-100 cursor-not-allowed"
           />
 
           {/* Condition Code */}

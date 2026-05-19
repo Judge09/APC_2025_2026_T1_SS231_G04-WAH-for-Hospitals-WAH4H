@@ -35,7 +35,7 @@ export const BillingForm: React.FC<BillingFormProps> = ({
     // Form State
     const [patientName, setPatientName] = useState('');
     const [hospitalId, setHospitalId] = useState('');
-    const [admissionDate, setAdmissionDate] = useState('');
+    const [admissionDate, setAdmissionDate] = useState(new Date().toISOString().slice(0, 10));
     const [dischargeDate, setDischargeDate] = useState('');
     const [roomWard, setRoomWard] = useState('');
 

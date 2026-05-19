@@ -344,7 +344,7 @@ const AdmitPatientModal: React.FC<AdmitPatientModalProps> = ({ isOpen, onClose, 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">Date <span className="text-red-500">*</span></label>
-                    <Input type="date" value={formData.admissionDate} onChange={e => setFormData({ ...formData, admissionDate: e.target.value })} className="bg-white" />
+                    <Input type="date" value={formData.admissionDate} max={new Date().toISOString().slice(0, 10)} onChange={e => setFormData({ ...formData, admissionDate: e.target.value })} className="bg-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">Time <span className="text-red-500">*</span></label>

@@ -378,11 +378,18 @@ const Step1Form = ({ form }: { form: any }) => {
           {...register('middle_name')}
           placeholder="e.g., Santos"
         />
-        <FormField
+        <SelectField
           label="Suffix"
           error={errors.suffix_name}
           {...register('suffix_name')}
-          placeholder="e.g., Jr, III"
+          options={[
+            { value: '', label: 'None / N/A' },
+            { value: 'Jr.', label: 'Jr.' },
+            { value: 'Sr.', label: 'Sr.' },
+            { value: 'II', label: 'II' },
+            { value: 'III', label: 'III' },
+            { value: 'IV', label: 'IV' },
+          ]}
         />
       </div>
 

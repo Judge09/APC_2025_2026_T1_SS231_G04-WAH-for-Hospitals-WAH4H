@@ -95,7 +95,7 @@ const SessionTimeout: React.FC<SessionTimeoutProps> = ({ children }) => {
                   Session Expiring Soon
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Your session will expire due to inactivity to protect patient data and ensure HIPAA compliance.
+                  Your session will expire due to inactivity to protect patient data and ensure RA 10173 (Data Privacy Act) compliance.
                 </p>
                 <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mb-4">
                   <p className="text-sm text-orange-800 font-medium text-center">

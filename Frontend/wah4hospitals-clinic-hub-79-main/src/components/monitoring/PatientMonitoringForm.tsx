@@ -113,7 +113,7 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
     });
   };
 
-  const renderInput = (label: string, path: string, type: string = 'text', rows?: number) => (
+  const renderInput = (label: string, path: string, type: string = 'text', rows?: number, min?: string, max?: string) => (
     <>
       <Label>{label}</Label>
       {rows ? (
@@ -126,6 +126,8 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
       ) : (
         <Input
           type={type}
+          min={min}
+          max={max}
           value={(formData as any)[path.split('.')[0]][path.split('.')[1]] ?? ''}
           onChange={(e) => updateFormData(path, e.target.value)}
           readOnly={isReadOnly}
@@ -192,10 +194,10 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
           <Card>
             <CardHeader><CardTitle>Vital Signs</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {renderInput('Heart Rate (BPM)', 'vitalSigns.heartRate')}
+              {renderInput('Heart Rate (BPM)', 'vitalSigns.heartRate', 'number', undefined, '0')}
               {renderInput('Blood Pressure', 'vitalSigns.bloodPressure')}
-              {renderInput('Temperature (°C)', 'vitalSigns.temperature')}
-              {renderInput('Respiratory Rate', 'vitalSigns.respiratoryRate')}
+              {renderInput('Temperature (°C)', 'vitalSigns.temperature', 'number', undefined, '0')}
+              {renderInput('Respiratory Rate', 'vitalSigns.respiratoryRate', 'number', undefined, '0')}
             </CardContent>
           </Card>
 
@@ -230,7 +232,9 @@ export const PatientMonitoringForm: React.FC<PatientMonitoringFormProps> = ({
                 <div>
                   <Label>Oxygen Saturation (%)</Label>
                   <Input
-                    type="text"
+                    type="number"
+                    min="0"
+                    max="100"
                     value={formData.oxygenSaturation}
                     onChange={(e) => updateFormData('oxygenSaturation', e.target.value)}
                     readOnly={isReadOnly}
