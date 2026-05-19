@@ -105,6 +105,7 @@ export const COMMON_ALLERGENS = [
 // ============================================================================
 
 export const IMMUNIZATION_STATUS_OPTIONS = [
+  { value: 'scheduled', label: 'Scheduled' },
   { value: 'completed', label: 'Completed' },
   { value: 'entered-in-error', label: 'Entered in Error' },
   { value: 'not-done', label: 'Not Done' },

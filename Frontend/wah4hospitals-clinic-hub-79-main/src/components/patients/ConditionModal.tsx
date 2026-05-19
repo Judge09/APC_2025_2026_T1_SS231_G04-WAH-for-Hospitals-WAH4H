@@ -216,6 +216,7 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
             <FormField
               label="Onset Date/Time"
               type="datetime-local"
+              max={new Date().toISOString().slice(0, 16)}
               error={errors.onset_datetime}
               {...register('onset_datetime')}
             />

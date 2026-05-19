@@ -5,7 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Condition, Allergy, Immunization } from '../../types/patient';
 import { ConditionModal } from './ConditionModal';
 import { AllergyModal } from './AllergyModal';
@@ -32,6 +33,7 @@ export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, e
   const [allergies, setAllergies] = useState<Allergy[]>([]);
   const [immunizations, setImmunizations] = useState<Immunization[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState('');
 
   // Modal states
   const [showConditionModal, setShowConditionModal] = useState(false);
@@ -48,6 +50,7 @@ export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, e
 
   const loadClinicalData = async () => {
     setLoading(true);
+    setFetchError('');
     try {
       const [conditionsData, allergiesData, immunizationsData] = await Promise.all([
         getPatientConditions(patientId),
@@ -57,8 +60,9 @@ export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, e
       setConditions(conditionsData);
       setAllergies(allergiesData);
       setImmunizations(immunizationsData);
-    } catch (error) {
-      console.error('Error loading clinical data:', error);
+    } catch (error: any) {
+      const msg = error?.response?.data?.detail || error?.response?.data?.error || error?.message || 'Failed to load clinical data';
+      setFetchError(msg);
     } finally {
       setLoading(false);
     }
@@ -120,6 +124,13 @@ export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, e
           count={immunizations.length}
         />
       </div>
+
+      {fetchError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{fetchError}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Tab Content */}
       <div className="min-h-[300px]">
@@ -334,7 +345,7 @@ const AllergiesTab: React.FC<{
                 <div className="flex items-center gap-2 mb-2">
                   <h4 className="font-semibold">{allergy.code}</h4>
                   {allergy.criticality && (
-                    <Badge variant={allergy.criticality === 'high' ? 'destructive' : 'secondary'}>
+                    <Badge variant={['high', 'critical'].includes(allergy.criticality) ? 'destructive' : 'secondary'}>
                       {allergy.criticality}
                     </Badge>
                   )}

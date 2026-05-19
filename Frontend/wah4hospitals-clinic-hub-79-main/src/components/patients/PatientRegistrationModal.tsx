@@ -353,6 +353,7 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
 const Step1Form = ({ form }: { form: any }) => {
   const { register, setValue, formState: { errors }, watch } = form;
   const indigenousFlag = watch('indigenous_flag');
+  const pwdType = watch('pwd_type');
 
   return (
     <div className="space-y-4">
@@ -430,6 +431,11 @@ const Step1Form = ({ form }: { form: any }) => {
           {...register('pwd_type')}
           options={[{ value: '', label: 'Select PWD Type' }, ...PWD_TYPE_OPTIONS]}
         />
+        {pwdType && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-1">
+            Ensure the patient's PWD ID or certification document has been sighted before marking this status.
+          </p>
+        )}
       </div>
 
       {/* Indigenous */}

@@ -47,6 +47,7 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
     formState: { errors },
     reset,
     watch,
+    setFocus,
   } = useForm<ImmunizationFormData>({
     resolver: zodResolver(immunizationFormSchema),
     defaultValues: immunization
@@ -84,6 +85,11 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
       setError('');
     }
   }, [isOpen, reset]);
+
+  useEffect(() => {
+    const firstError = Object.keys(errors)[0];
+    if (firstError) setFocus(firstError as keyof ImmunizationFormData);
+  }, [errors, setFocus]);
 
   const onSubmit = async (data: ImmunizationFormData) => {
     setIsLoading(true);
@@ -140,10 +146,12 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
 
           {/* Vaccine Selection */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Vaccine Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Vaccine Name <span className="text-red-500">*</span>
+            </label>
             <select
               {...register('vaccine_code')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.vaccine_code ? 'border-red-500' : 'border-gray-300'}`}
             >
               <option value="">Select Vaccine</option>
               {COMMON_VACCINES.map((opt) => (
@@ -152,6 +160,7 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
                 </option>
               ))}
             </select>
+            {errors.vaccine_code && <p className="text-xs text-red-500">{errors.vaccine_code.message}</p>}
             <p className="text-xs text-gray-500">Or enter a custom vaccine code/display below</p>
           </div>
 
@@ -166,7 +175,7 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
           {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
-              label="Occurrence Date/Time"
+              label="Occurrence Date/Time *"
               type="datetime-local"
               error={errors.occurrence_datetime}
               {...register('occurrence_datetime')}

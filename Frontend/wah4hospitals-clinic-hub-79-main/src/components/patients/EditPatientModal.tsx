@@ -67,6 +67,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   const selectedRegion = watch('address_state');
   const selectedProvince = watch('address_district');
   const selectedCity = watch('address_city');
+  const indigenousFlag = watch('indigenous_flag');
 
   // Clear API error and repopulate form whenever the modal opens with a new patient
   useEffect(() => {
@@ -452,13 +453,19 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
               <CheckboxField
                 label="Indigenous Person"
                 {...register('indigenous_flag')}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  register('indigenous_flag').onChange(e);
+                  if (!e.target.checked) setValue('indigenous_group', '');
+                }}
               />
-              <SelectField
-                label="Indigenous Group"
-                error={errors.indigenous_group}
-                {...register('indigenous_group')}
-                options={[{ value: '', label: 'Select Indigenous Group' }, ...INDIGENOUS_GROUP_OPTIONS]}
-              />
+              {indigenousFlag && (
+                <SelectField
+                  label="Indigenous Group"
+                  error={errors.indigenous_group}
+                  {...register('indigenous_group')}
+                  options={[{ value: '', label: 'Select Indigenous Group' }, ...INDIGENOUS_GROUP_OPTIONS]}
+                />
+              )}
               <CheckboxField
                 label="Consent to Data Processing"
                 {...register('consent_flag')}

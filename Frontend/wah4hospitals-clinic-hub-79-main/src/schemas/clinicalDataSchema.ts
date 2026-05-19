@@ -18,7 +18,10 @@ export const conditionFormSchema = z.object({
   patient: z.number().min(1, 'Patient ID is required'),
   encounter_id: z.number().min(1, 'Encounter ID is required'),
   body_site: z.string().max(255).optional(),
-  onset_datetime: z.string().optional(),
+  onset_datetime: z.string().optional().refine(
+    (val) => !val || new Date(val) <= new Date(),
+    { message: 'Onset date cannot be in the future' }
+  ),
   recorded_date: z.string().optional(),
   note: z.string().optional(),
 });
@@ -54,14 +57,14 @@ export type AllergyFormData = z.infer<typeof allergyFormSchema>;
 
 export const immunizationFormSchema = z.object({
   identifier: z.string().min(1, 'Identifier is required').max(100),
-  status: z.enum(['completed', 'entered-in-error', 'not-done'], {
+  status: z.enum(['scheduled', 'completed', 'entered-in-error', 'not-done'], {
     errorMap: () => ({ message: 'Please select a valid status' }),
   }),
-  vaccine_code: z.string().max(100).optional(),
+  vaccine_code: z.string().min(1, 'Vaccine is required').max(100),
   vaccine_display: z.string().max(100).optional(),
   patient: z.number().min(1, 'Patient ID is required'),
   encounter_id: z.number().min(1, 'Encounter ID is required'),
-  occurrence_datetime: z.string().optional(),
+  occurrence_datetime: z.string().min(1, 'Occurrence date/time is required'),
   recorded_datetime: z.string().optional(),
   lot_number: z.string().max(255).optional(),
   expiration_date: z.string().optional(),
