@@ -587,13 +587,7 @@ const Register = () => {
     });
 
     if (result.ok) {
-      if (result.otpDisabled) {
-        // Backend has OTP disabled — account created and auto-logged in, go to dashboard
-        navigate('/dashboard');
-      } else {
-        // OTP flow: show verification modal
-        setShowOTPModal(true);
-      }
+      navigate('/dashboard');
       return;
     }
 
