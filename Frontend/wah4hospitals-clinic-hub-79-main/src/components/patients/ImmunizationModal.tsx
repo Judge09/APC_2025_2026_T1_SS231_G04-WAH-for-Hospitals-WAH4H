@@ -214,6 +214,7 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
             <FormField
               label="Recorded Date/Time"
               type="datetime-local"
+              max={new Date().toISOString().slice(0, 16)}
               error={errors.recorded_datetime}
               {...register('recorded_datetime')}
             />

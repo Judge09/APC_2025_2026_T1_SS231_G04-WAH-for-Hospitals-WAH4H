@@ -64,7 +64,7 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
           patient: patientId,
           encounter_id: encounterId,
           onset_datetime: allergy.onset_datetime || '',
-          recorded_date: allergy.created_at?.split('T')[0] || '',
+          recorded_date: allergy.recorded_date || '',
           reaction_description: allergy.reaction_description || '',
           reaction_severity: allergy.reaction_severity || '',
           note: allergy.note || '',
@@ -256,6 +256,7 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
             <FormField
               label="Recorded Date"
               type="date"
+              max={new Date().toISOString().split('T')[0]}
               error={errors.recorded_date}
               {...register('recorded_date')}
             />

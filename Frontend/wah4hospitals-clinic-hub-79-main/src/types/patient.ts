@@ -187,6 +187,7 @@ export interface Allergy {
   reaction_severity?: string;
   note?: string;
   onset_datetime?: string;
+  recorded_date?: string;
   created_at?: string;
   updated_at?: string;
 }

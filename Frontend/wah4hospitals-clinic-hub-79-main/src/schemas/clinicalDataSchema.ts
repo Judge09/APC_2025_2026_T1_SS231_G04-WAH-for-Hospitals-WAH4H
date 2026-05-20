@@ -22,7 +22,10 @@ export const conditionFormSchema = z.object({
     (val) => !val || new Date(val) <= new Date(),
     { message: 'Onset date cannot be in the future' }
   ),
-  recorded_date: z.string().optional(),
+  recorded_date: z.string().optional().refine(
+    (val) => !val || new Date(val) <= new Date(),
+    { message: 'Recorded date cannot be in the future' }
+  ),
   note: z.string().optional(),
 });
 
@@ -46,7 +49,10 @@ export const allergyFormSchema = z.object({
     (val) => !val || new Date(val) <= new Date(),
     { message: 'Onset date cannot be in the future' }
   ),
-  recorded_date: z.string().optional(),
+  recorded_date: z.string().optional().refine(
+    (val) => !val || new Date(val) <= new Date(),
+    { message: 'Recorded date cannot be in the future' }
+  ),
   reaction_description: z.string().optional(),
   reaction_severity: z.string().max(255).optional(),
   note: z.string().optional(),

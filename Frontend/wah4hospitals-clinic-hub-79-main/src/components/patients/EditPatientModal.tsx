@@ -93,7 +93,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
         address_city: patient.address_city || '',
         address_district: patient.address_district || '',
         address_state: patient.address_state || '',
-        address_country: patient.address_country || '',
+        address_country: patient.address_country || 'Philippines',
         address_postal_code: patient.address_postal_code || '',
         contact_first_name: patient.contact_first_name || '',
         contact_last_name: patient.contact_last_name || '',
@@ -178,11 +178,18 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
                 {...register('middle_name')}
                 placeholder="e.g., Santos"
               />
-              <FormField
+              <SelectField
                 label="Suffix"
                 error={errors.suffix_name}
                 {...register('suffix_name')}
-                placeholder="e.g., Jr, III"
+                options={[
+                  { value: '', label: 'None / N/A' },
+                  { value: 'Jr.', label: 'Jr.' },
+                  { value: 'Sr.', label: 'Sr.' },
+                  { value: 'II', label: 'II' },
+                  { value: 'III', label: 'III' },
+                  { value: 'IV', label: 'IV' },
+                ]}
               />
             </div>
 

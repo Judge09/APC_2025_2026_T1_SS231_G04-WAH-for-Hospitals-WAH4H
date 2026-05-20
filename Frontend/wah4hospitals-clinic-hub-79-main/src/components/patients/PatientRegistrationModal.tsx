@@ -85,6 +85,7 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
   const step2Form = useForm<PatientStep2FormData>({
     resolver: zodResolver(patientStep2Schema),
     mode: 'onChange',
+    defaultValues: { address_country: 'Philippines' },
   });
 
   // Step 3: Emergency Contact + Consent
@@ -131,7 +132,7 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
       address_district:    prefillData.address_district,
       address_state:       prefillData.address_state,
       address_postal_code: prefillData.address_postal_code,
-      address_country:     prefillData.address_country,
+      address_country:     prefillData.address_country ?? 'Philippines',
     });
     step3Form.reset({
       contact_first_name:   prefillData.contact_first_name,

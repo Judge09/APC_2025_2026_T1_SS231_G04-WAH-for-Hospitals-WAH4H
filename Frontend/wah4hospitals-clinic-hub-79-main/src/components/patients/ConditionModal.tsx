@@ -252,6 +252,7 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
             <FormField
               label="Recorded Date"
               type="date"
+              max={new Date().toISOString().split('T')[0]}
               error={errors.recorded_date}
               {...register('recorded_date')}
             />

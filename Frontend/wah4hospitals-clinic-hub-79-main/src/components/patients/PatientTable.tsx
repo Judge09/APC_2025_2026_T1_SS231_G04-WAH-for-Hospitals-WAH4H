@@ -39,7 +39,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
 
         <tbody>
           {patients.map(patient => (
-            <tr key={patient.id} className="border-b hover:bg-gray-50">
+            <tr key={patient.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => handleViewDetails(patient)}>
               <td className="px-4 py-2 font-mono">{patient.patient_id}</td>
               <td className="px-4 py-2">
                 {patient.last_name}, {patient.first_name}
@@ -52,7 +52,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleViewDetails(patient)}
+                    aria-label={`View details for ${patient.last_name}, ${patient.first_name}`}
+                    onClick={(e) => { e.stopPropagation(); handleViewDetails(patient); }}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
@@ -60,7 +61,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleEdit(patient)}
+                    aria-label={`Edit ${patient.last_name}, ${patient.first_name}`}
+                    onClick={(e) => { e.stopPropagation(); handleEdit(patient); }}
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
@@ -68,7 +70,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleDelete(patient)}
+                    aria-label={`Delete ${patient.last_name}, ${patient.first_name}`}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(patient); }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
