@@ -19,12 +19,10 @@ import {
   patientStep1Schema,
   patientStep2Schema,
   patientStep3Schema,
-  patientStep4Schema,
   patientFormDataSchema,
   type PatientStep1FormData,
   type PatientStep2FormData,
   type PatientStep3FormData,
-  type PatientStep4FormData,
 } from '../../schemas/patientSchema';
 import {
   GENDER_OPTIONS,
@@ -78,20 +76,23 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
   // Step 1: Basic Info
   const step1Form = useForm<PatientStep1FormData>({
     resolver: zodResolver(patientStep1Schema),
-    mode: 'onChange',
+    mode: 'onTouched',
+    shouldUnregister: false,
   });
 
   // Step 2: Contact & Address
   const step2Form = useForm<PatientStep2FormData>({
     resolver: zodResolver(patientStep2Schema),
-    mode: 'onChange',
+    mode: 'onTouched',
+    shouldUnregister: false,
     defaultValues: { address_country: 'Philippines' },
   });
 
   // Step 3: Emergency Contact + Consent
   const step3Form = useForm<PatientStep3FormData>({
     resolver: zodResolver(patientStep3Schema),
-    mode: 'onChange',
+    mode: 'onTouched',
+    shouldUnregister: false,
     defaultValues: {
       contact_first_name: '',
       contact_last_name: '',
@@ -101,46 +102,62 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
     },
   });
 
-  // Pre-fill all three step forms when the modal opens with network-search data.
+  // Reset or pre-fill all step forms whenever the modal opens.
   React.useEffect(() => {
-    if (!isOpen || !prefillData || Object.keys(prefillData).length === 0) return;
-    // Seed the accumulated data so later steps inherit the values.
-    setAllStepsData(prefillData);
-    // Reset each step form with only the fields it owns.
-    step1Form.reset({
-      first_name:      prefillData.first_name      ?? '',
-      last_name:       prefillData.last_name        ?? '',
-      middle_name:     prefillData.middle_name,
-      suffix_name:     prefillData.suffix_name,
-      birthdate:       prefillData.birthdate        ?? '',
-      gender:          prefillData.gender,
-      civil_status:    prefillData.civil_status,
-      blood_type:      prefillData.blood_type,
-      pwd_type:        prefillData.pwd_type,
-      indigenous_flag: prefillData.indigenous_flag,
-      indigenous_group:prefillData.indigenous_group,
-      nationality:     prefillData.nationality,
-      religion:        prefillData.religion,
-      occupation:      prefillData.occupation,
-      education:       prefillData.education,
-      philhealth_id:   prefillData.philhealth_id,
-    });
-    step2Form.reset({
-      mobile_number:       prefillData.mobile_number       ?? '',
-      address_line:        prefillData.address_line        ?? '',
-      address_city:        prefillData.address_city        ?? '',
-      address_district:    prefillData.address_district,
-      address_state:       prefillData.address_state,
-      address_postal_code: prefillData.address_postal_code,
-      address_country:     prefillData.address_country ?? 'Philippines',
-    });
-    step3Form.reset({
-      contact_first_name:   prefillData.contact_first_name,
-      contact_last_name:    prefillData.contact_last_name,
-      contact_mobile_number:prefillData.contact_mobile_number ?? '',
-      contact_relationship: prefillData.contact_relationship,
-      consent_flag: false, // user must explicitly consent
-    });
+    if (!isOpen) return;
+
+    if (prefillData && Object.keys(prefillData).length > 0) {
+      // Network-search pre-fill: seed accumulated data and reset each step form.
+      setAllStepsData(prefillData);
+      step1Form.reset({
+        first_name:       prefillData.first_name       ?? '',
+        last_name:        prefillData.last_name         ?? '',
+        middle_name:      prefillData.middle_name,
+        suffix_name:      prefillData.suffix_name,
+        birthdate:        prefillData.birthdate         ?? '',
+        gender:           prefillData.gender,
+        civil_status:     prefillData.civil_status,
+        blood_type:       prefillData.blood_type,
+        pwd_type:         prefillData.pwd_type,
+        indigenous_flag:  prefillData.indigenous_flag,
+        indigenous_group: prefillData.indigenous_group,
+        nationality:      prefillData.nationality,
+        religion:         prefillData.religion,
+        occupation:       prefillData.occupation,
+        education:        prefillData.education,
+        philhealth_id:    prefillData.philhealth_id,
+      });
+      step2Form.reset({
+        mobile_number:       prefillData.mobile_number       ?? '',
+        address_line:        prefillData.address_line        ?? '',
+        address_city:        prefillData.address_city        ?? '',
+        address_district:    prefillData.address_district,
+        address_state:       prefillData.address_state,
+        address_postal_code: prefillData.address_postal_code,
+        address_country:     prefillData.address_country ?? 'Philippines',
+      });
+      step3Form.reset({
+        contact_first_name:    prefillData.contact_first_name,
+        contact_last_name:     prefillData.contact_last_name,
+        contact_mobile_number: prefillData.contact_mobile_number ?? '',
+        contact_relationship:  prefillData.contact_relationship,
+        consent_flag: false,
+      });
+    } else {
+      // Fresh open — clear any stale values so previous registration data
+      // cannot carry over and trigger false-positive duplicate errors.
+      setCurrentStep(1);
+      setAllStepsData({});
+      step1Form.reset();
+      step2Form.reset({ address_country: 'Philippines' });
+      step3Form.reset({
+        contact_first_name: '',
+        contact_last_name: '',
+        contact_mobile_number: '',
+        contact_relationship: '',
+        consent_flag: false,
+      });
+    }
     setCurrentStep(1);
   }, [isOpen, prefillData]); // eslint-disable-line react-hooks/exhaustive-deps
 

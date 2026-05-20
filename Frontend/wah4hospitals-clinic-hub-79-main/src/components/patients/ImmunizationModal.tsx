@@ -146,7 +146,10 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Immunization' : 'Add New Immunization'}</DialogTitle>
         </DialogHeader>
