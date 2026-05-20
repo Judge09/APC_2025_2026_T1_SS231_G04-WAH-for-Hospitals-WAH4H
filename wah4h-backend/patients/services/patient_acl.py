@@ -84,12 +84,27 @@ def search_patients(query: str, limit: int = 50) -> List[Dict[str, Any]]:
 
     try:
         q = query.strip()
-        patients = base_qs.filter(
-            Q(patient_id__icontains=q) |
-            Q(first_name__icontains=q) |
-            Q(last_name__icontains=q) |
-            Q(middle_name__icontains=q)
-        )[:limit]
+        words = q.split()
+        if len(words) > 1:
+            # Multi-word: every word must appear in at least one name field
+            combined = Q()
+            for word in words:
+                combined &= (
+                    Q(patient_id__icontains=word) |
+                    Q(first_name__icontains=word) |
+                    Q(last_name__icontains=word) |
+                    Q(middle_name__icontains=word) |
+                    Q(suffix_name__icontains=word)
+                )
+            patients = base_qs.filter(combined)[:limit]
+        else:
+            patients = base_qs.filter(
+                Q(patient_id__icontains=q) |
+                Q(first_name__icontains=q) |
+                Q(last_name__icontains=q) |
+                Q(middle_name__icontains=q) |
+                Q(suffix_name__icontains=q)
+            )[:limit]
         return [_patient_to_dict(p) for p in patients]
     except Exception:
         logger.exception("Unexpected error in search_patients for query=%r", query)

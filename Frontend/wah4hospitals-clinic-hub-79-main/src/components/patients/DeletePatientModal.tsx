@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import type { Patient } from '../../types/patient';
-import axios from 'axios';
+import { deletePatient } from '../../services/patientsService';
 
 interface DeletePatientModalProps {
   isOpen: boolean;
@@ -33,14 +33,7 @@ export const DeletePatientModal: React.FC<DeletePatientModalProps> = ({
     setError('');
 
     try {
-      // Use numeric ID for DELETE request
-      const API_URL =
-        import.meta.env.BACKEND_PATIENTS_8000 ||
-        (import.meta.env.LOCAL_8000 ? `${import.meta.env.LOCAL_8000}/api/patients/` : import.meta.env.BACKEND_PATIENTS);
-
-      await axios.delete(
-        `${API_URL}${patient.id}/`
-      );
+      await deletePatient(patient.id);
       await fetchPatients();
       handleClose();
     } catch (err: any) {

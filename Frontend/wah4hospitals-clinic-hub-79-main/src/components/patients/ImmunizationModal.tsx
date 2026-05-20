@@ -83,8 +83,36 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
     if (!isOpen) {
       reset();
       setError('');
+      return;
     }
-  }, [isOpen, reset]);
+    if (immunization) {
+      reset({
+        identifier: immunization.identifier || '',
+        status: immunization.status as 'scheduled' | 'completed' | 'entered-in-error' | 'not-done',
+        vaccine_code: immunization.vaccine_code || '',
+        vaccine_display: immunization.vaccine_display || '',
+        patient: patientId,
+        encounter_id: encounterId,
+        occurrence_datetime: immunization.occurrence_datetime || '',
+        recorded_datetime: immunization.created_at || '',
+        lot_number: immunization.lot_number || '',
+        expiration_date: immunization.expiration_date || '',
+        site_code: immunization.site_code || '',
+        route_code: immunization.route_code || '',
+        dose_quantity_value: immunization.dose_quantity_value || '',
+        dose_quantity_unit: immunization.dose_quantity_unit || '',
+        performer_name: immunization.performer_name || '',
+        note: immunization.note || '',
+      });
+    } else {
+      reset({
+        identifier: `IMM-${Date.now()}`,
+        status: 'scheduled',
+        patient: patientId,
+        encounter_id: encounterId,
+      });
+    }
+  }, [isOpen, immunization]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const firstError = Object.keys(errors)[0];
@@ -103,11 +131,13 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
+      const status = err.response?.status;
       const errorMsg =
         err.response?.data?.error ||
         err.response?.data?.message ||
-        err.message ||
-        'Failed to save immunization';
+        (status === 401 ? 'Session expired — please log in again' :
+         status === 400 ? 'Invalid immunization data — check required fields' :
+         err.message || 'Failed to save immunization');
       setError(errorMsg);
     } finally {
       setIsLoading(false);
@@ -177,6 +207,7 @@ export const ImmunizationModal: React.FC<ImmunizationModalProps> = ({
             <FormField
               label="Occurrence Date/Time *"
               type="datetime-local"
+              max={new Date().toISOString().slice(0, 16)}
               error={errors.occurrence_datetime}
               {...register('occurrence_datetime')}
             />

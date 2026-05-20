@@ -16,7 +16,7 @@ export const conditionFormSchema = z.object({
   severity: z.string().max(255).optional(),
   code: z.string().min(1, 'Condition code is required').max(100),
   patient: z.number().min(1, 'Patient ID is required'),
-  encounter_id: z.number().min(1, 'Encounter ID is required'),
+  encounter_id: z.number().optional(),
   body_site: z.string().max(255).optional(),
   onset_datetime: z.string().optional().refine(
     (val) => !val || new Date(val) <= new Date(),
@@ -41,8 +41,11 @@ export const allergyFormSchema = z.object({
   criticality: z.string().max(255).optional(),
   code: z.string().min(1, 'Allergen code is required').max(100),
   patient: z.number().min(1, 'Patient ID is required'),
-  encounter_id: z.number().min(1, 'Encounter ID is required'),
-  onset_datetime: z.string().optional(),
+  encounter_id: z.number().optional(),
+  onset_datetime: z.string().optional().refine(
+    (val) => !val || new Date(val) <= new Date(),
+    { message: 'Onset date cannot be in the future' }
+  ),
   recorded_date: z.string().optional(),
   reaction_description: z.string().optional(),
   reaction_severity: z.string().max(255).optional(),
@@ -63,7 +66,7 @@ export const immunizationFormSchema = z.object({
   vaccine_code: z.string().min(1, 'Vaccine is required').max(100),
   vaccine_display: z.string().max(100).optional(),
   patient: z.number().min(1, 'Patient ID is required'),
-  encounter_id: z.number().min(1, 'Encounter ID is required'),
+  encounter_id: z.number().optional(),
   occurrence_datetime: z.string().min(1, 'Occurrence date/time is required'),
   recorded_datetime: z.string().optional(),
   lot_number: z.string().max(255).optional(),

@@ -80,8 +80,33 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
     if (!isOpen) {
       reset();
       setError('');
+      return;
     }
-  }, [isOpen, reset]);
+    if (allergy) {
+      reset({
+        identifier: allergy.identifier || '',
+        clinical_status: allergy.clinical_status || '',
+        verification_status: allergy.verification_status || '',
+        type: allergy.type || '',
+        category: allergy.category || '',
+        criticality: allergy.criticality || '',
+        code: allergy.code || '',
+        patient: patientId,
+        encounter_id: encounterId,
+        onset_datetime: allergy.onset_datetime || '',
+        recorded_date: allergy.created_at?.split('T')[0] || '',
+        reaction_description: allergy.reaction_description || '',
+        reaction_severity: allergy.reaction_severity || '',
+        note: allergy.note || '',
+      });
+    } else {
+      reset({
+        identifier: `ALRG-${Date.now()}`,
+        patient: patientId,
+        encounter_id: encounterId,
+      });
+    }
+  }, [isOpen, allergy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (data: AllergyFormData) => {
     setIsLoading(true);
@@ -95,11 +120,13 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
+      const status = err.response?.status;
       const errorMsg =
         err.response?.data?.error ||
         err.response?.data?.message ||
-        err.message ||
-        'Failed to save allergy';
+        (status === 401 ? 'Session expired — please log in again' :
+         status === 400 ? 'Invalid allergy data — check required fields' :
+         err.message || 'Failed to save allergy');
       setError(errorMsg);
     } finally {
       setIsLoading(false);
@@ -222,6 +249,7 @@ export const AllergyModal: React.FC<AllergyModalProps> = ({
             <FormField
               label="Onset Date/Time"
               type="datetime-local"
+              max={new Date().toISOString().slice(0, 16)}
               error={errors.onset_datetime}
               {...register('onset_datetime')}
             />

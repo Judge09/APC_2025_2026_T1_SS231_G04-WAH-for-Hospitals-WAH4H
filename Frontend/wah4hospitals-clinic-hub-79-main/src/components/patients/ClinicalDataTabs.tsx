@@ -27,7 +27,7 @@ interface ClinicalDataTabsProps {
 
 type TabType = 'conditions' | 'allergies' | 'immunizations';
 
-export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, encounterId = 1 }) => {
+export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, encounterId = 0 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('conditions');
   const [conditions, setConditions] = useState<Condition[]>([]);
   const [allergies, setAllergies] = useState<Allergy[]>([]);
@@ -49,6 +49,7 @@ export const ClinicalDataTabs: React.FC<ClinicalDataTabsProps> = ({ patientId, e
   }, [patientId]);
 
   const loadClinicalData = async () => {
+    if (!patientId || patientId <= 0) return;
     setLoading(true);
     setFetchError('');
     try {

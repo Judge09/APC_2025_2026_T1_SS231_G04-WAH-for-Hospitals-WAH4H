@@ -85,8 +85,35 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
     if (!isOpen) {
       reset();
       setError('');
+      return;
     }
-  }, [isOpen, reset]);
+    if (condition) {
+      reset({
+        identifier: condition.identifier || '',
+        clinical_status: condition.clinical_status || '',
+        verification_status: condition.verification_status || '',
+        category: condition.category || '',
+        severity: condition.severity || '',
+        code: condition.code || '',
+        selected_code: condition.code || '',
+        custom_code: '',
+        patient: patientId,
+        encounter_id: encounterId,
+        body_site: condition.body_site || '',
+        onset_datetime: condition.onset_datetime || '',
+        recorded_date: condition.recorded_date || '',
+        note: condition.note || '',
+      } as any);
+    } else {
+      reset({
+        identifier: `COND-${Date.now()}`,
+        patient: patientId,
+        encounter_id: encounterId,
+        selected_code: '',
+        custom_code: '',
+      } as any);
+    }
+  }, [isOpen, condition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep canonical `code` field in sync with selected or custom inputs
   useEffect(() => {
@@ -111,11 +138,13 @@ export const ConditionModal: React.FC<ConditionModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
+      const status = err.response?.status;
       const errorMsg =
         err.response?.data?.error ||
         err.response?.data?.message ||
-        err.message ||
-        'Failed to save condition';
+        (status === 401 ? 'Session expired — please log in again' :
+         status === 400 ? 'Invalid condition data — check required fields' :
+         err.message || 'Failed to save condition');
       setError(errorMsg);
     } finally {
       setIsLoading(false);

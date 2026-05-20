@@ -335,5 +335,5 @@ class ImmunizationCreateSerializer(serializers.ModelSerializer):
             'identifier': {'required': True},
             'status': {'required': True},
             'patient': {'required': True},
-            'encounter_id': {'required': True},
+            'encounter_id': {'required': False, 'allow_null': True},
         }

@@ -13,10 +13,7 @@ import { DeletePatientModal } from '@/components/patients/DeletePatientModal';
 import { NetworkSearchModal } from '@/components/patients/NetworkSearchModal';
 import { InteropLogsModal } from '@/components/patients/InteropLogsModal';
 import type { Patient, PatientFormData } from '../types/patient';
-import axios from 'axios';
-
-// NOTE: Ensure trailing slash for Django
-const API_URL = import.meta.env.BACKEND_PATIENTS;
+import { getPatients, searchPatients, createPatient } from '../services/patientsService';
 
 // How long (ms) to wait after the user stops typing before firing the search.
 const SEARCH_DEBOUNCE_MS = 350;
@@ -70,8 +67,7 @@ export const PatientRegistration: React.FC = () => {
 
   const fetchPatients = async () => {
     try {
-      const res = await axios.get<Patient[]>(API_URL);
-      const data = Array.isArray(res.data) ? res.data : [];
+      const data = await getPatients();
       setPatients(data);
       setFilteredPatients(data);
     } catch (err) {
@@ -88,10 +84,8 @@ export const PatientRegistration: React.FC = () => {
         return;
       }
       try {
-        const res = await axios.get<Patient[]>(`${API_URL}search/`, {
-          params: { q: query, limit: 100 },
-        });
-        applyLocalFilters(Array.isArray(res.data) ? res.data : [], activeFilters);
+        const data = await searchPatients(query, 100);
+        applyLocalFilters(Array.isArray(data) ? data : [], activeFilters);
       } catch (err) {
         console.error('Search error:', err);
       }
@@ -130,7 +124,7 @@ export const PatientRegistration: React.FC = () => {
     setFormLoading(true);
     setFormError('');
     try {
-      await axios.post(API_URL, patientData);
+      await createPatient(patientData);
       fetchPatients();
     } catch (err: any) {
       console.error('Registration error:', err);

@@ -235,6 +235,7 @@ export const PatientRegistrationModal: React.FC<PatientRegistrationModalProps> =
   };
 
   const handleClose = () => {
+    if (isLoading) return;
     setCurrentStep(1);
     setAllStepsData({});
     step1Form.reset();
@@ -400,6 +401,7 @@ const Step1Form = ({ form }: { form: any }) => {
           label="Date of Birth"
           required
           type="date"
+          max={new Date().toISOString().split('T')[0]}
           error={errors.birthdate}
           {...register('birthdate')}
         />

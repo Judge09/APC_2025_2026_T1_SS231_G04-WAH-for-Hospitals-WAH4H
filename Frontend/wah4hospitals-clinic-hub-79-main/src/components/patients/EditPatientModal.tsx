@@ -3,7 +3,6 @@
  * Provides comprehensive patient editing functionality
  */
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, AlertCircle } from 'lucide-react';
 import type { Patient, PatientFormData } from '../../types/patient';
 import { patientFormDataSchema } from '../../schemas/patientSchema';
+import { partialUpdatePatient } from '../../services/patientsService';
 import {
   GENDER_OPTIONS,
   BLOOD_TYPE_OPTIONS,
@@ -27,8 +27,6 @@ import {
   INDIGENOUS_GROUP_OPTIONS,
 } from '../../constants/patientConstants';
 import addressData from '../../data/addressData.json';
-
-const API_URL = import.meta.env.BACKEND_PATIENTS as string;
 
 interface EditPatientModalProps {
   isOpen: boolean;
@@ -113,7 +111,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
     setApiError('');
     try {
       // PATCH /api/patients/{id}/ — numeric DB primary key, not the WAH-XXXX string
-      await axios.patch(`${API_URL}${patient.id}/`, formData);
+      await partialUpdatePatient(patient.id, formData);
       // Refresh the patient list in the parent so the table shows updated data
       if (fetchPatients) await fetchPatients();
       onClose();
@@ -198,6 +196,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
               <FormField
                 label="Date of Birth"
                 type="date"
+                max={new Date().toISOString().split('T')[0]}
                 error={errors.birthdate}
                 {...register('birthdate')}
               />

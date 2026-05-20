@@ -36,7 +36,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
 
   if (!patient) return null;
 
-  const initials = `${patient.first_name[0] || ''}${patient.last_name[0] || ''}`.toUpperCase();
+  const initials = `${patient.first_name?.[0] ?? ''}${patient.last_name?.[0] ?? ''}`.toUpperCase();
   const genderDisplay = patient.gender ? GENDER_MAP[patient.gender] : 'Unknown';
   const fullName = `${patient.last_name}, ${patient.first_name} ${patient.middle_name ?? ''} ${patient.suffix_name ?? ''}`.trim();
 
