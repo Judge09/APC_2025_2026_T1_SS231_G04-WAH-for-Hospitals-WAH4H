@@ -14,9 +14,9 @@ const SessionTimeout: React.FC<SessionTimeoutProps> = ({ children }) => {
   const [showWarning, setShowWarning] = useState(false);
   const [countdown, setCountdown] = useState(30);
 
-  // Timeout Configuration — 30 minutes per RA 10173 compliance requirements
-  const TIMEOUT = 30 * 60 * 1000;      // 30 minutes total (1,800,000 ms)
-  const WARNING_TIME = 30 * 1000;      // Show warning 30s before timeout
+  // Timeout Configuration — 15 minutes to match JWT access token lifetime
+  const TIMEOUT = 15 * 60 * 1000;      // 15 minutes total (900,000 ms)
+  const WARNING_TIME = 30 * 1000;      // Show warning 30s before logout
 
   // Ref allows handleOnActive (defined before useIdleTimer) to call activate()
   const activateRef = useRef<() => void>(() => {});
@@ -51,7 +51,7 @@ const SessionTimeout: React.FC<SessionTimeoutProps> = ({ children }) => {
     onPrompt: handleOnPrompt,
     onActive: handleOnActive,
     timeout: TIMEOUT,
-    promptBeforeIdle: TIMEOUT - WARNING_TIME,
+    promptBeforeIdle: WARNING_TIME,
     throttle: 500,
     crossTab: true, // Critical: Sync activity across all tabs
     syncTimers: 200,
