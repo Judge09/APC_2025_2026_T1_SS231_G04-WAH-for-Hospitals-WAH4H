@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -176,6 +176,10 @@ const Register = () => {
     hasNumber: false,
     hasSpecialChar: false,
   });
+
+  // Track last-checked values so handleNext skips duplicate API calls on back/forward
+  const lastCheckedEmailRef = useRef('');
+  const lastCheckedMobileRef = useRef('');
 
   const navigate = useNavigate();
   const { registerInitiate, registerVerify, isLoading } = useAuth();
@@ -467,6 +471,22 @@ const Register = () => {
     }
   };
 
+  const handleEmailBlur = async () => {
+    const email = formData.email;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    if (email === lastCheckedEmailRef.current) return;
+    try {
+      const resp = await api.get(`/api/accounts/check-email/?email=${encodeURIComponent(email)}`);
+      const available = resp?.data?.data?.available;
+      lastCheckedEmailRef.current = email;
+      if (available === false) {
+        setErrors((prev) => ({ ...prev, email: resp?.data?.data?.message || 'Email is already registered. Please use a different email.' }));
+      }
+    } catch {
+      // Silent — email check is best-effort on blur; Next will retry if needed
+    }
+  };
+
   const handleMobileChange = (value: string) => {
     // Auto-format Philippine mobile: 09XX-XXX-XXXX
     let cleaned = value.replace(/\D/g, '');
@@ -502,10 +522,11 @@ const Register = () => {
           return;
         }
 
-        if (isValid && formData.email) {
+        if (isValid && formData.email && formData.email !== lastCheckedEmailRef.current) {
           try {
             const resp = await api.get(`/api/accounts/check-email/?email=${encodeURIComponent(formData.email)}`);
             const available = resp?.data?.data?.available;
+            lastCheckedEmailRef.current = formData.email;
             if (available === false) {
               setErrors((prev) => ({ ...prev, email: resp?.data?.data?.message || 'Email is already registered. Please use a different email.' }));
               return;
@@ -515,12 +536,13 @@ const Register = () => {
           }
         }
 
-        if (isValid && formData.mobile) {
+        if (isValid && formData.mobile && formData.mobile !== lastCheckedMobileRef.current) {
           try {
             const cleaned = formData.mobile.replace(/\D/g, '');
             const resp = await api.get('/api/accounts/practitioners/');
             let data: any = resp.data;
             if (data.results && Array.isArray(data.results)) data = data.results;
+            lastCheckedMobileRef.current = formData.mobile;
 
             const conflict = (data || []).find((p: any) => {
               const telecom = (p.telecom || '').toString().replace(/\D/g, '');
@@ -565,9 +587,13 @@ const Register = () => {
     });
 
     if (result.ok) {
-      // TODO: Re-enable OTP modal when email verification is ready
-      // setShowOTPModal(true);
-      navigate('/dashboard');
+      if (result.otpDisabled) {
+        // Backend has OTP disabled — account created and auto-logged in, go to dashboard
+        navigate('/dashboard');
+      } else {
+        // OTP flow: show verification modal
+        setShowOTPModal(true);
+      }
       return;
     }
 
@@ -616,11 +642,18 @@ const Register = () => {
       const result = await registerVerify(formData.email, otpCode);
 
       if (result.ok) {
-        // Navigate to dashboard (protected route)
-        navigate('/dashboard');
+        // registerVerify does NOT auto-login — navigate to login so user can sign in
+        navigate('/login');
+      } else {
+        const errMsg =
+          result.error?.message ||
+          result.error?.detail ||
+          (result.error?.otp ? result.error.otp[0] : undefined) ||
+          'Invalid or expired OTP. Please try again.';
+        setErrors({ otp: errMsg });
       }
-    } catch (error) {
-      console.error('OTP verification failed:', error);
+    } catch (error: any) {
+      setErrors({ otp: error?.message || 'Verification failed. Please try again.' });
     } finally {
       setIsVerifying(false);
     }
@@ -755,6 +788,7 @@ const Register = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
+                onBlur={handleEmailBlur}
                 className={errors.email ? 'border-red-500' : ''}
               />
               {errors.email && (

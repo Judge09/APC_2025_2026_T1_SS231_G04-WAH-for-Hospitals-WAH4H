@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useIdleTimer } from 'react-idle-timer';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,23 +14,25 @@ const SessionTimeout: React.FC<SessionTimeoutProps> = ({ children }) => {
   const [showWarning, setShowWarning] = useState(false);
   const [countdown, setCountdown] = useState(30);
 
-// Timeout Configuration
-  const TIMEOUT = 15 * 60 * 1000;      // 15 minutes total (900,000 ms)
-  const WARNING_TIME = 30 * 1000;     // Show warning after 30 seconds (leaves 30s to react)
+  // Timeout Configuration — 30 minutes per RA 10173 compliance requirements
+  const TIMEOUT = 30 * 60 * 1000;      // 30 minutes total (1,800,000 ms)
+  const WARNING_TIME = 30 * 1000;      // Show warning 30s before timeout
+
+  // Ref allows handleOnActive (defined before useIdleTimer) to call activate()
+  const activateRef = useRef<() => void>(() => {});
 
   const handleOnIdle = () => {
-    // User has been idle for 15 minutes
     handleLogout();
   };
 
   const handleOnPrompt = () => {
-    // Show warning modal at 14 minutes
     setShowWarning(true);
   };
 
   const handleOnActive = () => {
-    // User became active again
+    // Hide warning and explicitly reset the idle timer (important for cross-tab sync)
     setShowWarning(false);
+    activateRef.current();
   };
 
   const handleLogout = () => {
@@ -56,6 +58,11 @@ const SessionTimeout: React.FC<SessionTimeoutProps> = ({ children }) => {
     leaderElection: true,
     disabled: !isAuthenticated, // Only track when user is logged in
   });
+
+  // Keep ref in sync so handleOnActive can call activate() without a circular dependency
+  useEffect(() => {
+    activateRef.current = activate;
+  }, [activate]);
 
   // Update countdown every second when warning modal is shown
   useEffect(() => {

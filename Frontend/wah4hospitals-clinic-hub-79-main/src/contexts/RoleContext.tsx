@@ -241,7 +241,18 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     return 'doctor';
   });
 
-  const [availableTabs, setAvailableTabs] = useState<string[]>([]);
+  const [availableTabs, setAvailableTabs] = useState<string[]>(() => {
+    // Eagerly initialize from localStorage so the sidebar is visible on first render
+    // (prevents flash of empty sidebar after login or password-reset redirect)
+    try {
+      const raw = localStorage.getItem('currentUser');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.role) return roleAccessConfig[parsed.role as UserRole] || [];
+      }
+    } catch {}
+    return [];
+  });
   const [roleLevel, setRoleLevel] = useState<RoleLevel>(RoleLevel.SUPPORT);
 
   // Sync role with authenticated user
