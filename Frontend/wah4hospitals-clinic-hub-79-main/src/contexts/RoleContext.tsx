@@ -93,7 +93,7 @@ const roleAccessConfig: Record<UserRole, string[]> = {
   ],
 
   // ========== DOCTOR: Clinical care and medical decisions ==========
-  // Doctors need access to patient care, diagnostics, treatment, and discharge
+  // Doctors need access to patient care, diagnostics, treatment, discharge, and PhilHealth review
   doctor: [
     'dashboard',
     'patients',
@@ -102,6 +102,7 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'laboratory',
     'monitoring',
     'discharge',
+    'philhealth',
     'settings',
   ],
 
@@ -143,6 +144,7 @@ const roleAccessConfig: Record<UserRole, string[]> = {
     'dashboard',
     'billing',
     'philhealth',
+    'statistics',
     'patients',
     'settings',
   ],
