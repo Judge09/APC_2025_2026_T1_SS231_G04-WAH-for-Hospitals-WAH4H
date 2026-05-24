@@ -14,16 +14,16 @@ const RoomManagementView: React.FC<RoomManagementProps> = ({ locations, admissio
   useEffect(() => {
     if (locations?.buildings?.length > 0 && !location.building) {
       const firstBldg = locations.buildings[0].code;
-      const wings = locations.wings[firstBldg] || [];
-      const firstWard = wings.length > 0 ? (locations.wards[wings[0].code]?.[0]?.code || '') : '';
+      const wards = locations.wards?.[firstBldg] || [];
+      const firstWard = wards.length > 0 ? wards[0].code : '';
       setLocation({ building: firstBldg, ward: firstWard });
     }
   }, [locations, location.building]);
 
   const handleLocationChange = (level: string, value: string) => {
     if (level === 'building') {
-      const wings = locations.wings[value] || [];
-      const firstWard = wings.length > 0 ? (locations.wards[wings[0].code]?.[0]?.code || '') : '';
+      const wards = locations.wards?.[value] || [];
+      const firstWard = wards.length > 0 ? wards[0].code : '';
       setLocation({ building: value, ward: firstWard });
     } else {
       setLocation(prev => ({ ...prev, [level]: value }));
@@ -34,7 +34,7 @@ const RoomManagementView: React.FC<RoomManagementProps> = ({ locations, admissio
 
   const currentRooms = (() => {
     if (!location.ward) return [];
-    return (locations.corridors[location.ward] || []).flatMap((c: any) => locations.rooms[c.code] || []);
+    return locations.rooms?.[location.ward] || [];
   })();
 
   const getPatientInBed = (room: any, bedCode: string) => {
