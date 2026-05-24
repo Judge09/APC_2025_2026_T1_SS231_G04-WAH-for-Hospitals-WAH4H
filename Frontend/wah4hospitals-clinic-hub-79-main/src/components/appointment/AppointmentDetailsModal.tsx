@@ -1,6 +1,6 @@
 // src/components/appointment/AppointmentDetailsModal.tsx
 import React, { useState } from 'react';
-import { Clock, User, Stethoscope, CalendarCheck, XCircle, CheckSquare, AlertCircle } from 'lucide-react';
+import { Clock, User, Stethoscope, CalendarCheck, XCircle, CheckSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +55,7 @@ const fmt = (iso?: string) =>
 export const AppointmentDetailsModal: React.FC<Props> = ({
   isOpen, onClose, appointment, onUpdate,
 }) => {
-  const [confirming, setConfirming] = useState<'cancel' | 'arrive' | 'fulfill' | null>(null);
+  const [confirming, setConfirming] = useState<'confirm' | 'cancel' | 'arrive' | 'fulfill' | null>(null);
   const [isActing, setIsActing] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [encounterRef, setEncounterRef] = useState('');
@@ -64,6 +64,7 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
   if (!appointment) return null;
 
   const { status } = appointment;
+  const canConfirm = ['proposed', 'pending'].includes(status);
   const canArrive  = status === 'booked';
   const canCancel  = !['fulfilled', 'cancelled', 'entered-in-error'].includes(status);
   const canFulfill = ['booked', 'arrived', 'checked-in'].includes(status);
@@ -74,7 +75,9 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
     setActionError('');
     try {
       let updated: Appointment;
-      if (confirming === 'arrive') {
+      if (confirming === 'confirm') {
+        updated = await appointmentService.update(appointment.identifier, { status: 'booked' });
+      } else if (confirming === 'arrive') {
         updated = await appointmentService.arrive(appointment.identifier);
       } else if (confirming === 'cancel') {
         updated = await appointmentService.cancel(appointment.identifier, {
@@ -205,6 +208,9 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
           {/* ── Action confirmation zone ────────────────────────── */}
           {confirming && (
             <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 space-y-3">
+              {confirming === 'confirm' && (
+                <p className="text-sm text-slate-700">Confirm this appointment and set it to <strong>booked</strong>? The patient will be notified.</p>
+              )}
               {confirming === 'cancel' && (
                 <>
                   <p className="text-sm font-semibold text-slate-700">Provide a cancellation reason (optional):</p>
@@ -240,12 +246,14 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
                   onClick={handleAction}
                   disabled={isActing}
                   className={
-                    confirming === 'cancel' ? 'bg-red-600 hover:bg-red-700 text-white' :
-                    confirming === 'arrive' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' :
+                    confirming === 'confirm' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                    confirming === 'cancel'  ? 'bg-red-600 hover:bg-red-700 text-white' :
+                    confirming === 'arrive'  ? 'bg-emerald-600 hover:bg-emerald-700 text-white' :
                     'bg-purple-600 hover:bg-purple-700 text-white'
                   }
                 >
                   {isActing ? 'Processing...' :
+                   confirming === 'confirm' ? 'Confirm Appointment' :
                    confirming === 'cancel' ? 'Confirm Cancel' :
                    confirming === 'arrive' ? 'Confirm Arrived' :
                    'Confirm Fulfilled'}
@@ -258,6 +266,15 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
         {/* Footer action buttons */}
         {!confirming && (
           <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+            {canConfirm && (
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5"
+                onClick={() => setConfirming('confirm')}
+              >
+                <CheckCircle2 className="w-4 h-4" /> Confirm Appointment
+              </Button>
+            )}
             {canArrive && (
               <Button
                 size="sm"
