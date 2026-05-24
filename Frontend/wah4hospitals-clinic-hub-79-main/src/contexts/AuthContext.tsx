@@ -85,7 +85,7 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // true until localStorage restore completes
   const { toast } = useToast();
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -100,6 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       // If parsing fails, clear inconsistent storage
       localStorage.removeItem('currentUser');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 

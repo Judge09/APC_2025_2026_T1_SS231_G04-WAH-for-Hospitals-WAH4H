@@ -70,7 +70,8 @@ const tabs = [
 ];
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null; // wait for localStorage restore before deciding
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
