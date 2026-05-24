@@ -3981,8 +3981,32 @@ def import_appointment_from_fhir(fhir_data, patient):
         None,
     )
 
+    # Resolve practitioner_id from Practitioner participant.
+    # Handles both reference format ("Practitioner/<identifier>") and
+    # identifier format (actor.identifier.value matched against Practitioner.identifier).
+    practitioner_id = None
+    for part in (fhir_data.get("participant") or []):
+        actor = part.get("actor") or {}
+        actor_type = actor.get("type", "")
+        actor_ref = actor.get("reference", "")
+        actor_identifier = (actor.get("identifier") or {}).get("value", "")
+        if actor_ref.startswith("Practitioner/"):
+            lookup_val = actor_ref.split("/", 1)[1]
+        elif actor_type == "Practitioner" and actor_identifier:
+            lookup_val = actor_identifier
+        else:
+            continue
+        try:
+            from accounts.models import Practitioner as _Practitioner
+            pract = _Practitioner.objects.get(identifier=lookup_val)
+            practitioner_id = pract.practitioner_id
+        except _Practitioner.DoesNotExist:
+            pass
+        break
+
     fields = {k: v for k, v in {
         "patient_id":                   patient.id,
+        "practitioner_id":              practitioner_id,
         "status":                       fhir_data.get("status", "pending"),
         "start":                        _parse_dt(fhir_data.get("start")),
         "end":                          _parse_dt(fhir_data.get("end")),
