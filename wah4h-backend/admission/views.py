@@ -32,7 +32,7 @@ from patients.wah4pc import (
     encounter_to_fhir, encounters_to_bundle,
     procedure_to_fhir, procedures_to_bundle,
     appointment_to_fhir, appointments_to_bundle,
-    request_appointment,
+    request_appointment, push_appointment,
 )
 from patients.models import WAH4PCTransaction
 
@@ -549,6 +549,31 @@ class SlotViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def _push_appointment_to_gateway(appointment):
+    """Push an updated appointment back to the originating gateway provider.
+
+    Looks up the most recent receive_push WAH4PCTransaction for the patient to
+    get the sender_id (the mobile app provider UUID), then calls push_appointment.
+    Failures are logged but never raised — the local save always succeeds first.
+    """
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
+    try:
+        txn = WAH4PCTransaction.objects.filter(
+            type='receive_push',
+            related_patient_id=appointment.patient_id,
+        ).order_by('-created_at').first()
+        if not txn or not txn.sender_id:
+            return
+        result = push_appointment(target_id=txn.sender_id, appointment=appointment)
+        if result and result.get('error'):
+            _log.warning('[WAH4PC] push_appointment failed: %s', result['error'])
+        else:
+            _log.info('[WAH4PC] Pushed appointment %s update to %s', appointment.identifier, txn.sender_id)
+    except Exception:
+        _log.exception('[WAH4PC] Unexpected error pushing appointment %s to gateway', appointment.identifier)
+
+
 class AppointmentViewSet(viewsets.ModelViewSet):
     """
     FHIR Appointment — patient booking lifecycle management.
@@ -585,11 +610,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(start__gte=date_from)
         if date_to:
             qs = qs.filter(end__lte=date_to)
-        # Role-based filtering: doctor/nurse see only their own appointments
-        user = self.request.user
-        role = getattr(user, 'role', None)
-        if role in ('doctor', 'nurse'):
-            qs = qs.filter(practitioner_id=user.pk)
         return qs
 
     def perform_create(self, serializer):
@@ -601,6 +621,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             serializer.save(practitioner_id=user.pk)
         else:
             serializer.save()
+
+    def perform_update(self, serializer):
+        old_status = serializer.instance.status
+        instance = serializer.save()
+        if instance.status != old_status:
+            _push_appointment_to_gateway(instance)
 
     @action(detail=False, methods=['get'], url_path='fhir')
     def fhir_list(self, request):
@@ -639,6 +665,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             serializer.save()
+        instance.refresh_from_db()
+        _push_appointment_to_gateway(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -662,6 +690,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             serializer.save()
+        instance.refresh_from_db()
+        _push_appointment_to_gateway(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -685,6 +715,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             serializer.save()
+        instance.refresh_from_db()
+        _push_appointment_to_gateway(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # ------------------------------------------------------------------ #

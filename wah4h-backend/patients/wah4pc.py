@@ -3847,6 +3847,87 @@ def appointments_to_bundle(queryset) -> dict:
     }
 
 
+def push_appointment(target_id, appointment, idempotency_key=None):
+    """Push an updated Appointment resource to another provider via the WAH4PC gateway.
+
+    Called after any local status change (booked, cancelled, fulfilled, etc.) so
+    the originating provider (e.g. WAH4Patient mobile app) sees the update.
+
+    Args:
+        target_id: Provider UUID to push to (the original sender_id from the inbound push)
+        appointment: Admission Appointment model instance
+        idempotency_key: Optional; generated if not provided
+
+    Returns:
+        dict: Gateway response on success, or {'error': ..., 'status_code': ...} on failure.
+    """
+    api_key = os.getenv("WAH4PC_API_KEY")
+    provider_id = os.getenv("WAH4PC_PROVIDER_ID")
+
+    if not idempotency_key:
+        idempotency_key = str(uuid.uuid4())
+
+    last_retryable_result = None
+
+    for attempt in range(_MAX_ATTEMPTS):
+        if attempt > 0:
+            time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+
+        try:
+            response = requests.post(
+                f"{URL}/api/v1/fhir/push/Appointment",
+                headers={
+                    "X-API-Key": api_key,
+                    "X-Provider-ID": provider_id,
+                    "Idempotency-Key": idempotency_key,
+                },
+                json={
+                    "senderId": provider_id,
+                    "targetId": target_id,
+                    "resourceType": "Appointment",
+                    "data": appointment_to_fhir(appointment),
+                },
+                timeout=30,
+            )
+
+            if response.status_code in _RETRY_STATUSES:
+                last_retryable_result = {
+                    "error": (
+                        "Request already in progress — retrying"
+                        if response.status_code == 409
+                        else "Rate limit exceeded — retrying"
+                    ),
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+                continue
+
+            if response.status_code >= 400:
+                error_msg = (
+                    response.json().get("error", "Unknown error")
+                    if response.text
+                    else "Unknown error"
+                )
+                return {
+                    "error": error_msg,
+                    "status_code": response.status_code,
+                    "idempotency_key": idempotency_key,
+                }
+
+            result = response.json()
+            result["idempotency_key"] = idempotency_key
+            return result
+
+        except requests.RequestException as e:
+            return {
+                "error": f"Network error: {str(e)}",
+                "status_code": 500,
+                "idempotency_key": idempotency_key,
+            }
+
+    return last_retryable_result
+
+
 def request_appointment(target_id, philhealth_id, idempotency_key=None, reason=None, notes=None):
     """Request appointment data for a patient from another provider via the WAH4PC gateway.
 
