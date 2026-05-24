@@ -470,6 +470,11 @@ class ScheduleViewSet(viewsets.ModelViewSet):
             qs = qs.filter(planning_horizon_end__gte=date_from)
         if date_to:
             qs = qs.filter(planning_horizon_start__lte=date_to)
+        # Doctor/nurse see only schedules where they are the actor
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        if role in ('doctor', 'nurse'):
+            qs = qs.filter(actor_practitioner_id=user.pk)
         return qs
 
     @action(detail=True, methods=['get'])
