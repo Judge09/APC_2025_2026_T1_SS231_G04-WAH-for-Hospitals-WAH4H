@@ -15,7 +15,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.db import transaction
 
-from admission.models import Encounter, Procedure, Schedule, Slot, Appointment
+from admission.models import Encounter, EncounterParticipant, Procedure, Schedule, Slot, Appointment
 from accounts.models import Location
 from patients.models import Patient
 
@@ -61,6 +61,19 @@ class EncounterViewSet(viewsets.ModelViewSet):
     ordering_fields = ['period_start', 'period_end', 'created_at']
     ordering = ['-period_start']
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        if role in ('doctor', 'nurse'):
+            care_team_enc_ids = EncounterParticipant.objects.filter(
+                practitioner_id=user.pk
+            ).values_list('encounter_id', flat=True)
+            qs = qs.filter(
+                Q(participant_individual_id=user.pk) | Q(encounter_id__in=care_team_enc_ids)
+            )
+        return qs
+
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
         if self.action == 'discharge':
@@ -94,6 +107,94 @@ class EncounterViewSet(viewsets.ModelViewSet):
             EncounterSerializer(instance).data,
             status=status.HTTP_200_OK
         )
+
+    # ------------------------------------------------------------------ #
+    # Care team — assign nurses / doctors to an admitted encounter        #
+    # ------------------------------------------------------------------ #
+
+    @action(detail=True, methods=['get', 'post'], url_path='care_team')
+    def care_team(self, request, identifier=None):
+        """
+        GET  /api/admission/encounters/{identifier}/care_team/  — list members
+        POST /api/admission/encounters/{identifier}/care_team/  — add member
+            Body: { "practitioner_id": <int>, "role_type": "ATND|PPRF|PART|NURSE|CONS|REF" }
+        """
+        encounter = self.get_object()
+
+        if request.method == 'GET':
+            members = EncounterParticipant.objects.filter(encounter=encounter)
+            from accounts.models import Practitioner
+            result = []
+            for m in members:
+                try:
+                    p = Practitioner.objects.get(practitioner_id=m.practitioner_id)
+                    full_name = f"{p.first_name} {p.last_name}".strip()
+                    qualification = getattr(p, 'qualification_code', None) or ''
+                except Exception:
+                    full_name = f"Practitioner #{m.practitioner_id}"
+                    qualification = ''
+                result.append({
+                    'id': m.pk,
+                    'practitioner_id': m.practitioner_id,
+                    'full_name': full_name,
+                    'qualification': qualification,
+                    'role_type': m.role_type,
+                    'role_display': dict(EncounterParticipant.ROLE_CHOICES).get(m.role_type, m.role_type),
+                    'added_at': m.added_at,
+                })
+            return Response(result, status=status.HTTP_200_OK)
+
+        # POST — add member
+        practitioner_id = request.data.get('practitioner_id')
+        role_type = request.data.get('role_type', 'PART')
+
+        if not practitioner_id:
+            return Response({'error': 'practitioner_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_roles = [c[0] for c in EncounterParticipant.ROLE_CHOICES]
+        if role_type not in valid_roles:
+            return Response(
+                {'error': f'role_type must be one of: {", ".join(valid_roles)}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from accounts.models import Practitioner
+        try:
+            p = Practitioner.objects.get(practitioner_id=practitioner_id)
+        except Practitioner.DoesNotExist:
+            return Response({'error': 'Practitioner not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        member, created = EncounterParticipant.objects.get_or_create(
+            encounter=encounter,
+            practitioner_id=practitioner_id,
+            defaults={'role_type': role_type},
+        )
+        if not created:
+            member.role_type = role_type
+            member.save(update_fields=['role_type'])
+
+        return Response({
+            'id': member.pk,
+            'practitioner_id': member.practitioner_id,
+            'full_name': f"{p.first_name} {p.last_name}".strip(),
+            'qualification': getattr(p, 'qualification_code', '') or '',
+            'role_type': member.role_type,
+            'role_display': dict(EncounterParticipant.ROLE_CHOICES).get(member.role_type, member.role_type),
+            'added_at': member.added_at,
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path=r'care_team/(?P<member_pk>\d+)')
+    def care_team_remove(self, request, identifier=None, member_pk=None):
+        """
+        DELETE /api/admission/encounters/{identifier}/care_team/{id}/  — remove member
+        """
+        encounter = self.get_object()
+        try:
+            member = EncounterParticipant.objects.get(pk=member_pk, encounter=encounter)
+        except EncounterParticipant.DoesNotExist:
+            return Response({'error': 'Care team member not found.'}, status=status.HTTP_404_NOT_FOUND)
+        member.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def locations(self, request):
@@ -477,6 +578,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(start__gte=date_from)
         if date_to:
             qs = qs.filter(end__lte=date_to)
+        # Role-based filtering: doctor/nurse see only their own appointments
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        if role in ('doctor', 'nurse'):
+            qs = qs.filter(practitioner_id=user.pk)
         return qs
 
     @action(detail=False, methods=['get'], url_path='fhir')

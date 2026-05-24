@@ -2,6 +2,16 @@
 import api from "./api"; // Shared Axios instance
 import type { Admission, NewAdmission } from "@/types/admission";
 
+export interface CareTeamMember {
+  id: number;
+  practitioner_id: number;
+  full_name: string;
+  qualification: string;
+  role_type: string;
+  role_display: string;
+  added_at: string;
+}
+
 export const admissionService = {
 
     /**
@@ -297,5 +307,30 @@ export const admissionService = {
      */
     async delete(id: number | string): Promise<void> {
         await api.delete(`/api/admission/encounters/${id}/`);
+    },
+
+    // ── Care Team ──────────────────────────────────────────────────────────
+
+    async getCareTeam(encounterId: number | string): Promise<CareTeamMember[]> {
+        const { data } = await api.get<CareTeamMember[]>(
+            `/api/admission/encounters/${encounterId}/care_team/`,
+        );
+        return data;
+    },
+
+    async addCareTeamMember(
+        encounterId: number | string,
+        practitionerId: number,
+        roleType: string,
+    ): Promise<CareTeamMember> {
+        const { data } = await api.post<CareTeamMember>(
+            `/api/admission/encounters/${encounterId}/care_team/`,
+            { practitioner_id: practitionerId, role_type: roleType },
+        );
+        return data;
+    },
+
+    async removeCareTeamMember(encounterId: number | string, memberId: number): Promise<void> {
+        await api.delete(`/api/admission/encounters/${encounterId}/care_team/${memberId}/`);
     },
 };

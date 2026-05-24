@@ -24,6 +24,7 @@ import { MedicationRequestTab } from '@/components/monitoring/MedicationRequestT
 import { LaboratoryTab } from '@/components/monitoring/LaboratoryTab';
 import { ProcedureTab } from '@/components/monitoring/ProcedureTab';
 import { admissionService } from '@/services/admissionService';
+import { CareTeamPanel } from '@/components/monitoring/CareTeamPanel';
 import monitoringService from '@/services/monitoringService';
 import laboratoryService from '@/services/laboratoryService';  // For lab requests/results
 
@@ -521,6 +522,13 @@ const Monitoring: React.FC = () => {
                   <span>Ward:</span>
                   <span className="font-medium">{selectedAdmission.ward}</span>
                 </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <CareTeamPanel
+                  encounterId={selectedAdmission.id}
+                  canManage={(user as any)?.role === 'admin' || (user as any)?.role === 'doctor'}
+                />
               </div>
             </>
           )}

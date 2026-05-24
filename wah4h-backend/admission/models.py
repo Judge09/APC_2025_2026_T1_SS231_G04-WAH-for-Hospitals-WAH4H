@@ -91,6 +91,39 @@ class Encounter(FHIRResourceModel):
         return f"Encounter {self.encounter_id} - {self.identifier}"
 
 
+class EncounterParticipant(models.Model):
+    """
+    Care team member assigned to an encounter.
+    Implements FHIR R4 Encounter.participant (0..*).
+    Separate from participant_individual_id which holds the primary attending.
+    """
+    ROLE_CHOICES = [
+        ('ATND',  'Attending Physician'),
+        ('PPRF',  'Primary Performer'),
+        ('PART',  'Participant'),
+        ('NURSE', 'Assigned Nurse'),
+        ('CONS',  'Consultant'),
+        ('REF',   'Referring Physician'),
+    ]
+
+    encounter = models.ForeignKey(
+        Encounter,
+        on_delete=models.CASCADE,
+        related_name='care_team',
+        db_column='encounter_id',
+    )
+    practitioner_id = models.BigIntegerField(db_index=True)
+    role_type = models.CharField(max_length=10, choices=ROLE_CHOICES, default='PART')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'encounter_participant'
+        unique_together = [('encounter', 'practitioner_id')]
+
+    def __str__(self):
+        return f"ENC-{self.encounter_id} · practitioner={self.practitioner_id} · {self.role_type}"
+
+
 class Procedure(FHIRResourceModel):
     """
     Procedure: Represents a medical procedure performed during an encounter.
