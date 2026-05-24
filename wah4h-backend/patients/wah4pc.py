@@ -3974,7 +3974,10 @@ def import_appointment_from_fhir(fhir_data, patient):
 
     patient_part_status = next(
         (p.get("status") for p in (fhir_data.get("participant") or [])
-         if (p.get("actor") or {}).get("reference", "").startswith("Patient/")),
+         if (
+             (p.get("actor") or {}).get("reference", "").startswith("Patient/")
+             or (p.get("actor") or {}).get("type") == "Patient"
+         )),
         None,
     )
 

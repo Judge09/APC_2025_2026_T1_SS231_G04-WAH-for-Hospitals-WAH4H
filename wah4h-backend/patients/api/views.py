@@ -1058,7 +1058,8 @@ def webhook_receive_push(request):
 
     Protocol:
         1. Validate X-Gateway-Auth — reject immediately if invalid.
-        2. Validate the four required envelope fields.
+        2. Normalize the envelope — gateway may send {data, senderId, targetId, reason, resource}
+           (push protocol) or {transactionId, senderId, resourceType, data} (old protocol).
         3. Persist the raw JSON body to the audit log before any processing.
         4. Non-Patient resources (Appointments, Observations, etc.):
              Log, store in WAH4PCTransaction, and return 200 OK.
@@ -1073,14 +1074,24 @@ def webhook_receive_push(request):
     if not gateway_key or not auth_header or auth_header != gateway_key:
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    txn_id = request.data.get('transactionId')
+    # Normalize envelope: gateway push uses {data, resource, senderId, targetId};
+    # old internal protocol uses {transactionId, senderId, resourceType, data}.
+    data = request.data.get('data') or request.data.get('resource')
     sender_id = request.data.get('senderId')
-    resource_type = request.data.get('resourceType')
-    data = request.data.get('data')
+    # resourceType: old protocol sends it top-level; gateway push has it inside data
+    resource_type = request.data.get('resourceType') or (
+        data.get('resourceType') if isinstance(data, dict) else None
+    )
+    # transactionId: old protocol top-level → Idempotency-Key header → generated UUID
+    txn_id = (
+        request.data.get('transactionId')
+        or request.headers.get('Idempotency-Key')
+        or str(uuid.uuid4())
+    )
 
-    if not txn_id or not sender_id or not resource_type or not data:
+    if not sender_id or not resource_type or not data:
         return Response(
-            {'error': 'transactionId, senderId, resourceType, and data are required'},
+            {'error': 'senderId, resourceType (or data.resourceType), and data are required'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -1097,16 +1108,29 @@ def webhook_receive_push(request):
             # Try subject/patient key first (Encounter, Observation, etc.)
             subject_ref = (data.get('subject') or data.get('patient') or {}).get('reference', '')
 
-            # For Appointment: patient is in participant[].actor, not subject/patient
+            # For Appointment: patient is in participant[].actor, not subject/patient.
+            # Gateway sends actor.identifier (PhilHealth ID); old protocol uses actor.reference.
             if not subject_ref and resource_type == 'Appointment':
+                philhealth_id = None
                 for part in (data.get('participant') or []):
-                    ref_str = (part.get('actor') or {}).get('reference', '')
-                    if ref_str.startswith('Patient/'):
-                        subject_ref = ref_str
+                    actor = part.get('actor') or {}
+                    actor_ref = actor.get('reference', '')
+                    actor_type = actor.get('type', '')
+                    actor_identifier = actor.get('identifier') or {}
+                    if actor_ref.startswith('Patient/'):
+                        subject_ref = actor_ref
                         break
+                    if actor_type == 'Patient' or 'philhealth' in actor_identifier.get('system', ''):
+                        philhealth_id = actor_identifier.get('value')
+                # Resolve patient by PhilHealth ID when no reference-style match found
+                if not subject_ref and philhealth_id:
+                    try:
+                        related_patient = Patient.objects.get(philhealth_id=philhealth_id)
+                    except Patient.DoesNotExist:
+                        pass
 
             # Extract UUID from "Patient/<uuid>" and reverse-map to local Patient
-            if subject_ref.startswith('Patient/'):
+            if subject_ref.startswith('Patient/') and not related_patient:
                 remote_fhir_id = subject_ref.split('/', 1)[1]
                 for p in Patient.objects.all().only('id', 'first_name', 'last_name'):
                     import uuid as _uuid
