@@ -592,6 +592,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(practitioner_id=user.pk)
         return qs
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        # Auto-assign the logged-in doctor/nurse as practitioner when not explicitly set,
+        # so the appointment appears in their own filtered view after booking.
+        if role in ('doctor', 'nurse') and not serializer.validated_data.get('practitioner_id'):
+            serializer.save(practitioner_id=user.pk)
+        else:
+            serializer.save()
+
     @action(detail=False, methods=['get'], url_path='fhir')
     def fhir_list(self, request):
         """Return all appointments as a FHIR Bundle (for external FHIR consumers)."""
