@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { appointmentService } from '@/services/appointmentService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { PatientSummary, Slot, NewAppointment } from '@/types/appointment';
 
 interface Props {
@@ -66,6 +67,7 @@ const APPOINTMENT_TYPES = [
 const STEPS = ['Patient', 'Details', 'Time & Confirm'];
 
 export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -98,7 +100,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
   const [useManualTime, setUseManualTime] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
-  // Reset on open/close
+  // Reset on close
   useEffect(() => {
     if (!isOpen) {
       setStep(0);
@@ -125,9 +127,17 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
     }
   }, [isOpen]);
 
+  // Pre-fill physician to logged-in doctor/nurse so appointment is always assigned to them
+  useEffect(() => {
+    if (isOpen && (user?.role === 'doctor' || user?.role === 'nurse') && user?.id) {
+      setPractitionerId(user.id);
+    }
+  }, [isOpen, user?.id, user?.role]);
+
   useEffect(() => {
     if (isOpen && step === 1 && practitioners.length === 0) {
-      appointmentService.getPractitioners('doctor').then(setPractitioners);
+      // Fetch all practitioners (doctors + nurses) so the logged-in user always appears in the list
+      appointmentService.getPractitioners().then(setPractitioners);
     }
   }, [isOpen, step]);
 
@@ -343,7 +353,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
                   {practitioners.map((p: any) => (
                     <SelectItem key={p.practitioner_id} value={String(p.practitioner_id)}>
                       {p.first_name} {p.last_name}
-                      {p.qualification_display ? ` · ${p.qualification_display}` : ''}
+                      {p.qualification_code ? ` · ${p.qualification_code}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

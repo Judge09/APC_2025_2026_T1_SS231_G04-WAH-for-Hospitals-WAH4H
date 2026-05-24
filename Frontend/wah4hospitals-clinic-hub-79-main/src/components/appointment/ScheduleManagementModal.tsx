@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { appointmentService } from '@/services/appointmentService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Schedule, NewSchedule, Slot, NewSlot } from '@/types/appointment';
 
 interface Props {
@@ -41,6 +42,7 @@ const fmtDate = (iso?: string) =>
 export const ScheduleManagementModal: React.FC<Props> = ({
   isOpen, onClose, onSuccess, schedule,
 }) => {
+  const { user } = useAuth();
   const isEditing = !!schedule;
 
   // Form fields
@@ -84,6 +86,13 @@ export const ScheduleManagementModal: React.FC<Props> = ({
       appointmentService.getPractitioners('doctor').then(setPractitioners);
     }
   }, [isOpen]);
+
+  // Pre-fill physician to logged-in doctor/nurse when creating a new schedule
+  useEffect(() => {
+    if (isOpen && !schedule && (user?.role === 'doctor' || user?.role === 'nurse') && user?.id) {
+      setPractitionerId(user.id);
+    }
+  }, [isOpen, schedule, user?.id, user?.role]);
 
   const loadSlots = async (identifier: string) => {
     setSlotsLoading(true);

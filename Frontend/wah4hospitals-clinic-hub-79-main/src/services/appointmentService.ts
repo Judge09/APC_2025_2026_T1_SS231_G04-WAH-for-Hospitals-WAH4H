@@ -183,9 +183,12 @@ export const appointmentService = {
 
   // ── Shared helpers ────────────────────────────────────────────────────────
 
-  async getPractitioners(role = 'doctor') {
+  async getPractitioners(role?: string) {
     try {
-      const response = await api.get(`/api/accounts/practitioners/?role=${role}`);
+      const url = role
+        ? `/api/accounts/practitioners/?role=${encodeURIComponent(role)}`
+        : '/api/accounts/practitioners/';
+      const response = await api.get(url);
       return unpage<any>(response.data);
     } catch (e) {
       console.error('Failed to fetch practitioners', e);
