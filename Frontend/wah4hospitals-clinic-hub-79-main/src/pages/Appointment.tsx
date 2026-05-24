@@ -117,7 +117,7 @@ const AppointmentPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState('booked');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
 
@@ -295,11 +295,12 @@ const AppointmentPage: React.FC = () => {
               {viewMode === 'list' && (
                 <div className="flex gap-2 p-1 bg-slate-50 rounded-lg flex-wrap">
                   {[
+                    { key: 'all',       label: 'All' },
+                    { key: 'proposed',  label: 'Proposed' },
                     { key: 'booked',    label: 'Booked' },
                     { key: 'arrived',   label: 'Arrived' },
                     { key: 'fulfilled', label: 'Fulfilled' },
                     { key: 'cancelled', label: 'Cancelled' },
-                    { key: 'all',       label: 'All' },
                   ].map(tab => (
                     <button
                       key={tab.key}
