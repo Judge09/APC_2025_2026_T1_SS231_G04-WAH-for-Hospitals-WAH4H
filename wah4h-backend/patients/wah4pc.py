@@ -3548,12 +3548,15 @@ def claimresponse_to_fhir(model) -> dict:
 # APPOINTMENT / SCHEDULE / SLOT — FHIR R4
 # =============================================================================
 
-_APPOINTMENT_STATUS_CS = "http://hl7.org/fhir/appointmentstatus"
-_PARTICIPATION_STATUS_CS = "http://hl7.org/fhir/participationstatus"
-_PARTICIPANT_TYPE_CS   = "http://terminology.hl7.org/CodeSystem/v3-ParticipationType"
-_ACT_CODE_CS           = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
-_SERVICE_TYPE_CS       = f"{_URN_CS}/service-type"
-_SPECIALTY_CS          = "http://snomed.info/sct"
+_APPOINTMENT_STATUS_CS        = "http://hl7.org/fhir/appointmentstatus"
+_PARTICIPATION_STATUS_CS      = "http://hl7.org/fhir/participationstatus"
+_PARTICIPANT_TYPE_CS          = "http://terminology.hl7.org/CodeSystem/v3-ParticipationType"
+_ACT_CODE_CS                  = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+_SERVICE_TYPE_CS              = f"{_URN_CS}/service-type"
+_SPECIALTY_CS                 = "http://snomed.info/sct"
+_WAH_APPT_IDENTIFIER_SYSTEM   = "https://wah.ph/fhir/Identifier/appointment-id"
+_WAH_SERVICE_CATEGORY_CS      = "https://wah.ph/fhir/CodeSystem/service-category"
+_APPOINTMENT_PROFILE          = f"{_URN_EXT}/ph-core-appointment"
 
 
 def schedule_to_fhir(model) -> dict:
@@ -3687,7 +3690,7 @@ def slot_to_fhir(model) -> dict:
 
 
 def appointment_to_fhir(model) -> dict:
-    """Convert a local Appointment instance to a FHIR R4 Appointment resource."""
+    """Convert a local Appointment instance to a FHIR R4 Appointment resource (PHCore profile)."""
     pk = getattr(model, "appointment_id", None) or getattr(model, "pk", None)
     resource_id = (
         str(uuid.uuid5(uuid.NAMESPACE_OID, f"appointment:{pk}"))
@@ -3697,20 +3700,33 @@ def appointment_to_fhir(model) -> dict:
         "resourceType": "Appointment",
         "id": resource_id,
         "meta": {
-            "profile":     ["http://hl7.org/fhir/StructureDefinition/Appointment"],
+            "profile":     [_APPOINTMENT_PROFILE],
             "lastUpdated": _meta_last_updated(getattr(model, "updated_at", None)),
         },
         "status": model.status,
     }
 
     if model.identifier:
-        fhir["identifier"] = [{"value": model.identifier}]
+        fhir["identifier"] = [{
+            "use":    "official",
+            "system": _WAH_APPT_IDENTIFIER_SYSTEM,
+            "value":  model.identifier,
+        }]
 
     if model.cancellation_reason_code:
         fhir["cancelationReason"] = {
             "coding": [{"code": model.cancellation_reason_code,
                         "display": model.cancellation_reason_display or model.cancellation_reason_code}]
         }
+
+    if model.service_category_code or model.service_category_display:
+        fhir["serviceCategory"] = [{
+            "coding": [{
+                "system":  _WAH_SERVICE_CATEGORY_CS,
+                "code":    model.service_category_code or "",
+                "display": model.service_category_display or "",
+            }]
+        }]
 
     if model.service_type_code or model.service_type_display:
         fhir["serviceType"] = [{
@@ -3737,7 +3753,13 @@ def appointment_to_fhir(model) -> dict:
         }
 
     if model.reason_code:
-        fhir["reasonCode"] = [{"text": model.reason_code}]
+        fhir["reasonCode"] = [{
+            "coding": [{"system": _SPECIALTY_CS, "code": model.reason_code}],
+            "text":   model.reason_code,
+        }]
+
+    if model.reason_reference_id:
+        fhir["reasonReference"] = [{"reference": f"Condition/{model.reason_reference_id}"}]
 
     if model.priority is not None:
         fhir["priority"] = model.priority
@@ -3771,9 +3793,10 @@ def appointment_to_fhir(model) -> dict:
     participants = []
 
     patient_part: dict = {
-        "actor": _subject_block(model.patient_id),
+        "type": [{"coding": [{"system": _PARTICIPANT_TYPE_CS, "code": "SBJ", "display": "subject"}]}],
+        "actor":    _subject_block(model.patient_id),
         "required": "required",
-        "status": model.patient_participation_status or "accepted",
+        "status":   model.patient_participation_status or "accepted",
     }
     participants.append(patient_part)
 
@@ -3784,8 +3807,8 @@ def appointment_to_fhir(model) -> dict:
                 "type": [{
                     "coding": [{
                         "system":  _PARTICIPANT_TYPE_CS,
-                        "code":    "PPRF",
-                        "display": "primary performer",
+                        "code":    "ATND",
+                        "display": "attender",
                     }]
                 }],
                 "actor":    pract_ref,
@@ -3798,6 +3821,7 @@ def appointment_to_fhir(model) -> dict:
             from accounts.models import Location
             loc = Location.objects.get(location_id=model.location_id)
             participants.append({
+                "type": [{"coding": [{"system": _PARTICIPANT_TYPE_CS, "code": "LOC", "display": "location"}]}],
                 "actor":    {"display": loc.name, "reference": f"Location/{loc.identifier or loc.location_id}"},
                 "required": "required",
                 "status":   "accepted",
@@ -3807,9 +3831,9 @@ def appointment_to_fhir(model) -> dict:
 
     fhir["participant"] = participants
 
-    # Resulting encounter
-    if model.resulting_encounter_id:
-        fhir["basedOn"] = [{"reference": f"Encounter/{model.resulting_encounter_id}"}]
+    # ServiceRequest that originated this appointment (FHIR Appointment.basedOn → ServiceRequest)
+    if model.based_on_service_request_id:
+        fhir["basedOn"] = [{"reference": f"ServiceRequest/{model.based_on_service_request_id}"}]
 
     return {k: v for k, v in fhir.items() if v is not None}
 
@@ -3917,6 +3941,9 @@ def import_appointment_from_fhir(fhir_data, patient):
         except Exception:
             return None
 
+    svc_categories = fhir_data.get("serviceCategory") or []
+    svc_cat_coding = ((svc_categories[0].get("coding") or [{}])[0]) if svc_categories else {}
+
     service_types = fhir_data.get("serviceType") or []
     svc_coding = ((service_types[0].get("coding") or [{}])[0]) if service_types else {}
 
@@ -3926,8 +3953,24 @@ def import_appointment_from_fhir(fhir_data, patient):
     specialties = fhir_data.get("specialty") or []
     spec_coding = ((specialties[0].get("coding") or [{}])[0]) if specialties else {}
 
+    # reasonCode: prefer coding[0].code, fall back to text
     reason_codes = fhir_data.get("reasonCode") or []
-    reason_text = reason_codes[0].get("text") if reason_codes else None
+    reason_text = None
+    if reason_codes:
+        rc = reason_codes[0]
+        rc_coding = (rc.get("coding") or [{}])[0]
+        reason_text = rc_coding.get("code") or rc.get("text")
+
+    # reasonReference → Condition ID
+    reason_refs = fhir_data.get("reasonReference") or []
+    reason_ref_id = None
+    if reason_refs:
+        ref_str = (reason_refs[0].get("reference") or "")
+        if ref_str.startswith("Condition/"):
+            try:
+                reason_ref_id = int(ref_str.split("/", 1)[1])
+            except (ValueError, IndexError):
+                pass
 
     patient_part_status = next(
         (p.get("status") for p in (fhir_data.get("participant") or [])
@@ -3940,10 +3983,13 @@ def import_appointment_from_fhir(fhir_data, patient):
         "status":                       fhir_data.get("status", "pending"),
         "start":                        _parse_dt(fhir_data.get("start")),
         "end":                          _parse_dt(fhir_data.get("end")),
+        "created_datetime":             _parse_dt(fhir_data.get("created")),
         "minutes_duration":             fhir_data.get("minutesDuration"),
         "description":                  fhir_data.get("description"),
         "comment":                      fhir_data.get("comment"),
         "patient_instruction":          fhir_data.get("patientInstruction"),
+        "service_category_code":        svc_cat_coding.get("code"),
+        "service_category_display":     svc_cat_coding.get("display"),
         "service_type_code":            svc_coding.get("code"),
         "service_type_display":         svc_coding.get("display"),
         "specialty_code":               spec_coding.get("code"),
@@ -3951,6 +3997,7 @@ def import_appointment_from_fhir(fhir_data, patient):
         "appointment_type_code":        appt_coding.get("code"),
         "appointment_type_display":     appt_coding.get("display"),
         "reason_code":                  reason_text,
+        "reason_reference_id":          reason_ref_id,
         "priority":                     fhir_data.get("priority"),
         "patient_participation_status": patient_part_status,
     }.items() if v is not None}

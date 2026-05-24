@@ -52,6 +52,10 @@ SNOMED_SYSTEM        = "http://snomed.info/sct"
 PHIC_IDENTIFIER_SYSTEM = "http://philhealth.gov.ph/fhir/Identifier/philhealth-id"
 NHFR_IDENTIFIER_SYSTEM = "https://nhfr.doh.gov.ph"
 
+# ── WAH canonical public identifier / CodeSystem URIs (used in FHIR output for external consumers) ──
+WAH_APPOINTMENT_IDENTIFIER_SYSTEM = "https://wah.ph/fhir/Identifier/appointment-id"
+WAH_SERVICE_CATEGORY_CS           = "https://wah.ph/fhir/CodeSystem/service-category"
+
 # ── PHCore code systems ───────────────────────────────────────────────────────
 PHC_COVERAGE_TYPE_CS   = f"{PHC_CS_BASE}/ph-core-coverage-type"
 PHC_COVERAGE_CLASS_CS  = f"{PHC_CS_BASE}/ph-core-coverage-class"

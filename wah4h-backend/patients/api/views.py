@@ -1094,7 +1094,17 @@ def webhook_receive_push(request):
     if resource_type != 'Patient':
         related_patient = None
         try:
+            # Try subject/patient key first (Encounter, Observation, etc.)
             subject_ref = (data.get('subject') or data.get('patient') or {}).get('reference', '')
+
+            # For Appointment: patient is in participant[].actor, not subject/patient
+            if not subject_ref and resource_type == 'Appointment':
+                for part in (data.get('participant') or []):
+                    ref_str = (part.get('actor') or {}).get('reference', '')
+                    if ref_str.startswith('Patient/'):
+                        subject_ref = ref_str
+                        break
+
             # Extract UUID from "Patient/<uuid>" and reverse-map to local Patient
             if subject_ref.startswith('Patient/'):
                 remote_fhir_id = subject_ref.split('/', 1)[1]
@@ -1225,7 +1235,7 @@ def webhook_process_query(request):
     # Detect which resource type was requested: explicit param wins, then infer from return URL.
     requested_resource = request.data.get('resourceType', '')
     if not requested_resource:
-        for _rt in ('Encounter', 'Procedure', 'Immunization', 'Condition',
+        for _rt in ('Appointment', 'Encounter', 'Procedure', 'Immunization', 'Condition',
                     'AllergyIntolerance', 'Observation', 'MedicationRequest', 'DiagnosticReport'):
             if return_url and _rt in return_url:
                 requested_resource = _rt
@@ -1292,6 +1302,14 @@ def webhook_process_query(request):
             if not patient:
                 response_data = {'error': 'Patient not found'}
                 response_status = 'FAILED'
+            elif requested_resource == 'Appointment':
+                from admission.models import Appointment as AppointmentModel
+                from patients.wah4pc import appointments_to_bundle
+                appt_qs = AppointmentModel.objects.filter(
+                    patient_id=patient.id
+                ).order_by('-start', '-created_at')
+                response_data = appointments_to_bundle(appt_qs)
+                response_status = 'SUCCESS'
             elif requested_resource == 'Encounter':
                 from admission.models import Encounter as EncounterModel
                 enc_qs = EncounterModel.objects.filter(

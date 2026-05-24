@@ -27,6 +27,7 @@ from core.fhir_utils import (
     HL7_ACT_CODE, SNOMED_SYSTEM, HL7_PARTICIPANT_TYPE, HL7_SERVICE_CATEGORY,
     WAH4H_SCHEDULE_SYSTEM, WAH4H_SLOT_SYSTEM,
     WAH4H_APPOINTMENT_SYSTEM, WAH4H_SERVICE_REQUEST_SYSTEM,
+    WAH_APPOINTMENT_IDENTIFIER_SYSTEM, WAH_SERVICE_CATEGORY_CS,
 )
 
 
@@ -839,14 +840,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 "resourceType": "Appointment",
                 "id": obj.identifier,
                 "meta": fhir_meta("Appointment", obj.updated_at),
-                "identifier": [fhir_identifier(WAH4H_APPOINTMENT_SYSTEM, obj.identifier, use="official")],
+                "identifier": [fhir_identifier(WAH_APPOINTMENT_IDENTIFIER_SYSTEM, obj.identifier, use="official")],
                 "status": obj.status,
                 "cancelationReason": codeable_concept(HL7_ACT_CODE, obj.cancellation_reason_code, obj.cancellation_reason_display) if obj.cancellation_reason_code else None,
-                "serviceCategory": [codeable_concept(HL7_SERVICE_CATEGORY, obj.service_category_code, obj.service_category_display)] if obj.service_category_code else [],
+                "serviceCategory": [codeable_concept(WAH_SERVICE_CATEGORY_CS, obj.service_category_code, obj.service_category_display)] if obj.service_category_code else [],
                 "serviceType": [codeable_concept(PHC_SERVICE_TYPE_CS, obj.service_type_code, obj.service_type_display)] if obj.service_type_code else [],
                 "specialty": [codeable_concept(PHC_SPECIALTY_CS, obj.specialty_code, obj.specialty_display)] if obj.specialty_code else [],
                 "appointmentType": codeable_concept(PHC_APPT_TYPE_CS, obj.appointment_type_code, obj.appointment_type_display) if obj.appointment_type_code else None,
-                "reasonCode": [codeable_concept(SNOMED_SYSTEM, obj.reason_code)] if obj.reason_code else [],
+                "reasonCode": [{
+                    "coding": [{"system": SNOMED_SYSTEM, "code": obj.reason_code}],
+                    "text": obj.reason_code,
+                }] if obj.reason_code else [],
+                "reasonReference": [fhir_reference("Condition", obj.reason_reference_id)] if obj.reason_reference_id else [],
                 "priority": obj.priority,
                 "description": obj.description,
                 "start": obj.start.isoformat() if obj.start else None,
@@ -858,19 +863,22 @@ class AppointmentSerializer(serializers.ModelSerializer):
                 "basedOn": [fhir_reference("ServiceRequest", obj.based_on_service_request_id)] if obj.based_on_service_request_id else [],
                 "participant": [p for p in [
                     {
-                        "actor": fhir_reference("Patient", obj.patient_id),
-                        "status": obj.patient_participation_status or "accepted",
                         "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "SBJ", "Subject")],
+                        "actor": fhir_reference("Patient", obj.patient_id),
+                        "required": "required",
+                        "status": obj.patient_participation_status or "accepted",
                     } if obj.patient_id else None,
                     {
+                        "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "ATND", "Attender")],
                         "actor": fhir_reference("Practitioner", obj.practitioner_id),
+                        "required": "required",
                         "status": obj.practitioner_participation_status or "accepted",
-                        "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "PPRF", "Primary performer")],
                     } if obj.practitioner_id else None,
                     {
-                        "actor": fhir_reference("Location", obj.location_id),
-                        "status": "accepted",
                         "type": [codeable_concept(HL7_PARTICIPANT_TYPE, "LOC", "Location")],
+                        "actor": fhir_reference("Location", obj.location_id),
+                        "required": "required",
+                        "status": "accepted",
                     } if obj.location_id else None,
                 ] if p],
                 "comment": obj.comment,
