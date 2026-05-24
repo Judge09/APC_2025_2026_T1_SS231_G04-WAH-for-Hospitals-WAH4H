@@ -3874,6 +3874,7 @@ def push_appointment(target_id, appointment, idempotency_key=None):
             time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
 
         try:
+            fhir_resource = appointment_to_fhir(appointment)
             response = requests.post(
                 f"{URL}/api/v1/fhir/push/Appointment",
                 headers={
@@ -3885,7 +3886,8 @@ def push_appointment(target_id, appointment, idempotency_key=None):
                     "senderId": provider_id,
                     "targetId": target_id,
                     "resourceType": "Appointment",
-                    "data": appointment_to_fhir(appointment),
+                    "data": fhir_resource,
+                    "resource": fhir_resource,
                 },
                 timeout=30,
             )
