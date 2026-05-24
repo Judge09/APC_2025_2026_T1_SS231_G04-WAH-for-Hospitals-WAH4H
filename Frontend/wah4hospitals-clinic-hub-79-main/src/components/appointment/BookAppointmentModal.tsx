@@ -56,6 +56,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
   const [appointmentTypeDisplay, setAppointmentTypeDisplay] = useState('Routine');
   const [reasonCode, setReasonCode] = useState('');
   const [description, setDescription] = useState('');
+  const [patientInstruction, setPatientInstruction] = useState('');
 
   // Step 3 — Time
   const [selectedDate, setSelectedDate] = useState('');
@@ -81,6 +82,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
       setAppointmentTypeDisplay('Routine');
       setReasonCode('');
       setDescription('');
+      setPatientInstruction('');
       setSelectedDate('');
       setAvailableSlots([]);
       setSelectedSlot(null);
@@ -157,13 +159,15 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
     try {
       const payload: NewAppointment = {
         patient_id: selectedPatient.id,
-        ...(practitionerId ? { practitioner_id: Number(practitionerId) } : {}),
+        // Guard against the "none" sentinel — Number("none") = NaN
+        ...(practitionerId && practitionerId !== 'none' ? { practitioner_id: Number(practitionerId) } : {}),
         service_type_code:    serviceTypeCode,
         service_type_display: serviceTypeDisplay,
         appointment_type_code:    appointmentTypeCode,
         appointment_type_display: appointmentTypeDisplay,
-        reason_code: reasonCode || undefined,
-        description: description || undefined,
+        reason_code:         reasonCode || undefined,
+        description:         description || undefined,
+        patient_instruction: patientInstruction || undefined,
         status: 'booked',
       };
 
@@ -344,10 +348,21 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
               <Label>Notes</Label>
               <Textarea
                 className="mt-1"
-                placeholder="Additional details..."
+                placeholder="Additional clinical details..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                rows={3}
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <Label>Patient Instructions <span className="text-slate-400 font-normal text-xs">(optional)</span></Label>
+              <Textarea
+                className="mt-1"
+                placeholder="e.g. Arrive 15 min early, bring lab results, fast for 8 hours..."
+                value={patientInstruction}
+                onChange={e => setPatientInstruction(e.target.value)}
+                rows={2}
               />
             </div>
           </div>

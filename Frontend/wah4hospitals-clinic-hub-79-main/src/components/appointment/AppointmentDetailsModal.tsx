@@ -151,10 +151,13 @@ export const AppointmentDetailsModal: React.FC<Props> = ({
 
           {/* Clinical */}
           <Section title="Clinical Details">
-            <Field label="Service"        value={appointment.service_type_display} />
-            <Field label="Specialty"      value={appointment.specialty_display} />
-            <Field label="Type"           value={appointment.appointment_type_display} />
-            <Field label="Reason"         value={appointment.reason_code} />
+            {appointment.service_category_display && (
+              <Field label="Category"       value={appointment.service_category_display} />
+            )}
+            <Field label="Service"          value={appointment.service_type_display} />
+            <Field label="Specialty"        value={appointment.specialty_display} />
+            <Field label="Type"             value={appointment.appointment_type_display} />
+            <Field label="Reason"           value={appointment.reason_code} />
             {appointment.description && (
               <div className="text-sm text-slate-700 bg-slate-50 rounded p-2 mt-1">{appointment.description}</div>
             )}

@@ -162,9 +162,12 @@ export interface Appointment {
 export interface NewAppointment {
   patient_id: number;
   practitioner_id?: number;
+  location_id?: number;
   slot_id?: number;
   start?: string;
   end?: string;
+  service_category_code?: string;
+  service_category_display?: string;
   service_type_code?: string;
   service_type_display?: string;
   specialty_code?: string;
