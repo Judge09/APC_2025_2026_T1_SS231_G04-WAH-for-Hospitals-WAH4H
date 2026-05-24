@@ -49,9 +49,9 @@ export const admissionService = {
     /**
      * List all encounters (admissions)
      */
-    async getAll(): Promise<Admission[]> {
+    async getAll(params?: Record<string, string>): Promise<Admission[]> {
         try {
-            const response = await api.get('/api/admission/encounters/');
+            const response = await api.get('/api/admission/encounters/', { params });
             let data = response.data;
 
             // Handle pagination (DRF returns { count, next, previous, results })

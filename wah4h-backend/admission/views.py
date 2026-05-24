@@ -63,9 +63,11 @@ class EncounterViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        user = self.request.user
-        role = getattr(user, 'role', None)
-        if role in ('doctor', 'nurse'):
+        # Optional: ?mine=1 — used by the Monitoring page so doctors/nurses
+        # see only their own patients. Never auto-applied; admission module
+        # always sees all encounters regardless of role.
+        if self.request.query_params.get('mine') == '1':
+            user = self.request.user
             care_team_enc_ids = EncounterParticipant.objects.filter(
                 practitioner_id=user.pk
             ).values_list('encounter_id', flat=True)

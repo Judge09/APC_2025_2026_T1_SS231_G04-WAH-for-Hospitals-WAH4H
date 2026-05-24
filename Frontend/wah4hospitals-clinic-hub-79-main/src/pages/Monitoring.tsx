@@ -48,7 +48,9 @@ const Monitoring: React.FC = () => {
   useEffect(() => {
     const fetchAdmissions = async () => {
       try {
-        const data = await admissionService.getAll();
+        const userRole = (user as any)?.role;
+        const params = (userRole === 'doctor' || userRole === 'nurse') ? { mine: '1' } : {};
+        const data = await admissionService.getAll(params);
         if (Array.isArray(data)) {
           // Only show patients with active admissions (not discharged/finished)
           const activeAdmissions = data.filter((adm: any) => adm.status === 'in-progress');
