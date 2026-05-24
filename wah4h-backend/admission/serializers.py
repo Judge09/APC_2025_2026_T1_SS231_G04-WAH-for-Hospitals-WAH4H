@@ -467,6 +467,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['schedule_id', 'created_at', 'updated_at', 'actor_name']
         extra_kwargs = {
+            'identifier':             {'required': False},
             'planning_horizon_start': {'required': True},
             'planning_horizon_end':   {'required': True},
         }

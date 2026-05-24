@@ -26,6 +26,35 @@ const SERVICE_TYPES = [
   { code: '11429009', display: 'Procedure' },
 ];
 
+const SPECIALTIES = [
+  { code: '394814009', display: 'General Practice' },
+  { code: '394802001', display: 'General Medicine' },
+  { code: '394580004', display: 'Clinical Genetics' },
+  { code: '394585009', display: 'Obstetrics and Gynaecology' },
+  { code: '394586005', display: 'Gynaecology' },
+  { code: '394584008', display: 'Gastroenterology' },
+  { code: '394589003', display: 'Nephrology' },
+  { code: '394591006', display: 'Neurology' },
+  { code: '394592004', display: 'Clinical Oncology' },
+  { code: '394594003', display: 'Ophthalmology' },
+  { code: '394601005', display: 'Cardiovascular and Thoracic Surgery' },
+  { code: '394603008', display: 'Cardiothoracic Surgery' },
+  { code: '394609007', display: 'General Surgery' },
+  { code: '394611003', display: 'Geriatric Medicine' },
+  { code: '394612005', display: 'Haematology' },
+  { code: '394807007', display: 'Infectious Diseases' },
+  { code: '419772000', display: 'Family Practice' },
+  { code: '394577000', display: 'Anaesthetics' },
+  { code: '394579002', display: 'Cardiology' },
+  { code: '394812008', display: 'Dental Medicine' },
+  { code: '394821009', display: 'Occupational Medicine' },
+  { code: '394822002', display: 'Orthopedics' },
+  { code: '394823007', display: 'Pediatrics' },
+  { code: '418960008', display: 'Otolaryngology' },
+  { code: '394733009', display: 'Medical Oncology' },
+  { code: '394537008', display: 'Pediatric Oncology' },
+];
+
 const APPOINTMENT_TYPES = [
   { code: 'ROUTINE', display: 'Routine' },
   { code: 'WALKIN', display: 'Walk-in' },
@@ -54,6 +83,8 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
   const [serviceTypeDisplay, setServiceTypeDisplay] = useState('');
   const [appointmentTypeCode, setAppointmentTypeCode] = useState('ROUTINE');
   const [appointmentTypeDisplay, setAppointmentTypeDisplay] = useState('Routine');
+  const [specialtyCode, setSpecialtyCode] = useState('');
+  const [specialtyDisplay, setSpecialtyDisplay] = useState('');
   const [reasonCode, setReasonCode] = useState('');
   const [description, setDescription] = useState('');
   const [patientInstruction, setPatientInstruction] = useState('');
@@ -80,6 +111,8 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
       setServiceTypeDisplay('');
       setAppointmentTypeCode('ROUTINE');
       setAppointmentTypeDisplay('Routine');
+      setSpecialtyCode('');
+      setSpecialtyDisplay('');
       setReasonCode('');
       setDescription('');
       setPatientInstruction('');
@@ -119,7 +152,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
     const slots = await appointmentService.getAvailableSlots({
       date_from: dateFrom,
       date_to:   dateTo,
-      ...(practitionerId ? { practitioner_id: Number(practitionerId) } : {}),
+      ...(practitionerId && practitionerId !== 'none' ? { practitioner_id: Number(practitionerId) } : {}),
     });
     setAvailableSlots(slots);
     setSelectedSlot(null);
@@ -140,6 +173,12 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
     const apt = APPOINTMENT_TYPES.find(a => a.code === code);
     setAppointmentTypeCode(code);
     setAppointmentTypeDisplay(apt?.display ?? code);
+  };
+
+  const handleSpecialtyChange = (code: string) => {
+    const sp = SPECIALTIES.find(s => s.code === code);
+    setSpecialtyCode(code === 'none' ? '' : code);
+    setSpecialtyDisplay(code === 'none' ? '' : (sp?.display ?? code));
   };
 
   const canNext = () => {
@@ -163,6 +202,7 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
         ...(practitionerId && practitionerId !== 'none' ? { practitioner_id: Number(practitionerId) } : {}),
         service_type_code:    serviceTypeCode,
         service_type_display: serviceTypeDisplay,
+        ...(specialtyCode ? { specialty_code: specialtyCode, specialty_display: specialtyDisplay } : {}),
         appointment_type_code:    appointmentTypeCode,
         appointment_type_display: appointmentTypeDisplay,
         reason_code:         reasonCode || undefined,
@@ -174,10 +214,14 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
       if (useManualTime) {
         payload.start = manualStart;
         payload.end   = manualEnd;
+        const diffMs = new Date(manualEnd).getTime() - new Date(manualStart).getTime();
+        if (diffMs > 0) payload.minutes_duration = Math.round(diffMs / 60000);
       } else if (selectedSlot) {
         payload.slot_id = selectedSlot.slot_id;
         payload.start   = selectedSlot.start;
         payload.end     = selectedSlot.end;
+        const diffMs = new Date(selectedSlot.end).getTime() - new Date(selectedSlot.start).getTime();
+        if (diffMs > 0) payload.minutes_duration = Math.round(diffMs / 60000);
       }
 
       await appointmentService.create(payload);
@@ -329,6 +373,21 @@ export const BookAppointmentModal: React.FC<Props> = ({ isOpen, onClose, onSucce
                 <SelectContent>
                   {APPOINTMENT_TYPES.map(a => (
                     <SelectItem key={a.code} value={a.code}>{a.display}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Specialty <span className="text-slate-400 font-normal text-xs">(optional)</span></Label>
+              <Select value={specialtyCode || 'none'} onValueChange={handleSpecialtyChange}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select specialty..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {SPECIALTIES.map(s => (
+                    <SelectItem key={s.code} value={s.code}>{s.display}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

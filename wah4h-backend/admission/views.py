@@ -587,10 +587,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         for p in patients:
             results.append({
                 'id': p.id,
-                'patientId': p.patient_id,
-                'name': f"{p.first_name} {p.last_name}",
-                'firstName': p.first_name,
-                'lastName': p.last_name,
+                'patient_id': p.patient_id,
+                'full_name': f"{p.first_name} {p.last_name}".strip(),
+                'first_name': p.first_name,
+                'last_name': p.last_name,
                 'dob': p.birthdate.isoformat() if p.birthdate else None,
                 'age': p.age,
                 'gender': p.gender,
