@@ -12,6 +12,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils import timezone
 from datetime import date, datetime
+import datetime as _dt
 import random
 
 # Direct Model Imports - Trinity Pattern
@@ -663,9 +664,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
     patient_summary      = serializers.SerializerMethodField()
     practitioner_summary = serializers.SerializerMethodField()
     slot_detail          = serializers.SerializerMethodField()
-    start                = serializers.DateTimeField(format='iso-8601', default_timezone=None)
-    end                  = serializers.DateTimeField(format='iso-8601', default_timezone=None)
-    created_datetime     = serializers.DateTimeField(format='iso-8601', default_timezone=None, required=False, allow_null=True)
+    start            = serializers.DateTimeField(format='iso-8601', default_timezone=_dt.timezone.utc)
+    end              = serializers.DateTimeField(format='iso-8601', default_timezone=_dt.timezone.utc)
+    created_datetime = serializers.DateTimeField(format='iso-8601', default_timezone=_dt.timezone.utc, required=False, allow_null=True)
 
     class Meta:
         model = Appointment
