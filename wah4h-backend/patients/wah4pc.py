@@ -4107,7 +4107,10 @@ def import_appointment_from_fhir(fhir_data, patient):
         "created_datetime":             _parse_dt(fhir_data.get("created")),
         "minutes_duration":             fhir_data.get("minutesDuration"),
         "description":                  fhir_data.get("description"),
-        "comment":                      fhir_data.get("comment"),
+        "comment":                      (
+            fhir_data.get("comment")
+            or next((n.get("text") for n in (fhir_data.get("note") or []) if n.get("text")), None)
+        ),
         "patient_instruction":          fhir_data.get("patientInstruction"),
         "service_category_code":        svc_cat_coding.get("code"),
         "service_category_display":     svc_cat_coding.get("display"),

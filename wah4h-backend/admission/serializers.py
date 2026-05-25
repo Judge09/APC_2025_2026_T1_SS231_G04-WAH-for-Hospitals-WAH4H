@@ -660,9 +660,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
     - Booking a slot atomically flips Slot.status → 'busy'.
     - Cancelling/noshow flips the slot back to 'free'.
     """
-    patient_summary     = serializers.SerializerMethodField()
+    patient_summary      = serializers.SerializerMethodField()
     practitioner_summary = serializers.SerializerMethodField()
-    slot_detail         = serializers.SerializerMethodField()
+    slot_detail          = serializers.SerializerMethodField()
+    start                = serializers.SerializerMethodField()
+    end                  = serializers.SerializerMethodField()
+    created_datetime     = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
@@ -696,6 +699,25 @@ class AppointmentSerializer(serializers.ModelSerializer):
     # ------------------------------------------------------------------ #
     # Enriched read fields                                                 #
     # ------------------------------------------------------------------ #
+
+    def _to_pht(self, dt):
+        """Convert a UTC-stored datetime to Asia/Manila (PHT) for display."""
+        if dt is None:
+            return None
+        from zoneinfo import ZoneInfo
+        pht = ZoneInfo('Asia/Manila')
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.utc)
+        return dt.astimezone(pht).isoformat()
+
+    def get_start(self, obj):
+        return self._to_pht(obj.start)
+
+    def get_end(self, obj):
+        return self._to_pht(obj.end)
+
+    def get_created_datetime(self, obj):
+        return self._to_pht(obj.created_datetime)
 
     def get_patient_summary(self, obj):
         try:
