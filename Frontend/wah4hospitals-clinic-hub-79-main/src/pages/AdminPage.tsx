@@ -474,7 +474,7 @@ const UserManagementTab: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${ACCOUNTS_API}/admin/users/`, { headers: authHeaders() });
-      setUsers(data.data as AdminUser[]);
+      setUsers(Array.isArray(data.data) ? data.data : []);
     } catch { toast({ title: 'Failed to load users', variant: 'destructive' }); }
     finally { setLoading(false); }
   }, [toast]);
@@ -830,10 +830,10 @@ const FacilitiesTab: React.FC = () => {
       axios.get(`${ACCOUNTS_API}/admin/locations/?physical_type=ro`, h),
       axios.get(`${ACCOUNTS_API}/admin/room-types/`, h),
     ]);
-    if (bRes.status === 'fulfilled') setBuildings(bRes.value.data.data ?? []);
-    if (wRes.status === 'fulfilled') setWards(wRes.value.data.data ?? []);
-    if (rRes.status === 'fulfilled') setRooms(rRes.value.data.data ?? []);
-    if (rtRes.status === 'fulfilled') setRoomTypes(rtRes.value.data.data ?? []);
+    if (bRes.status === 'fulfilled') setBuildings(Array.isArray(bRes.value.data.data) ? bRes.value.data.data : []);
+    if (wRes.status === 'fulfilled') setWards(Array.isArray(wRes.value.data.data) ? wRes.value.data.data : []);
+    if (rRes.status === 'fulfilled') setRooms(Array.isArray(rRes.value.data.data) ? rRes.value.data.data : []);
+    if (rtRes.status === 'fulfilled') setRoomTypes(Array.isArray(rtRes.value.data.data) ? rtRes.value.data.data : []);
   }, []);
 
   const loadItems = useCallback(async () => {
@@ -843,7 +843,7 @@ const FacilitiesTab: React.FC = () => {
       if (filterParent !== '') params.append('part_of_location_id', String(filterParent));
       const { data } = await axios.get(`${ACCOUNTS_API}/admin/locations/?${params}`, { headers: authHeaders() });
       // client-side filter since the API filters by physical_type but not by parent yet
-      const all: LocRecord[] = data.data ?? [];
+      const all: LocRecord[] = Array.isArray(data.data) ? data.data : [];
       setItems(filterParent !== '' ? all.filter(l => l.part_of_location_id === filterParent) : all);
     } catch {
       toast({ title: 'Failed to load', variant: 'destructive' });
@@ -1190,7 +1190,7 @@ const RoomTypesSection: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${ACCOUNTS_API}/admin/room-types/`, { headers: authHeaders() });
-      setItems(data.data as RoomType[]);
+      setItems(Array.isArray(data.data) ? data.data : []);
     } catch { toast({ title: 'Failed to load room types', variant: 'destructive' }); }
     finally { setLoading(false); }
   }, [toast]);
@@ -1331,7 +1331,7 @@ const DoctorFeesSection: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${ACCOUNTS_API}/admin/doctor-fees/`, { headers: authHeaders() });
-      setItems(data.data as DoctorFee[]);
+      setItems(Array.isArray(data.data) ? data.data : []);
     } catch { toast({ title: 'Failed to load fee schedules', variant: 'destructive' }); }
     finally { setLoading(false); }
   }, [toast]);
@@ -1476,7 +1476,7 @@ const LabTestPricingSection: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${LAB_API}/test-definitions/`, { headers: authHeaders() });
-      setItems((data.results ?? data) as LabTest[]);
+      setItems(Array.isArray(data.results) ? data.results : Array.isArray(data.data) ? data.data : []);
     } catch { toast({ title: 'Failed to load lab tests', variant: 'destructive' }); }
     finally { setLoading(false); }
   }, [toast]);
@@ -1606,7 +1606,7 @@ const ProcedurePricingSection: React.FC = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${ACCOUNTS_API}/admin/procedures/`, { headers: authHeaders() });
-      setItems(data.data as ProcedurePrice[]);
+      setItems(Array.isArray(data.data) ? data.data : []);
     } catch { toast({ title: 'Failed to load procedures', variant: 'destructive' }); }
     finally { setLoading(false); }
   }, [toast]);

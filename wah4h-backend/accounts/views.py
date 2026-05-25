@@ -87,7 +87,7 @@ def success_response(message, data=None, http_status=status.HTTP_200_OK):
     return Response({
         'status': 'success',
         'message': message,
-        'data': data or {}
+        'data': data if data is not None else {}
     }, status=http_status)
 
 
