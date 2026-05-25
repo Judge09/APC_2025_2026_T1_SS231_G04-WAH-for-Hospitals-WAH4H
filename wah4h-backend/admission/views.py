@@ -565,16 +565,19 @@ def _push_appointment_to_gateway(appointment):
         ).order_by('-created_at').first()
         if not txn or not txn.sender_id:
             return
-        correlation_id = (txn.raw_payload or {}).get('correlationId')
+        # appointment.identifier holds the scheduling-request-id from the inbound FHIR
+        # identifier[0].value — the same UUID WAH4Patient set as their correlationId.
+        # The gateway replaces correlationId with its own transactionId when forwarding,
+        # so raw_payload['correlationId'] is wrong; appointment.identifier is the source of truth.
         result = push_appointment(
             target_id=txn.sender_id,
             appointment=appointment,
-            correlation_id=correlation_id,
+            correlation_id=appointment.identifier,
         )
         if result and result.get('error'):
             _log.warning('[WAH4PC] push_appointment failed: %s', result['error'])
         else:
-            _log.info('[WAH4PC] Pushed appointment %s update to %s (correlationId=%s)', appointment.identifier, txn.sender_id, correlation_id)
+            _log.info('[WAH4PC] Pushed appointment %s update to %s (correlationId=%s)', appointment.identifier, txn.sender_id, appointment.identifier)
     except Exception:
         _log.exception('[WAH4PC] Unexpected error pushing appointment %s to gateway', appointment.identifier)
 
