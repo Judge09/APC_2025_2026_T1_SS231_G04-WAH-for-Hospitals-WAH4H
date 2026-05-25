@@ -3847,7 +3847,7 @@ def appointments_to_bundle(queryset) -> dict:
     }
 
 
-def push_appointment(target_id, appointment, idempotency_key=None):
+def push_appointment(target_id, appointment, idempotency_key=None, correlation_id=None):
     """Push an updated Appointment resource to another provider via the WAH4PC gateway.
 
     Called after any local status change (booked, cancelled, fulfilled, etc.) so
@@ -3857,6 +3857,8 @@ def push_appointment(target_id, appointment, idempotency_key=None):
         target_id: Provider UUID to push to (the original sender_id from the inbound push)
         appointment: Admission Appointment model instance
         idempotency_key: Optional; generated if not provided
+        correlation_id: Optional; the inbound transactionId from the original appointment push,
+                        echoed back so the sender can match this response to their request
 
     Returns:
         dict: Gateway response on success, or {'error': ..., 'status_code': ...} on failure.
@@ -3875,6 +3877,15 @@ def push_appointment(target_id, appointment, idempotency_key=None):
 
         try:
             fhir_resource = appointment_to_fhir(appointment)
+            payload = {
+                "senderId": provider_id,
+                "targetId": target_id,
+                "resourceType": "Appointment",
+                "data": fhir_resource,
+                "resource": fhir_resource,
+            }
+            if correlation_id:
+                payload["correlationId"] = correlation_id
             response = requests.post(
                 f"{URL}/api/v1/fhir/push/Appointment",
                 headers={
@@ -3882,13 +3893,7 @@ def push_appointment(target_id, appointment, idempotency_key=None):
                     "X-Provider-ID": provider_id,
                     "Idempotency-Key": idempotency_key,
                 },
-                json={
-                    "senderId": provider_id,
-                    "targetId": target_id,
-                    "resourceType": "Appointment",
-                    "data": fhir_resource,
-                    "resource": fhir_resource,
-                },
+                json=payload,
                 timeout=30,
             )
 
