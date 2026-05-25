@@ -18,7 +18,10 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 import secrets
 import string
 
-from .models import Organization, Practitioner, PractitionerRole, RoleModuleConfig
+from .models import (
+    Organization, Practitioner, PractitionerRole, RoleModuleConfig,
+    RoomTypeDefinition, DoctorFeeSchedule, ProcedurePriceConfig, Location,
+)
 from core.fhir_utils import (
     codeable_concept, fhir_extension, fhir_period, fhir_reference,
     fhir_identifier, fhir_meta,
@@ -828,5 +831,108 @@ class ChangePasswordVerifySerializer(serializers.Serializer):
         
         # Delete cache after successful password change
         cache.delete(cache_key)
-        
+
         return user
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADMIN PERSONALIZATION SERIALIZERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class RoomTypeDefinitionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomTypeDefinition
+        fields = [
+            'room_type_id', 'code', 'name', 'description',
+            'daily_rate', 'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['room_type_id', 'created_at', 'updated_at']
+
+    def validate_daily_rate(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Daily rate cannot be negative.")
+        return value
+
+
+class DoctorFeeScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorFeeSchedule
+        fields = [
+            'fee_id', 'practitioner_id', 'practitioner_name',
+            'specialty_code', 'specialty_display',
+            'consultation_fee', 'professional_fee',
+            'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['fee_id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        # Skip cross-field validation on partial updates — the existing record
+        # already satisfies the constraint; we only need to check on full creates.
+        if self.partial:
+            return attrs
+        pid = attrs.get('practitioner_id')
+        sc = attrs.get('specialty_code', '').strip() if attrs.get('specialty_code') else ''
+        if pid is None and not sc:
+            raise serializers.ValidationError(
+                "Either practitioner_id or specialty_code must be provided."
+            )
+        return attrs
+
+    def validate_consultation_fee(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Consultation fee cannot be negative.")
+        return value
+
+    def validate_professional_fee(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Professional fee cannot be negative.")
+        return value
+
+
+class ProcedurePriceConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedurePriceConfig
+        fields = [
+            'price_id', 'code', 'name', 'category',
+            'base_price', 'description', 'is_active',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['price_id', 'created_at', 'updated_at']
+
+    def validate_base_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Base price cannot be negative.")
+        return value
+
+
+class LocationAdminSerializer(serializers.ModelSerializer):
+    part_of_name = serializers.SerializerMethodField()
+    # Explicitly declared so DRF generates a writable IntegerField, not a
+    # read-only property field (which is what it falls back to for FK attnames).
+    part_of_location_id = serializers.IntegerField(allow_null=True, required=False)
+
+    class Meta:
+        model = Location
+        fields = [
+            'location_id', 'name', 'alias', 'description',
+            'physical_type_code', 'type_code', 'status', 'operational_status',
+            'telecom', 'address_line', 'address_city', 'address_state',
+            'address_country', 'address_postal_code',
+            'hours_of_operation_days', 'opening_time', 'closing_time',
+            'part_of_location_id', 'part_of_name',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['location_id', 'created_at', 'updated_at', 'part_of_name']
+
+    def get_part_of_name(self, obj):
+        if obj.part_of_location:
+            return obj.part_of_location.name
+        return None
+
+    def create(self, validated_data):
+        # Location.identifier is unique but nullable — auto-generate to avoid
+        # empty-string collisions when admin doesn't supply an explicit code.
+        if not validated_data.get('identifier'):
+            import uuid
+            validated_data['identifier'] = f"loc-{uuid.uuid4().hex[:12]}"
+        return super().create(validated_data)

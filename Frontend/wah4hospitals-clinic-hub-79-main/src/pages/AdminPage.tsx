@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   Building2, Users, LayoutGrid, Code2, Save, RefreshCw,
   ShieldCheck, CheckCircle2, XCircle, Loader2,
+  DollarSign, MapPin, Plus, Pencil, Trash2, X,
 } from 'lucide-react';
 
 const API_BASE    = import.meta.env.LOCAL_8000 || '';
@@ -737,6 +738,867 @@ const FHIROrgTab: React.FC = () => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SHARED INLINE FORM HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FormRow: React.FC<{ label: string; children: React.ReactNode; span2?: boolean }> = ({ label, children, span2 }) => (
+  <div className={`space-y-1 ${span2 ? 'md:col-span-2' : ''}`}>
+    <Label>{label}</Label>
+    {children}
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FACILITIES TAB — Location (Building / Ward / Room / Bed) CRUD
+// ─────────────────────────────────────────────────────────────────────────────
+interface LocationRecord {
+  location_id: number;
+  name: string;
+  alias: string;
+  description: string;
+  physical_type_code: string;
+  type_code: string;
+  status: string;
+  operational_status: string;
+  telecom: string;
+  address_line: string;
+  part_of_location_id: number | null;
+  part_of_name: string | null;
+  hours_of_operation_days: string;
+  opening_time: string;
+  closing_time: string;
+}
+
+const PHYSICAL_TYPES = [
+  { code: 'bu', display: 'Building' },
+  { code: 'wi', display: 'Wing' },
+  { code: 'wa', display: 'Ward' },
+  { code: 'ro', display: 'Room' },
+  { code: 'bd', display: 'Bed' },
+  { code: 've', display: 'Vehicle' },
+  { code: 'ho', display: 'House' },
+  { code: 'ca', display: 'Cabinet' },
+  { code: 'rd', display: 'Road' },
+  { code: 'area', display: 'Area' },
+];
+
+const LOCATION_STATUSES = [
+  { code: 'active', display: 'Active' },
+  { code: 'suspended', display: 'Suspended' },
+  { code: 'inactive', display: 'Inactive' },
+];
+
+const OPERATIONAL_STATUSES = [
+  { code: 'O', display: 'Operational' },
+  { code: 'C', display: 'Closed' },
+  { code: 'H', display: 'Housekeeping' },
+  { code: 'U', display: 'Unoccupied' },
+  { code: 'K', display: 'Contaminated' },
+  { code: 'I', display: 'Isolated' },
+];
+
+const emptyLocation: Omit<LocationRecord, 'location_id' | 'part_of_name'> = {
+  name: '', alias: '', description: '', physical_type_code: 'ro',
+  type_code: '', status: 'active', operational_status: 'O',
+  telecom: '', address_line: '', part_of_location_id: null,
+  hours_of_operation_days: '', opening_time: '', closing_time: '',
+};
+
+const FacilitiesTab: React.FC = () => {
+  const { toast } = useToast();
+  const [locations, setLocations] = useState<LocationRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<LocationRecord | null>(null);
+  const [form, setForm] = useState<typeof emptyLocation>({ ...emptyLocation });
+  const [saving, setSaving] = useState(false);
+  const [filterType, setFilterType] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = filterType ? `?physical_type=${filterType}` : '';
+      const { data } = await axios.get(`${ACCOUNTS_API}/admin/locations/${params}`, { headers: authHeaders() });
+      setLocations(data.data as LocationRecord[]);
+    } catch {
+      toast({ title: 'Failed to load locations', variant: 'destructive' });
+    } finally { setLoading(false); }
+  }, [toast, filterType]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setEditing(null); setForm({ ...emptyLocation }); setShowForm(true); };
+  const openEdit = (loc: LocationRecord) => {
+    setEditing(loc);
+    setForm({
+      name: loc.name || '', alias: loc.alias || '', description: loc.description || '',
+      physical_type_code: loc.physical_type_code || 'ro', type_code: loc.type_code || '',
+      status: loc.status || 'active', operational_status: loc.operational_status || 'O',
+      telecom: loc.telecom || '', address_line: loc.address_line || '',
+      part_of_location_id: loc.part_of_location_id,
+      hours_of_operation_days: loc.hours_of_operation_days || '',
+      opening_time: loc.opening_time || '', closing_time: loc.closing_time || '',
+    });
+    setShowForm(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        await axios.put(`${ACCOUNTS_API}/admin/locations/${editing.location_id}/`, form, { headers: authHeaders() });
+        toast({ title: 'Location updated.' });
+      } else {
+        await axios.post(`${ACCOUNTS_API}/admin/locations/`, form, { headers: authHeaders() });
+        toast({ title: 'Location created.' });
+      }
+      setShowForm(false);
+      load();
+    } catch (e: any) {
+      toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' });
+    } finally { setSaving(false); }
+  };
+
+  const remove = async (id: number) => {
+    if (!confirm('Delete this location?')) return;
+    try {
+      await axios.delete(`${ACCOUNTS_API}/admin/locations/${id}/`, { headers: authHeaders() });
+      toast({ title: 'Location deleted.' });
+      load();
+    } catch {
+      toast({ title: 'Delete failed.', variant: 'destructive' });
+    }
+  };
+
+  const fi = (key: keyof typeof emptyLocation) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => setForm(p => ({ ...p, [key]: e.target.value }));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <select
+            className="border rounded px-3 py-1.5 text-sm"
+            value={filterType}
+            onChange={e => setFilterType(e.target.value)}
+          >
+            <option value="">All Types</option>
+            {PHYSICAL_TYPES.map(t => <option key={t.code} value={t.code}>{t.display}</option>)}
+          </select>
+          <Button variant="outline" size="sm" onClick={load} className="flex items-center gap-1">
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </Button>
+        </div>
+        <Button size="sm" onClick={openAdd} className="flex items-center gap-1">
+          <Plus className="w-4 h-4" /> Add Location
+        </Button>
+      </div>
+
+      {showForm && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-base">{editing ? 'Edit Location' : 'New Location'}</CardTitle>
+              <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-gray-500" /></button>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormRow label="Name">
+              <Input value={form.name} onChange={fi('name')} placeholder="e.g. Room 201" />
+            </FormRow>
+            <FormRow label="Alias / Short Name">
+              <Input value={form.alias} onChange={fi('alias')} placeholder="e.g. R201" />
+            </FormRow>
+            <FormRow label="Physical Type">
+              <select
+                value={form.physical_type_code}
+                onChange={e => setForm(p => ({ ...p, physical_type_code: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {PHYSICAL_TYPES.map(t => <option key={t.code} value={t.code}>{t.display}</option>)}
+              </select>
+            </FormRow>
+            <FormRow label="Status">
+              <select
+                value={form.status}
+                onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {LOCATION_STATUSES.map(s => <option key={s.code} value={s.code}>{s.display}</option>)}
+              </select>
+            </FormRow>
+            <FormRow label="Operational Status">
+              <select
+                value={form.operational_status}
+                onChange={e => setForm(p => ({ ...p, operational_status: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {OPERATIONAL_STATUSES.map(s => <option key={s.code} value={s.code}>{s.display}</option>)}
+              </select>
+            </FormRow>
+            <FormRow label="Telecom">
+              <Input value={form.telecom} onChange={fi('telecom')} placeholder="+63 2 8XXX XXXX" />
+            </FormRow>
+            <FormRow label="Parent Location ID" >
+              <Input
+                type="number"
+                value={form.part_of_location_id ?? ''}
+                onChange={e => setForm(p => ({ ...p, part_of_location_id: e.target.value ? Number(e.target.value) : null }))}
+                placeholder="ID of parent building/ward"
+              />
+            </FormRow>
+            <FormRow label="Address Line">
+              <Input value={form.address_line} onChange={fi('address_line')} placeholder="Floor / wing / corridor" />
+            </FormRow>
+            <FormRow label="Operating Hours (days)">
+              <Input value={form.hours_of_operation_days} onChange={fi('hours_of_operation_days')} placeholder="Mon-Fri" />
+            </FormRow>
+            <FormRow label="Opening Time">
+              <Input value={form.opening_time} onChange={fi('opening_time')} placeholder="08:00" />
+            </FormRow>
+            <FormRow label="Closing Time">
+              <Input value={form.closing_time} onChange={fi('closing_time')} placeholder="17:00" />
+            </FormRow>
+            <FormRow label="Description" span2>
+              <Input value={form.description} onChange={fi('description')} placeholder="Optional notes" />
+            </FormRow>
+            <div className="md:col-span-2 flex gap-2">
+              <Button onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                {editing ? 'Update' : 'Create'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center p-10"><Loader2 className="animate-spin w-6 h-6" /></div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+              <tr>
+                <th className="px-4 py-3 text-left">Name</th>
+                <th className="px-4 py-3 text-left">Type</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Ops Status</th>
+                <th className="px-4 py-3 text-left">Parent</th>
+                <th className="px-4 py-3 text-left">Hours</th>
+                <th className="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {locations.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No locations found.</td></tr>
+              )}
+              {locations.map(loc => {
+                const physLabel = PHYSICAL_TYPES.find(t => t.code === loc.physical_type_code)?.display || loc.physical_type_code;
+                return (
+                  <tr key={loc.location_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">
+                      {loc.name}
+                      {loc.alias && <span className="text-xs text-gray-400 ml-1">({loc.alias})</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">{physLabel}</span>
+                    </td>
+                    <td className="px-4 py-3 capitalize">{loc.status}</td>
+                    <td className="px-4 py-3">
+                      {OPERATIONAL_STATUSES.find(s => s.code === loc.operational_status)?.display || loc.operational_status}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{loc.part_of_name || '—'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {loc.opening_time && loc.closing_time ? `${loc.opening_time}–${loc.closing_time}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 flex gap-2">
+                      <button onClick={() => openEdit(loc)} className="text-blue-600 hover:text-blue-800">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => remove(loc.location_id)} className="text-red-500 hover:text-red-700">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING & RATES TAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Room Types ──────────────────────────────────────────────────────────────
+interface RoomType { room_type_id: number; code: string; name: string; description: string; daily_rate: string; is_active: boolean; }
+const emptyRoomType = { code: '', name: '', description: '', daily_rate: '0', is_active: true };
+
+const RoomTypesSection: React.FC = () => {
+  const { toast } = useToast();
+  const [items, setItems] = useState<RoomType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<RoomType | null>(null);
+  const [form, setForm] = useState({ ...emptyRoomType });
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${ACCOUNTS_API}/admin/room-types/`, { headers: authHeaders() });
+      setItems(data.data as RoomType[]);
+    } catch { toast({ title: 'Failed to load room types', variant: 'destructive' }); }
+    finally { setLoading(false); }
+  }, [toast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setEditing(null); setForm({ ...emptyRoomType }); setShowForm(true); };
+  const openEdit = (r: RoomType) => {
+    setEditing(r);
+    setForm({ code: r.code, name: r.name, description: r.description || '', daily_rate: r.daily_rate, is_active: r.is_active });
+    setShowForm(true);
+  };
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        await axios.put(`${ACCOUNTS_API}/admin/room-types/${editing.room_type_id}/`, form, { headers: authHeaders() });
+        toast({ title: 'Room type updated.' });
+      } else {
+        await axios.post(`${ACCOUNTS_API}/admin/room-types/`, form, { headers: authHeaders() });
+        toast({ title: 'Room type created.' });
+      }
+      setShowForm(false); load();
+    } catch (e: any) { toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' }); }
+    finally { setSaving(false); }
+  };
+  const remove = async (id: number) => {
+    if (!confirm('Delete this room type?')) return;
+    try { await axios.delete(`${ACCOUNTS_API}/admin/room-types/${id}/`, { headers: authHeaders() }); toast({ title: 'Deleted.' }); load(); }
+    catch { toast({ title: 'Delete failed.', variant: 'destructive' }); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Room Types & Daily Rates</CardTitle>
+          <Button size="sm" onClick={openAdd} className="flex items-center gap-1"><Plus className="w-3 h-3" /> Add</Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {showForm && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <FormRow label="Code">
+              <Input value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="e.g. ICU" />
+            </FormRow>
+            <FormRow label="Name">
+              <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Intensive Care Unit" />
+            </FormRow>
+            <FormRow label="Daily Rate (PHP)">
+              <Input type="number" value={form.daily_rate} onChange={e => setForm(p => ({ ...p, daily_rate: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Description" span2>
+              <Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Optional" />
+            </FormRow>
+            <div className="flex items-end gap-2">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.is_active} onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))} />
+                <Label>Active</Label>
+              </div>
+            </div>
+            <div className="md:col-span-3 flex gap-2">
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+                {editing ? 'Update' : 'Create'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th className="px-3 py-2 text-left">Code</th>
+              <th className="px-3 py-2 text-left">Name</th>
+              <th className="px-3 py-2 text-right">Daily Rate</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {loading && <tr><td colSpan={5} className="py-6 text-center"><Loader2 className="inline animate-spin w-4 h-4" /></td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-gray-400">No room types yet.</td></tr>}
+            {items.map(r => (
+              <tr key={r.room_type_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-mono text-xs">{r.code}</td>
+                <td className="px-3 py-2">{r.name}</td>
+                <td className="px-3 py-2 text-right font-medium">₱{Number(r.daily_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {r.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-3 py-2 flex gap-2 justify-end">
+                  <button onClick={() => openEdit(r)} className="text-blue-600 hover:text-blue-800"><Pencil className="w-3 h-3" /></button>
+                  <button onClick={() => remove(r.room_type_id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-3 h-3" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── Doctor Fee Schedules ─────────────────────────────────────────────────────
+interface DoctorFee {
+  fee_id: number;
+  practitioner_id: number | null;
+  practitioner_name: string | null;
+  specialty_code: string | null;
+  specialty_display: string | null;
+  consultation_fee: string;
+  professional_fee: string;
+  is_active: boolean;
+}
+const emptyFee = {
+  practitioner_id: '' as string | number,
+  practitioner_name: '',
+  specialty_code: '',
+  specialty_display: '',
+  consultation_fee: '0',
+  professional_fee: '0',
+  is_active: true,
+};
+
+const DoctorFeesSection: React.FC = () => {
+  const { toast } = useToast();
+  const [items, setItems] = useState<DoctorFee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<DoctorFee | null>(null);
+  const [form, setForm] = useState({ ...emptyFee });
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${ACCOUNTS_API}/admin/doctor-fees/`, { headers: authHeaders() });
+      setItems(data.data as DoctorFee[]);
+    } catch { toast({ title: 'Failed to load fee schedules', variant: 'destructive' }); }
+    finally { setLoading(false); }
+  }, [toast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setEditing(null); setForm({ ...emptyFee }); setShowForm(true); };
+  const openEdit = (f: DoctorFee) => {
+    setEditing(f);
+    setForm({
+      practitioner_id: f.practitioner_id ?? '',
+      practitioner_name: f.practitioner_name ?? '',
+      specialty_code: f.specialty_code ?? '',
+      specialty_display: f.specialty_display ?? '',
+      consultation_fee: f.consultation_fee,
+      professional_fee: f.professional_fee,
+      is_active: f.is_active,
+    });
+    setShowForm(true);
+  };
+  const save = async () => {
+    setSaving(true);
+    const payload = {
+      ...form,
+      practitioner_id: form.practitioner_id !== '' ? Number(form.practitioner_id) : null,
+    };
+    try {
+      if (editing) {
+        await axios.put(`${ACCOUNTS_API}/admin/doctor-fees/${editing.fee_id}/`, payload, { headers: authHeaders() });
+        toast({ title: 'Fee schedule updated.' });
+      } else {
+        await axios.post(`${ACCOUNTS_API}/admin/doctor-fees/`, payload, { headers: authHeaders() });
+        toast({ title: 'Fee schedule created.' });
+      }
+      setShowForm(false); load();
+    } catch (e: any) { toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' }); }
+    finally { setSaving(false); }
+  };
+  const remove = async (id: number) => {
+    if (!confirm('Delete this fee schedule?')) return;
+    try { await axios.delete(`${ACCOUNTS_API}/admin/doctor-fees/${id}/`, { headers: authHeaders() }); toast({ title: 'Deleted.' }); load(); }
+    catch { toast({ title: 'Delete failed.', variant: 'destructive' }); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Doctor Professional Fee Schedules</CardTitle>
+          <Button size="sm" onClick={openAdd} className="flex items-center gap-1"><Plus className="w-3 h-3" /> Add</Button>
+        </div>
+        <CardDescription className="text-xs">Set per-doctor or per-specialty consultation and professional fees.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {showForm && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <FormRow label="Practitioner ID (optional)">
+              <Input type="number" value={form.practitioner_id as string} onChange={e => setForm(p => ({ ...p, practitioner_id: e.target.value }))} placeholder="Leave blank for specialty-level" />
+            </FormRow>
+            <FormRow label="Practitioner Name">
+              <Input value={form.practitioner_name} onChange={e => setForm(p => ({ ...p, practitioner_name: e.target.value }))} placeholder="Dr. Juan Dela Cruz" />
+            </FormRow>
+            <FormRow label="Specialty Code (optional)">
+              <Input value={form.specialty_code} onChange={e => setForm(p => ({ ...p, specialty_code: e.target.value }))} placeholder="e.g. 394814009 (SNOMED)" />
+            </FormRow>
+            <FormRow label="Specialty Display">
+              <Input value={form.specialty_display} onChange={e => setForm(p => ({ ...p, specialty_display: e.target.value }))} placeholder="e.g. General Practice" />
+            </FormRow>
+            <FormRow label="Consultation Fee (PHP)">
+              <Input type="number" value={form.consultation_fee} onChange={e => setForm(p => ({ ...p, consultation_fee: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Professional Fee (PHP)">
+              <Input type="number" value={form.professional_fee} onChange={e => setForm(p => ({ ...p, professional_fee: e.target.value }))} />
+            </FormRow>
+            <div className="flex items-center gap-2 mt-2">
+              <Switch checked={form.is_active} onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))} />
+              <Label>Active</Label>
+            </div>
+            <div className="md:col-span-3 flex gap-2">
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+                {editing ? 'Update' : 'Create'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th className="px-3 py-2 text-left">Doctor / Specialty</th>
+              <th className="px-3 py-2 text-right">Consultation</th>
+              <th className="px-3 py-2 text-right">Professional</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {loading && <tr><td colSpan={5} className="py-6 text-center"><Loader2 className="inline animate-spin w-4 h-4" /></td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-gray-400">No fee schedules yet.</td></tr>}
+            {items.map(f => (
+              <tr key={f.fee_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2">
+                  <div className="font-medium">{f.practitioner_name || f.specialty_display || '—'}</div>
+                  {f.specialty_code && <div className="text-xs text-gray-400">SNOMED {f.specialty_code}</div>}
+                </td>
+                <td className="px-3 py-2 text-right">₱{Number(f.consultation_fee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-2 text-right">₱{Number(f.professional_fee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${f.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {f.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-3 py-2 flex gap-2 justify-end">
+                  <button onClick={() => openEdit(f)} className="text-blue-600 hover:text-blue-800"><Pencil className="w-3 h-3" /></button>
+                  <button onClick={() => remove(f.fee_id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-3 h-3" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── Lab Test Pricing ─────────────────────────────────────────────────────────
+interface LabTest { test_id: number; code: string; name: string; category: string; base_price: string; turnaround_time: string; unit: string; }
+const emptyLab = { code: '', name: '', category: '', base_price: '0', turnaround_time: '', unit: '' };
+const LAB_API = `${import.meta.env.LOCAL_8000 || ''}/api/laboratory`;
+
+const LabTestPricingSection: React.FC = () => {
+  const { toast } = useToast();
+  const [items, setItems] = useState<LabTest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<LabTest | null>(null);
+  const [form, setForm] = useState({ ...emptyLab });
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${LAB_API}/test-definitions/`, { headers: authHeaders() });
+      setItems((data.results ?? data) as LabTest[]);
+    } catch { toast({ title: 'Failed to load lab tests', variant: 'destructive' }); }
+    finally { setLoading(false); }
+  }, [toast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setEditing(null); setForm({ ...emptyLab }); setShowForm(true); };
+  const openEdit = (t: LabTest) => {
+    setEditing(t);
+    setForm({ code: t.code, name: t.name, category: t.category, base_price: t.base_price, turnaround_time: t.turnaround_time || '', unit: t.unit || '' });
+    setShowForm(true);
+  };
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        await axios.patch(`${LAB_API}/test-definitions/${editing.test_id}/`, form, { headers: authHeaders() });
+        toast({ title: 'Lab test updated.' });
+      } else {
+        // LabTestDefinition inherits identifier+status as required non-nullable fields
+        // from FHIRResourceModel — auto-populate them so the create succeeds.
+        const createPayload = {
+          ...form,
+          status: 'active',
+          identifier: `lab-${form.code.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`,
+        };
+        await axios.post(`${LAB_API}/test-definitions/`, createPayload, { headers: authHeaders() });
+        toast({ title: 'Lab test created.' });
+      }
+      setShowForm(false); load();
+    } catch (e: any) { toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' }); }
+    finally { setSaving(false); }
+  };
+  const remove = async (id: number) => {
+    if (!confirm('Delete this lab test?')) return;
+    try { await axios.delete(`${LAB_API}/test-definitions/${id}/`, { headers: authHeaders() }); toast({ title: 'Deleted.' }); load(); }
+    catch { toast({ title: 'Delete failed.', variant: 'destructive' }); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Lab Test Catalog & Pricing</CardTitle>
+          <Button size="sm" onClick={openAdd} className="flex items-center gap-1"><Plus className="w-3 h-3" /> Add</Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {showForm && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <FormRow label="Code (SKU)">
+              <Input value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="e.g. LAB-CBC-001" />
+            </FormRow>
+            <FormRow label="Test Name">
+              <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Complete Blood Count" />
+            </FormRow>
+            <FormRow label="Category">
+              <Input value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} placeholder="e.g. Hematology" />
+            </FormRow>
+            <FormRow label="Base Price (PHP)">
+              <Input type="number" value={form.base_price} onChange={e => setForm(p => ({ ...p, base_price: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Turnaround Time">
+              <Input value={form.turnaround_time} onChange={e => setForm(p => ({ ...p, turnaround_time: e.target.value }))} placeholder="e.g. 4 hours" />
+            </FormRow>
+            <FormRow label="Unit">
+              <Input value={form.unit} onChange={e => setForm(p => ({ ...p, unit: e.target.value }))} placeholder="e.g. mg/dL" />
+            </FormRow>
+            <div className="md:col-span-3 flex gap-2">
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+                {editing ? 'Update' : 'Create'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th className="px-3 py-2 text-left">Code</th>
+              <th className="px-3 py-2 text-left">Name</th>
+              <th className="px-3 py-2 text-left">Category</th>
+              <th className="px-3 py-2 text-right">Base Price</th>
+              <th className="px-3 py-2 text-left">TAT</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {loading && <tr><td colSpan={6} className="py-6 text-center"><Loader2 className="inline animate-spin w-4 h-4" /></td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-gray-400">No lab tests yet.</td></tr>}
+            {items.map(t => (
+              <tr key={t.test_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-mono text-xs">{t.code}</td>
+                <td className="px-3 py-2">{t.name}</td>
+                <td className="px-3 py-2 text-gray-500 text-xs">{t.category}</td>
+                <td className="px-3 py-2 text-right font-medium">₱{Number(t.base_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-2 text-xs text-gray-500">{t.turnaround_time || '—'}</td>
+                <td className="px-3 py-2 flex gap-2 justify-end">
+                  <button onClick={() => openEdit(t)} className="text-blue-600 hover:text-blue-800"><Pencil className="w-3 h-3" /></button>
+                  <button onClick={() => remove(t.test_id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-3 h-3" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── Procedure Pricing ────────────────────────────────────────────────────────
+interface ProcedurePrice { price_id: number; code: string; name: string; category: string; base_price: string; description: string; is_active: boolean; }
+const emptyProc = { code: '', name: '', category: 'surgical', base_price: '0', description: '', is_active: true };
+const PROC_CATEGORIES = ['surgical', 'diagnostic', 'therapeutic', 'rehabilitative', 'preventive', 'other'];
+
+const ProcedurePricingSection: React.FC = () => {
+  const { toast } = useToast();
+  const [items, setItems] = useState<ProcedurePrice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<ProcedurePrice | null>(null);
+  const [form, setForm] = useState({ ...emptyProc });
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${ACCOUNTS_API}/admin/procedures/`, { headers: authHeaders() });
+      setItems(data.data as ProcedurePrice[]);
+    } catch { toast({ title: 'Failed to load procedures', variant: 'destructive' }); }
+    finally { setLoading(false); }
+  }, [toast]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setEditing(null); setForm({ ...emptyProc }); setShowForm(true); };
+  const openEdit = (p: ProcedurePrice) => {
+    setEditing(p);
+    setForm({ code: p.code, name: p.name, category: p.category || 'surgical', base_price: p.base_price, description: p.description || '', is_active: p.is_active });
+    setShowForm(true);
+  };
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        await axios.put(`${ACCOUNTS_API}/admin/procedures/${editing.price_id}/`, form, { headers: authHeaders() });
+        toast({ title: 'Procedure updated.' });
+      } else {
+        await axios.post(`${ACCOUNTS_API}/admin/procedures/`, form, { headers: authHeaders() });
+        toast({ title: 'Procedure created.' });
+      }
+      setShowForm(false); load();
+    } catch (e: any) { toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' }); }
+    finally { setSaving(false); }
+  };
+  const remove = async (id: number) => {
+    if (!confirm('Delete this procedure?')) return;
+    try { await axios.delete(`${ACCOUNTS_API}/admin/procedures/${id}/`, { headers: authHeaders() }); toast({ title: 'Deleted.' }); load(); }
+    catch { toast({ title: 'Delete failed.', variant: 'destructive' }); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Procedure Price Catalog</CardTitle>
+          <Button size="sm" onClick={openAdd} className="flex items-center gap-1"><Plus className="w-3 h-3" /> Add</Button>
+        </div>
+        <CardDescription className="text-xs">Maps to ICD-10 PCS / CPT procedure codes used in Encounter records.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {showForm && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <FormRow label="Code (ICD-10 PCS / CPT)">
+              <Input value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="e.g. 0BH17EZ" />
+            </FormRow>
+            <FormRow label="Procedure Name">
+              <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Appendectomy" />
+            </FormRow>
+            <FormRow label="Category">
+              <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {PROC_CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+              </select>
+            </FormRow>
+            <FormRow label="Base Price (PHP)">
+              <Input type="number" value={form.base_price} onChange={e => setForm(p => ({ ...p, base_price: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Description" span2>
+              <Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Optional notes" />
+            </FormRow>
+            <div className="flex items-center gap-2 mt-2">
+              <Switch checked={form.is_active} onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))} />
+              <Label>Active</Label>
+            </div>
+            <div className="md:col-span-3 flex gap-2">
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
+                {editing ? 'Update' : 'Create'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </div>
+        )}
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th className="px-3 py-2 text-left">Code</th>
+              <th className="px-3 py-2 text-left">Name</th>
+              <th className="px-3 py-2 text-left">Category</th>
+              <th className="px-3 py-2 text-right">Base Price</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {loading && <tr><td colSpan={6} className="py-6 text-center"><Loader2 className="inline animate-spin w-4 h-4" /></td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-gray-400">No procedures yet.</td></tr>}
+            {items.map(p => (
+              <tr key={p.price_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-mono text-xs">{p.code}</td>
+                <td className="px-3 py-2">{p.name}</td>
+                <td className="px-3 py-2 text-xs capitalize text-gray-500">{p.category}</td>
+                <td className="px-3 py-2 text-right font-medium">₱{Number(p.base_price).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td className="px-3 py-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {p.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-3 py-2 flex gap-2 justify-end">
+                  <button onClick={() => openEdit(p)} className="text-blue-600 hover:text-blue-800"><Pencil className="w-3 h-3" /></button>
+                  <button onClick={() => remove(p.price_id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-3 h-3" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── Pricing Tab Wrapper ───────────────────────────────────────────────────────
+const PricingTab: React.FC = () => (
+  <div className="space-y-6">
+    <p className="text-sm text-gray-500">
+      Configure pricing and rates used across billing, admission, and laboratory modules.
+      Changes apply to new invoices — existing invoices are not retroactively updated.
+    </p>
+    <RoomTypesSection />
+    <DoctorFeesSection />
+    <LabTestPricingSection />
+    <ProcedurePricingSection />
+  </div>
+);
+
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN ADMIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const AdminPage: React.FC = () => (
@@ -754,6 +1616,12 @@ const AdminPage: React.FC = () => (
         <TabsTrigger value="hospital" className="flex items-center gap-2 flex-shrink-0">
           <Building2 className="w-4 h-4" /> Hospital Profile
         </TabsTrigger>
+        <TabsTrigger value="facilities" className="flex items-center gap-2 flex-shrink-0">
+          <MapPin className="w-4 h-4" /> Facilities
+        </TabsTrigger>
+        <TabsTrigger value="pricing" className="flex items-center gap-2 flex-shrink-0">
+          <DollarSign className="w-4 h-4" /> Pricing & Rates
+        </TabsTrigger>
         <TabsTrigger value="users" className="flex items-center gap-2 flex-shrink-0">
           <Users className="w-4 h-4" /> Users
         </TabsTrigger>
@@ -766,6 +1634,8 @@ const AdminPage: React.FC = () => (
       </TabsList>
 
       <TabsContent value="hospital"><HospitalProfileTab /></TabsContent>
+      <TabsContent value="facilities"><FacilitiesTab /></TabsContent>
+      <TabsContent value="pricing"><PricingTab /></TabsContent>
       <TabsContent value="users"><UserManagementTab /></TabsContent>
       <TabsContent value="roles"><RoleModulesTab /></TabsContent>
       <TabsContent value="fhir"><FHIROrgTab /></TabsContent>

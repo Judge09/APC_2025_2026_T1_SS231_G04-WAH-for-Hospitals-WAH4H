@@ -349,3 +349,103 @@ class RoleModuleConfig(models.Model):
 
     def __str__(self):
         return f"RoleModuleConfig({self.role})"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADMIN PERSONALIZATION MODELS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class RoomTypeDefinition(models.Model):
+    """
+    Admin-configurable room type catalog with daily rates.
+    Used by billing to populate room/accommodation charges.
+    """
+    ROOM_TYPE_CODES = [
+        ('ICU', 'Intensive Care Unit (ICU)'),
+        ('NICU', 'Neonatal ICU (NICU)'),
+        ('PRIVATE', 'Private Room'),
+        ('SEMI_PRIVATE', 'Semi-Private Room'),
+        ('WARD', 'General Ward'),
+        ('ER', 'Emergency Room'),
+        ('OR', 'Operating Room'),
+        ('RECOVERY', 'Recovery Room'),
+        ('ISOLATION', 'Isolation Room'),
+        ('OTHER', 'Other'),
+    ]
+
+    room_type_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    daily_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'room_type_definition'
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class DoctorFeeSchedule(models.Model):
+    """
+    Admin-configurable professional fee schedule per practitioner or specialty.
+    Fortress pattern: practitioner_id is a BigIntegerField (no FK).
+    Either practitioner_id or specialty_code must be set (not both required).
+    """
+    fee_id = models.AutoField(primary_key=True)
+    practitioner_id = models.BigIntegerField(db_index=True, null=True, blank=True,
+        help_text="Links to accounts.Practitioner.practitioner_id (Fortress pattern)")
+    practitioner_name = models.CharField(max_length=255, null=True, blank=True,
+        help_text="Cached display name for the practitioner")
+    specialty_code = models.CharField(max_length=100, null=True, blank=True,
+        help_text="SNOMED CT specialty code (e.g. 394814009 = General practice)")
+    specialty_display = models.CharField(max_length=255, null=True, blank=True)
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    professional_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'doctor_fee_schedule'
+        ordering = ['practitioner_name', 'specialty_display']
+
+    def __str__(self):
+        label = self.practitioner_name or self.specialty_display or f"Fee #{self.fee_id}"
+        return label
+
+
+class ProcedurePriceConfig(models.Model):
+    """
+    Admin-configurable procedure price catalog.
+    Code maps to ICD-10 PCS or CPT procedure codes stored in Encounter.Procedure.
+    """
+    PROCEDURE_CATEGORIES = [
+        ('surgical', 'Surgical'),
+        ('diagnostic', 'Diagnostic'),
+        ('therapeutic', 'Therapeutic'),
+        ('rehabilitative', 'Rehabilitative'),
+        ('preventive', 'Preventive'),
+        ('other', 'Other'),
+    ]
+
+    price_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, null=True, blank=True, choices=PROCEDURE_CATEGORIES)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    description = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'procedure_price_config'
+        ordering = ['category', 'code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"

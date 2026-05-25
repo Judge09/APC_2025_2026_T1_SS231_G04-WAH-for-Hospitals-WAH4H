@@ -97,7 +97,14 @@
       "Bash(jq -r '.url' docs/fhir/resources/structure-definitions/extensions/*.json)",
       "Bash(jq -r '.uniqueId[].value' /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/docs/fhir/resources/naming-systems/*.json)",
       "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H add wah4h-backend/core/fhir_utils.py wah4h-backend/patients/api/views.py wah4h-backend/patients/wah4pc.py)",
-      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H add wah4h-backend/patients/wah4pc.py wah4h-backend/fhir_roundtrip_test.py wah4h-backend/samples/fhir/)"
+      "Bash(git -C /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H add wah4h-backend/patients/wah4pc.py wah4h-backend/fhir_roundtrip_test.py wah4h-backend/samples/fhir/)",
+      "Bash(pip3 show *)",
+      "Bash(find /usr /home /opt -name \"django-admin\" 2>/dev/null | head -5; ls /workspaces/APC_2025_2026_T1_SS231_G04-WAH-for-Hospitals-WAH4H/wah4h-backend/)",
+      "Read(//usr/**)",
+      "Bash(pip3 install *)",
+      "Bash(python3 manage.py makemigrations accounts)",
+      "Bash(npm install *)",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   }
 }

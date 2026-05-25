@@ -33,7 +33,10 @@ from .serializers import PractitionerSerializer
 
 from .emails import send_otp_email
 
-from .models import Organization, Practitioner, RoleModuleConfig
+from .models import (
+    Organization, Practitioner, RoleModuleConfig,
+    RoomTypeDefinition, DoctorFeeSchedule, ProcedurePriceConfig, Location,
+)
 from .serializers import (
     OrganizationSerializer,
     PractitionerSignupSerializer,
@@ -48,6 +51,10 @@ from .serializers import (
     HospitalSettingsSerializer,
     AdminUserSerializer,
     RoleModuleConfigSerializer,
+    RoomTypeDefinitionSerializer,
+    DoctorFeeScheduleSerializer,
+    ProcedurePriceConfigSerializer,
+    LocationAdminSerializer,
     generate_otp
 )
 
@@ -1006,3 +1013,259 @@ class FHIROrganizationAPIView(APIView):
 
         from patients.wah4pc import organization_to_fhir
         return Response(organization_to_fhir(org), status=status.HTTP_200_OK)
+
+
+# ============================================================================
+# ADMIN: ROOM TYPE DEFINITIONS
+# ============================================================================
+
+class AdminRoomTypeListCreateAPIView(APIView):
+    """
+    GET  /api/accounts/admin/room-types/   - list all room types
+    POST /api/accounts/admin/room-types/   - create a room type
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        qs = RoomTypeDefinition.objects.all()
+        serializer = RoomTypeDefinitionSerializer(qs, many=True)
+        return success_response('Room types retrieved.', data=serializer.data)
+
+    def post(self, request):
+        serializer = RoomTypeDefinitionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Room type created.', data=serializer.data,
+                                    http_status=status.HTTP_201_CREATED)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+class AdminRoomTypeDetailAPIView(APIView):
+    """
+    GET    /api/accounts/admin/room-types/<pk>/
+    PUT    /api/accounts/admin/room-types/<pk>/
+    DELETE /api/accounts/admin/room-types/<pk>/
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get(self, pk):
+        try:
+            return RoomTypeDefinition.objects.get(pk=pk)
+        except RoomTypeDefinition.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Room type not found.', http_status=status.HTTP_404_NOT_FOUND)
+        return success_response('Room type retrieved.', data=RoomTypeDefinitionSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Room type not found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = RoomTypeDefinitionSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Room type updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+    def delete(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Room type not found.', http_status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return success_response('Room type deleted.')
+
+
+# ============================================================================
+# ADMIN: DOCTOR FEE SCHEDULES
+# ============================================================================
+
+class AdminDoctorFeeListCreateAPIView(APIView):
+    """
+    GET  /api/accounts/admin/doctor-fees/   - list all fee schedules
+    POST /api/accounts/admin/doctor-fees/   - create a fee schedule
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        qs = DoctorFeeSchedule.objects.all()
+        serializer = DoctorFeeScheduleSerializer(qs, many=True)
+        return success_response('Doctor fee schedules retrieved.', data=serializer.data)
+
+    def post(self, request):
+        serializer = DoctorFeeScheduleSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Fee schedule created.', data=serializer.data,
+                                    http_status=status.HTTP_201_CREATED)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+class AdminDoctorFeeDetailAPIView(APIView):
+    """
+    GET    /api/accounts/admin/doctor-fees/<pk>/
+    PUT    /api/accounts/admin/doctor-fees/<pk>/
+    DELETE /api/accounts/admin/doctor-fees/<pk>/
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get(self, pk):
+        try:
+            return DoctorFeeSchedule.objects.get(pk=pk)
+        except DoctorFeeSchedule.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Fee schedule not found.', http_status=status.HTTP_404_NOT_FOUND)
+        return success_response('Fee schedule retrieved.', data=DoctorFeeScheduleSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Fee schedule not found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = DoctorFeeScheduleSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Fee schedule updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+    def delete(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Fee schedule not found.', http_status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return success_response('Fee schedule deleted.')
+
+
+# ============================================================================
+# ADMIN: PROCEDURE PRICE CONFIGS
+# ============================================================================
+
+class AdminProcedurePriceListCreateAPIView(APIView):
+    """
+    GET  /api/accounts/admin/procedures/   - list all procedure prices
+    POST /api/accounts/admin/procedures/   - create a procedure price
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        qs = ProcedurePriceConfig.objects.all()
+        serializer = ProcedurePriceConfigSerializer(qs, many=True)
+        return success_response('Procedure prices retrieved.', data=serializer.data)
+
+    def post(self, request):
+        serializer = ProcedurePriceConfigSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Procedure price created.', data=serializer.data,
+                                    http_status=status.HTTP_201_CREATED)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+class AdminProcedurePriceDetailAPIView(APIView):
+    """
+    GET    /api/accounts/admin/procedures/<pk>/
+    PUT    /api/accounts/admin/procedures/<pk>/
+    DELETE /api/accounts/admin/procedures/<pk>/
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get(self, pk):
+        try:
+            return ProcedurePriceConfig.objects.get(pk=pk)
+        except ProcedurePriceConfig.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Procedure price not found.', http_status=status.HTTP_404_NOT_FOUND)
+        return success_response('Procedure price retrieved.', data=ProcedurePriceConfigSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Procedure price not found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = ProcedurePriceConfigSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Procedure price updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+    def delete(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Procedure price not found.', http_status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return success_response('Procedure price deleted.')
+
+
+# ============================================================================
+# ADMIN: LOCATION / FACILITIES MANAGEMENT
+# ============================================================================
+
+class AdminLocationListCreateAPIView(APIView):
+    """
+    GET  /api/accounts/admin/locations/   - list all locations
+    POST /api/accounts/admin/locations/   - create a location
+    Supports ?physical_type=building|ward|room|bed filter.
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        qs = Location.objects.select_related('part_of_location').all()
+        physical_type = request.query_params.get('physical_type')
+        if physical_type:
+            qs = qs.filter(physical_type_code__iexact=physical_type)
+        serializer = LocationAdminSerializer(qs, many=True)
+        return success_response('Locations retrieved.', data=serializer.data)
+
+    def post(self, request):
+        serializer = LocationAdminSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Location created.', data=serializer.data,
+                                    http_status=status.HTTP_201_CREATED)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+
+class AdminLocationDetailAPIView(APIView):
+    """
+    GET    /api/accounts/admin/locations/<pk>/
+    PUT    /api/accounts/admin/locations/<pk>/
+    DELETE /api/accounts/admin/locations/<pk>/
+    """
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def _get(self, pk):
+        try:
+            return Location.objects.select_related('part_of_location').get(pk=pk)
+        except Location.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Location not found.', http_status=status.HTTP_404_NOT_FOUND)
+        return success_response('Location retrieved.', data=LocationAdminSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Location not found.', http_status=status.HTTP_404_NOT_FOUND)
+        serializer = LocationAdminSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return success_response('Location updated.', data=serializer.data)
+        return error_response('Validation failed.', errors=serializer.errors)
+
+    def delete(self, request, pk):
+        obj = self._get(pk)
+        if not obj:
+            return error_response('Location not found.', http_status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return success_response('Location deleted.')

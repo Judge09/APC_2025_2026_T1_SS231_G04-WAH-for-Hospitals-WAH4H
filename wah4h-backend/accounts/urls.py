@@ -31,6 +31,14 @@ from .views import (
     AdminUserDetailAPIView,
     AdminRoleModuleConfigAPIView,
     FHIROrganizationAPIView,
+    AdminRoomTypeListCreateAPIView,
+    AdminRoomTypeDetailAPIView,
+    AdminDoctorFeeListCreateAPIView,
+    AdminDoctorFeeDetailAPIView,
+    AdminProcedurePriceListCreateAPIView,
+    AdminProcedurePriceDetailAPIView,
+    AdminLocationListCreateAPIView,
+    AdminLocationDetailAPIView,
 )
 
 urlpatterns = [
@@ -124,5 +132,29 @@ urlpatterns = [
     # ========================================================================
     path('fhir/Organization/', FHIROrganizationAPIView.as_view(), name='fhir-organization'),
     path('fhir/Organization/<int:pk>/', FHIROrganizationAPIView.as_view(), name='fhir-organization-detail'),
+
+    # ========================================================================
+    # ADMIN: ROOM TYPES & RATES
+    # ========================================================================
+    path('admin/room-types/', AdminRoomTypeListCreateAPIView.as_view(), name='admin-room-type-list'),
+    path('admin/room-types/<int:pk>/', AdminRoomTypeDetailAPIView.as_view(), name='admin-room-type-detail'),
+
+    # ========================================================================
+    # ADMIN: DOCTOR FEE SCHEDULES
+    # ========================================================================
+    path('admin/doctor-fees/', AdminDoctorFeeListCreateAPIView.as_view(), name='admin-doctor-fee-list'),
+    path('admin/doctor-fees/<int:pk>/', AdminDoctorFeeDetailAPIView.as_view(), name='admin-doctor-fee-detail'),
+
+    # ========================================================================
+    # ADMIN: PROCEDURE PRICING
+    # ========================================================================
+    path('admin/procedures/', AdminProcedurePriceListCreateAPIView.as_view(), name='admin-procedure-list'),
+    path('admin/procedures/<int:pk>/', AdminProcedurePriceDetailAPIView.as_view(), name='admin-procedure-detail'),
+
+    # ========================================================================
+    # ADMIN: FACILITIES (LOCATIONS)
+    # ========================================================================
+    path('admin/locations/', AdminLocationListCreateAPIView.as_view(), name='admin-location-list'),
+    path('admin/locations/<int:pk>/', AdminLocationDetailAPIView.as_view(), name='admin-location-detail'),
 ]
 
