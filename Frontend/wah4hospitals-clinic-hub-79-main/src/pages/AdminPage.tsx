@@ -749,9 +749,9 @@ const FormRow: React.FC<{ label: string; children: React.ReactNode; span2?: bool
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FACILITIES TAB — Location (Building / Ward / Room / Bed) CRUD
+// FACILITIES TAB — Hierarchical Building → Ward → Room → Bed manager
 // ─────────────────────────────────────────────────────────────────────────────
-interface LocationRecord {
+interface LocRecord {
   location_id: number;
   name: string;
   alias: string;
@@ -761,264 +761,401 @@ interface LocationRecord {
   status: string;
   operational_status: string;
   telecom: string;
-  address_line: string;
   part_of_location_id: number | null;
   part_of_name: string | null;
-  hours_of_operation_days: string;
-  opening_time: string;
-  closing_time: string;
 }
+interface RoomTypeCatalog { room_type_id: number; code: string; name: string; daily_rate: string; is_active: boolean; }
 
-const PHYSICAL_TYPES = [
-  { code: 'bu', display: 'Building' },
-  { code: 'wi', display: 'Wing' },
-  { code: 'wa', display: 'Ward' },
-  { code: 'ro', display: 'Room' },
-  { code: 'bd', display: 'Bed' },
-  { code: 've', display: 'Vehicle' },
-  { code: 'ho', display: 'House' },
-  { code: 'ca', display: 'Cabinet' },
-  { code: 'rd', display: 'Road' },
-  { code: 'area', display: 'Area' },
+type FacLevel = 'bu' | 'wa' | 'ro' | 'bd';
+
+const FAC_LEVELS: { code: FacLevel; label: string; parentLabel: string }[] = [
+  { code: 'bu', label: 'Buildings',  parentLabel: '' },
+  { code: 'wa', label: 'Wards',      parentLabel: 'Building' },
+  { code: 'ro', label: 'Rooms',      parentLabel: 'Ward' },
+  { code: 'bd', label: 'Beds',       parentLabel: 'Room' },
 ];
 
-const LOCATION_STATUSES = [
-  { code: 'active', display: 'Active' },
-  { code: 'suspended', display: 'Suspended' },
-  { code: 'inactive', display: 'Inactive' },
+const OPS_STATUSES = [
+  { code: 'O', label: 'Operational' },
+  { code: 'C', label: 'Closed' },
+  { code: 'H', label: 'Housekeeping' },
+  { code: 'U', label: 'Unoccupied' },
+  { code: 'K', label: 'Contaminated' },
+  { code: 'I', label: 'Isolated' },
 ];
 
-const OPERATIONAL_STATUSES = [
-  { code: 'O', display: 'Operational' },
-  { code: 'C', display: 'Closed' },
-  { code: 'H', display: 'Housekeeping' },
-  { code: 'U', display: 'Unoccupied' },
-  { code: 'K', display: 'Contaminated' },
-  { code: 'I', display: 'Isolated' },
-];
-
-const emptyLocation: Omit<LocationRecord, 'location_id' | 'part_of_name'> = {
-  name: '', alias: '', description: '', physical_type_code: 'ro',
-  type_code: '', status: 'active', operational_status: 'O',
-  telecom: '', address_line: '', part_of_location_id: null,
-  hours_of_operation_days: '', opening_time: '', closing_time: '',
-};
+const selectCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 const FacilitiesTab: React.FC = () => {
   const { toast } = useToast();
-  const [locations, setLocations] = useState<LocationRecord[]>([]);
+
+  const [level, setLevel] = useState<FacLevel>('bu');
+  const [items, setItems] = useState<LocRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<LocationRecord | null>(null);
-  const [form, setForm] = useState<typeof emptyLocation>({ ...emptyLocation });
+  const [editing, setEditing] = useState<LocRecord | null>(null);
   const [saving, setSaving] = useState(false);
-  const [filterType, setFilterType] = useState('');
 
-  const load = useCallback(async () => {
+  // parent lookups for dropdowns
+  const [buildings, setBuildings] = useState<LocRecord[]>([]);
+  const [wards, setWards] = useState<LocRecord[]>([]);
+  const [rooms, setRooms] = useState<LocRecord[]>([]);
+  const [roomTypes, setRoomTypes] = useState<RoomTypeCatalog[]>([]);
+
+  // filter by parent
+  const [filterParent, setFilterParent] = useState<number | ''>('');
+
+  // form state
+  const [fName, setFName] = useState('');
+  const [fAlias, setFAlias] = useState('');
+  const [fDesc, setFDesc] = useState('');
+  const [fParent, setFParent] = useState<number | ''>('');
+  const [fRoomType, setFRoomType] = useState('');   // type_code = RoomTypeDefinition.code
+  const [fStatus, setFStatus] = useState('active');
+  const [fOps, setFOps] = useState('O');
+  const [fTelecom, setFTelecom] = useState('');
+
+  const resetForm = () => {
+    setFName(''); setFAlias(''); setFDesc('');
+    setFParent(''); setFRoomType('');
+    setFStatus('active'); setFOps('O'); setFTelecom('');
+    setEditing(null);
+  };
+
+  const loadLookups = useCallback(async () => {
+    const h = { headers: authHeaders() };
+    const [bRes, wRes, rRes, rtRes] = await Promise.allSettled([
+      axios.get(`${ACCOUNTS_API}/admin/locations/?physical_type=bu`, h),
+      axios.get(`${ACCOUNTS_API}/admin/locations/?physical_type=wa`, h),
+      axios.get(`${ACCOUNTS_API}/admin/locations/?physical_type=ro`, h),
+      axios.get(`${ACCOUNTS_API}/admin/room-types/`, h),
+    ]);
+    if (bRes.status === 'fulfilled') setBuildings(bRes.value.data.data ?? []);
+    if (wRes.status === 'fulfilled') setWards(wRes.value.data.data ?? []);
+    if (rRes.status === 'fulfilled') setRooms(rRes.value.data.data ?? []);
+    if (rtRes.status === 'fulfilled') setRoomTypes(rtRes.value.data.data ?? []);
+  }, []);
+
+  const loadItems = useCallback(async () => {
     setLoading(true);
     try {
-      const params = filterType ? `?physical_type=${filterType}` : '';
-      const { data } = await axios.get(`${ACCOUNTS_API}/admin/locations/${params}`, { headers: authHeaders() });
-      setLocations(data.data as LocationRecord[]);
+      const params = new URLSearchParams({ physical_type: level });
+      if (filterParent !== '') params.append('part_of_location_id', String(filterParent));
+      const { data } = await axios.get(`${ACCOUNTS_API}/admin/locations/?${params}`, { headers: authHeaders() });
+      // client-side filter since the API filters by physical_type but not by parent yet
+      const all: LocRecord[] = data.data ?? [];
+      setItems(filterParent !== '' ? all.filter(l => l.part_of_location_id === filterParent) : all);
     } catch {
-      toast({ title: 'Failed to load locations', variant: 'destructive' });
+      toast({ title: 'Failed to load', variant: 'destructive' });
     } finally { setLoading(false); }
-  }, [toast, filterType]);
+  }, [level, filterParent, toast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadLookups(); }, [loadLookups]);
+  useEffect(() => { loadItems(); setShowForm(false); resetForm(); }, [loadItems]);
 
-  const openAdd = () => { setEditing(null); setForm({ ...emptyLocation }); setShowForm(true); };
-  const openEdit = (loc: LocationRecord) => {
+  const parentOptions = () => {
+    if (level === 'wa') return buildings;
+    if (level === 'ro') return wards;
+    if (level === 'bd') return rooms;
+    return [];
+  };
+
+  const filterOptions = () => {
+    if (level === 'wa') return buildings;
+    if (level === 'ro') return wards;
+    if (level === 'bd') return rooms;
+    return [];
+  };
+
+  const openAdd = () => { resetForm(); setShowForm(true); };
+  const openEdit = (loc: LocRecord) => {
     setEditing(loc);
-    setForm({
-      name: loc.name || '', alias: loc.alias || '', description: loc.description || '',
-      physical_type_code: loc.physical_type_code || 'ro', type_code: loc.type_code || '',
-      status: loc.status || 'active', operational_status: loc.operational_status || 'O',
-      telecom: loc.telecom || '', address_line: loc.address_line || '',
-      part_of_location_id: loc.part_of_location_id,
-      hours_of_operation_days: loc.hours_of_operation_days || '',
-      opening_time: loc.opening_time || '', closing_time: loc.closing_time || '',
-    });
+    setFName(loc.name || '');
+    setFAlias(loc.alias || '');
+    setFDesc(loc.description || '');
+    setFParent(loc.part_of_location_id ?? '');
+    setFRoomType(loc.type_code || '');
+    setFStatus(loc.status || 'active');
+    setFOps(loc.operational_status || 'O');
+    setFTelecom(loc.telecom || '');
     setShowForm(true);
   };
 
   const save = async () => {
+    if (!fName.trim()) { toast({ title: 'Name is required.', variant: 'destructive' }); return; }
+    if (level !== 'bu' && fParent === '') { toast({ title: 'Parent location is required.', variant: 'destructive' }); return; }
+
     setSaving(true);
+    const payload: Record<string, unknown> = {
+      name: fName.trim(),
+      alias: fAlias.trim(),
+      description: fDesc.trim(),
+      physical_type_code: level,
+      type_code: fRoomType || '',
+      status: fStatus,
+      operational_status: fOps,
+      telecom: fTelecom.trim(),
+      part_of_location_id: fParent !== '' ? Number(fParent) : null,
+    };
+
     try {
       if (editing) {
-        await axios.put(`${ACCOUNTS_API}/admin/locations/${editing.location_id}/`, form, { headers: authHeaders() });
-        toast({ title: 'Location updated.' });
+        await axios.put(`${ACCOUNTS_API}/admin/locations/${editing.location_id}/`, payload, { headers: authHeaders() });
+        toast({ title: 'Updated successfully.' });
       } else {
-        await axios.post(`${ACCOUNTS_API}/admin/locations/`, form, { headers: authHeaders() });
-        toast({ title: 'Location created.' });
+        await axios.post(`${ACCOUNTS_API}/admin/locations/`, payload, { headers: authHeaders() });
+        toast({ title: 'Created successfully.' });
       }
       setShowForm(false);
-      load();
+      resetForm();
+      loadItems();
+      loadLookups();
     } catch (e: any) {
       toast({ title: e?.response?.data?.message || 'Save failed.', variant: 'destructive' });
     } finally { setSaving(false); }
   };
 
-  const remove = async (id: number) => {
-    if (!confirm('Delete this location?')) return;
+  const remove = async (id: number, name: string) => {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
       await axios.delete(`${ACCOUNTS_API}/admin/locations/${id}/`, { headers: authHeaders() });
-      toast({ title: 'Location deleted.' });
-      load();
+      toast({ title: 'Deleted.' });
+      loadItems();
+      loadLookups();
     } catch {
-      toast({ title: 'Delete failed.', variant: 'destructive' });
+      toast({ title: 'Delete failed — item may still be in use.', variant: 'destructive' });
     }
   };
 
-  const fi = (key: keyof typeof emptyLocation) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => setForm(p => ({ ...p, [key]: e.target.value }));
+  const selectedRoomType = roomTypes.find(rt => rt.code === fRoomType);
+  const levelMeta = FAC_LEVELS.find(l => l.code === level)!;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <select
-            className="border rounded px-3 py-1.5 text-sm"
-            value={filterType}
-            onChange={e => setFilterType(e.target.value)}
+      {/* Level Selector */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        {FAC_LEVELS.map(l => (
+          <button
+            key={l.code}
+            onClick={() => { setLevel(l.code); setFilterParent(''); }}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              level === l.code ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <option value="">All Types</option>
-            {PHYSICAL_TYPES.map(t => <option key={t.code} value={t.code}>{t.display}</option>)}
-          </select>
-          <Button variant="outline" size="sm" onClick={load} className="flex items-center gap-1">
+            {l.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {filterOptions().length > 0 && (
+            <select
+              className="border rounded px-3 py-1.5 text-sm"
+              value={filterParent}
+              onChange={e => setFilterParent(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value="">All {levelMeta.parentLabel}s</option>
+              {filterOptions().map(p => <option key={p.location_id} value={p.location_id}>{p.name}</option>)}
+            </select>
+          )}
+          <Button variant="outline" size="sm" onClick={loadItems} className="flex items-center gap-1">
             <RefreshCw className="w-3 h-3" /> Refresh
           </Button>
         </div>
         <Button size="sm" onClick={openAdd} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Add Location
+          <Plus className="w-4 h-4" /> Add {levelMeta.label.replace(/s$/, '')}
         </Button>
       </div>
 
+      {/* Inline Add / Edit Form */}
       {showForm && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader className="pb-2">
+        <Card className="border-blue-200 bg-blue-50/60">
+          <CardHeader className="pb-2 pt-4 px-4">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-base">{editing ? 'Edit Location' : 'New Location'}</CardTitle>
-              <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-gray-500" /></button>
+              <CardTitle className="text-sm font-semibold text-blue-800">
+                {editing ? `Edit ${levelMeta.label.replace(/s$/, '')}` : `New ${levelMeta.label.replace(/s$/, '')}`}
+              </CardTitle>
+              <button onClick={() => { setShowForm(false); resetForm(); }}>
+                <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
             </div>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormRow label="Name">
-              <Input value={form.name} onChange={fi('name')} placeholder="e.g. Room 201" />
-            </FormRow>
-            <FormRow label="Alias / Short Name">
-              <Input value={form.alias} onChange={fi('alias')} placeholder="e.g. R201" />
-            </FormRow>
-            <FormRow label="Physical Type">
-              <select
-                value={form.physical_type_code}
-                onChange={e => setForm(p => ({ ...p, physical_type_code: e.target.value }))}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {PHYSICAL_TYPES.map(t => <option key={t.code} value={t.code}>{t.display}</option>)}
-              </select>
-            </FormRow>
-            <FormRow label="Status">
-              <select
-                value={form.status}
-                onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {LOCATION_STATUSES.map(s => <option key={s.code} value={s.code}>{s.display}</option>)}
-              </select>
-            </FormRow>
-            <FormRow label="Operational Status">
-              <select
-                value={form.operational_status}
-                onChange={e => setForm(p => ({ ...p, operational_status: e.target.value }))}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {OPERATIONAL_STATUSES.map(s => <option key={s.code} value={s.code}>{s.display}</option>)}
-              </select>
-            </FormRow>
-            <FormRow label="Telecom">
-              <Input value={form.telecom} onChange={fi('telecom')} placeholder="+63 2 8XXX XXXX" />
-            </FormRow>
-            <FormRow label="Parent Location ID" >
-              <Input
-                type="number"
-                value={form.part_of_location_id ?? ''}
-                onChange={e => setForm(p => ({ ...p, part_of_location_id: e.target.value ? Number(e.target.value) : null }))}
-                placeholder="ID of parent building/ward"
-              />
-            </FormRow>
-            <FormRow label="Address Line">
-              <Input value={form.address_line} onChange={fi('address_line')} placeholder="Floor / wing / corridor" />
-            </FormRow>
-            <FormRow label="Operating Hours (days)">
-              <Input value={form.hours_of_operation_days} onChange={fi('hours_of_operation_days')} placeholder="Mon-Fri" />
-            </FormRow>
-            <FormRow label="Opening Time">
-              <Input value={form.opening_time} onChange={fi('opening_time')} placeholder="08:00" />
-            </FormRow>
-            <FormRow label="Closing Time">
-              <Input value={form.closing_time} onChange={fi('closing_time')} placeholder="17:00" />
-            </FormRow>
-            <FormRow label="Description" span2>
-              <Input value={form.description} onChange={fi('description')} placeholder="Optional notes" />
-            </FormRow>
-            <div className="md:col-span-2 flex gap-2">
-              <Button onClick={save} disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+          <CardContent className="px-4 pb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Name */}
+              <div className="space-y-1">
+                <Label className="text-xs">Name *</Label>
+                <Input value={fName} onChange={e => setFName(e.target.value)}
+                  placeholder={level === 'bu' ? 'e.g. Main Building' : level === 'wa' ? 'e.g. Ward A' : level === 'ro' ? 'e.g. Room 201' : 'e.g. Bed 1'}
+                />
+              </div>
+
+              {/* Alias */}
+              <div className="space-y-1">
+                <Label className="text-xs">Alias / Code</Label>
+                <Input value={fAlias} onChange={e => setFAlias(e.target.value)}
+                  placeholder={level === 'bu' ? 'MAIN' : level === 'wa' ? 'WA' : level === 'ro' ? 'R201' : 'B1'}
+                />
+              </div>
+
+              {/* Parent (Ward, Room, Bed only) */}
+              {level !== 'bu' && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Parent {levelMeta.parentLabel} *</Label>
+                  <select className={selectCls} value={fParent}
+                    onChange={e => setFParent(e.target.value ? Number(e.target.value) : '')}>
+                    <option value="">— select —</option>
+                    {parentOptions().map(p => (
+                      <option key={p.location_id} value={p.location_id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Room Type (Rooms only) */}
+              {level === 'ro' && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Room Type & Rate</Label>
+                  <select className={selectCls} value={fRoomType} onChange={e => setFRoomType(e.target.value)}>
+                    <option value="">— no type —</option>
+                    {roomTypes.filter(rt => rt.is_active).map(rt => (
+                      <option key={rt.code} value={rt.code}>
+                        {rt.name} — ₱{Number(rt.daily_rate).toLocaleString('en-PH')}/day
+                      </option>
+                    ))}
+                  </select>
+                  {selectedRoomType && (
+                    <p className="text-xs text-blue-600 mt-0.5">
+                      Rate: ₱{Number(selectedRoomType.daily_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}/day
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Status */}
+              <div className="space-y-1">
+                <Label className="text-xs">Status</Label>
+                <select className={selectCls} value={fStatus} onChange={e => setFStatus(e.target.value)}>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* Operational Status (Rooms & Beds) */}
+              {(level === 'ro' || level === 'bd') && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Operational Status</Label>
+                  <select className={selectCls} value={fOps} onChange={e => setFOps(e.target.value)}>
+                    {OPS_STATUSES.map(s => <option key={s.code} value={s.code}>{s.label}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Telecom (Buildings & Wards) */}
+              {(level === 'bu' || level === 'wa') && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Telephone</Label>
+                  <Input value={fTelecom} onChange={e => setFTelecom(e.target.value)} placeholder="+63 2 8XXX XXXX" />
+                </div>
+              )}
+
+              {/* Description */}
+              <div className="space-y-1 col-span-2">
+                <Label className="text-xs">Description</Label>
+                <Input value={fDesc} onChange={e => setFDesc(e.target.value)} placeholder="Optional notes" />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
                 {editing ? 'Update' : 'Create'}
               </Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button size="sm" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Table */}
       {loading ? (
-        <div className="flex justify-center p-10"><Loader2 className="animate-spin w-6 h-6" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin w-5 h-5 text-gray-400" /></div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Type</th>
+                {level !== 'bu' && <th className="px-4 py-3 text-left">{levelMeta.parentLabel}</th>}
+                {level === 'ro' && <th className="px-4 py-3 text-left">Room Type</th>}
+                {level === 'ro' && <th className="px-4 py-3 text-right">Daily Rate</th>}
                 <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Ops Status</th>
-                <th className="px-4 py-3 text-left">Parent</th>
-                <th className="px-4 py-3 text-left">Hours</th>
-                <th className="px-4 py-3 text-left">Actions</th>
+                {(level === 'ro' || level === 'bd') && <th className="px-4 py-3 text-left">Ops</th>}
+                {(level === 'bu' || level === 'wa') && <th className="px-4 py-3 text-left">Tel</th>}
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {locations.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No locations found.</td></tr>
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
+                    No {levelMeta.label.toLowerCase()} yet.
+                    {level !== 'bu' && ` Add a ${levelMeta.parentLabel.toLowerCase()} first if needed.`}
+                  </td>
+                </tr>
               )}
-              {locations.map(loc => {
-                const physLabel = PHYSICAL_TYPES.find(t => t.code === loc.physical_type_code)?.display || loc.physical_type_code;
+              {items.map(loc => {
+                const rt = level === 'ro' ? roomTypes.find(r => r.code === loc.type_code) : null;
                 return (
                   <tr key={loc.location_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">
-                      {loc.name}
-                      {loc.alias && <span className="text-xs text-gray-400 ml-1">({loc.alias})</span>}
-                    </td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">{physLabel}</span>
+                      <div className="font-medium">{loc.name}</div>
+                      {loc.alias && <div className="text-xs text-gray-400">{loc.alias}</div>}
                     </td>
-                    <td className="px-4 py-3 capitalize">{loc.status}</td>
+                    {level !== 'bu' && (
+                      <td className="px-4 py-3 text-sm text-gray-600">{loc.part_of_name || '—'}</td>
+                    )}
+                    {level === 'ro' && (
+                      <td className="px-4 py-3">
+                        {rt ? (
+                          <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700">{rt.name}</span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
+                    {level === 'ro' && (
+                      <td className="px-4 py-3 text-right font-medium text-sm">
+                        {rt ? `₱${Number(rt.daily_rate).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '—'}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
-                      {OPERATIONAL_STATUSES.find(s => s.code === loc.operational_status)?.display || loc.operational_status}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        loc.status === 'active' ? 'bg-green-100 text-green-700' :
+                        loc.status === 'inactive' ? 'bg-gray-100 text-gray-500' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>{loc.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{loc.part_of_name || '—'}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      {loc.opening_time && loc.closing_time ? `${loc.opening_time}–${loc.closing_time}` : '—'}
-                    </td>
-                    <td className="px-4 py-3 flex gap-2">
-                      <button onClick={() => openEdit(loc)} className="text-blue-600 hover:text-blue-800">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => remove(loc.location_id)} className="text-red-500 hover:text-red-700">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    {(level === 'ro' || level === 'bd') && (
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {OPS_STATUSES.find(s => s.code === loc.operational_status)?.label || loc.operational_status || '—'}
+                      </td>
+                    )}
+                    {(level === 'bu' || level === 'wa') && (
+                      <td className="px-4 py-3 text-xs text-gray-500">{loc.telecom || '—'}</td>
+                    )}
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => openEdit(loc)} className="text-blue-500 hover:text-blue-700">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => remove(loc.location_id, loc.name)} className="text-red-400 hover:text-red-600">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
