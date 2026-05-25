@@ -565,15 +565,16 @@ def _push_appointment_to_gateway(appointment):
         ).order_by('-created_at').first()
         if not txn or not txn.sender_id:
             return
+        correlation_id = (txn.raw_payload or {}).get('correlationId')
         result = push_appointment(
             target_id=txn.sender_id,
             appointment=appointment,
-            correlation_id=txn.transaction_id,
+            correlation_id=correlation_id,
         )
         if result and result.get('error'):
             _log.warning('[WAH4PC] push_appointment failed: %s', result['error'])
         else:
-            _log.info('[WAH4PC] Pushed appointment %s update to %s (correlationId=%s)', appointment.identifier, txn.sender_id, txn.transaction_id)
+            _log.info('[WAH4PC] Pushed appointment %s update to %s (correlationId=%s)', appointment.identifier, txn.sender_id, correlation_id)
     except Exception:
         _log.exception('[WAH4PC] Unexpected error pushing appointment %s to gateway', appointment.identifier)
 
