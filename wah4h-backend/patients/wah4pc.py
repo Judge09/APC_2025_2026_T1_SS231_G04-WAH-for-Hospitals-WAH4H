@@ -4024,8 +4024,14 @@ def import_appointment_from_fhir(fhir_data, patient):
         if not val:
             return None
         try:
-            from dateutil.parser import parse as _parse
-            return _parse(val)
+            from django.utils.dateparse import parse_datetime
+            from django.utils.timezone import make_aware, UTC
+            # FHIR uses Z suffix for UTC; Python's ISO parser requires +00:00
+            normalized = val[:-1] + '+00:00' if val.endswith('Z') else val
+            dt = parse_datetime(normalized)
+            if dt is not None and dt.tzinfo is None:
+                dt = make_aware(dt, UTC)
+            return dt
         except Exception:
             return None
 
