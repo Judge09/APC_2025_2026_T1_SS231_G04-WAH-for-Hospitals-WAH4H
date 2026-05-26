@@ -437,7 +437,7 @@ const AppointmentPage: React.FC = () => {
 
                         {/* Service */}
                         <td className="px-6 py-4 align-top">
-                          <div className="text-sm text-slate-700">{a.service_type_display ?? '—'}</div>
+                          <div className="text-sm text-slate-700">{a.service_type_display || a.service_category_display || '—'}</div>
                           {a.appointment_type_display && (
                             <div className="text-xs text-slate-400 mt-0.5">{a.appointment_type_display}</div>
                           )}

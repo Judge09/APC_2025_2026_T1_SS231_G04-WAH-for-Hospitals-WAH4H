@@ -104,7 +104,12 @@
       "Bash(pip3 install *)",
       "Bash(python3 manage.py makemigrations accounts)",
       "Bash(npm install *)",
-      "Bash(node_modules/.bin/tsc --noEmit)"
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(pg_lsclusters)",
+      "Bash(service postgresql *)",
+      "Bash(systemctl status *)",
+      "Bash(which pg_ctlcluster pg_ctl postgres 2>/dev/null; find /etc/postgresql /var/lib/postgresql -maxdepth 2 2>/dev/null | head -10)",
+      "Read(//etc/**)"
     ]
   }
 }
