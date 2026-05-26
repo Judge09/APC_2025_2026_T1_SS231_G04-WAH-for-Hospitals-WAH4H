@@ -201,6 +201,7 @@ class PractitionerSerializer(serializers.ModelSerializer):
         fields = [
             'practitioner_id',
             'identifier',
+            'wah4pc_id',
             'first_name',
             'middle_name',
             'last_name',

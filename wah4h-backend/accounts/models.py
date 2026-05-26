@@ -122,6 +122,8 @@ class Practitioner(FHIRResourceModel):
     # PRC license — required PH Core practitioner identifier
     # System: http://prc.gov.ph/fhir/Identifier/prc-license
     prc_license_number = models.CharField(max_length=50, null=True, blank=True)
+    # WAH4PC gateway provider UUID — used to route interop pushes to this practitioner
+    wah4pc_id = models.UUIDField(null=True, blank=True)
 
     class Meta:
         db_table = 'practitioner'

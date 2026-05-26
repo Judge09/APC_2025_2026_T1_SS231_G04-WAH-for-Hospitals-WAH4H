@@ -29,6 +29,7 @@ urlpatterns = [
     # WAH4PC GATEWAY WEBHOOKS - Must be at /fhir/* per API specification
     # ============================================================================
     path('fhir/metadata', patient_views.fhir_capability_statement, name='fhir_metadata'),
+    path('fhir/practitioners', patient_views.fhir_practitioner_list, name='fhir_practitioner_list'),
     path('fhir/Patient/<str:patient_id>/$everything', patient_views.fhir_patient_everything, name='fhir_patient_everything'),
     path('fhir/process-query', patient_views.webhook_process_query, name='wah4pc_process_query'),
     path('fhir/receive-results', patient_views.webhook_receive, name='wah4pc_receive_results'),

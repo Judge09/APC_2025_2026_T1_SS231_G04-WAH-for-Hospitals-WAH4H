@@ -1682,3 +1682,60 @@ def fhir_patient_everything(request, patient_id):
         "entry": entries,
     }
     return JsonResponse(response_bundle, status=200, content_type='application/fhir+json')
+
+
+# ============================================================================
+# FHIR PRACTITIONER LIST — called by the gateway to sync practitioners
+# ============================================================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def fhir_practitioner_list(request):
+    """
+    GET /fhir/practitioners
+    Returns a FHIR R4 Bundle of all active practitioners.
+    The gateway calls this endpoint to discover which practitioners belong
+    to this hospital so it can route interop appointment pushes correctly.
+    Each practitioner that has a wah4pc_id will include the gateway provider-id
+    identifier so the gateway can match on it.
+    """
+    from accounts.models import Practitioner
+    from core.fhir_utils import fhir_identifier, fhir_meta, WAH4H_PRACTITIONER_SYSTEM
+
+    WAH4PC_PROVIDER_ID_SYSTEM = "https://wah.ph/fhir/Identifier/provider-id"
+
+    practitioners = Practitioner.objects.filter(active=True).select_related('qualification_issuer')
+
+    entries = []
+    for p in practitioners:
+        given = p.first_name.split() if p.first_name else []
+        if p.middle_name:
+            given.append(p.middle_name)
+
+        identifiers = [fhir_identifier(WAH4H_PRACTITIONER_SYSTEM, p.identifier, use="official")]
+        if p.wah4pc_id:
+            identifiers.append(fhir_identifier(WAH4PC_PROVIDER_ID_SYSTEM, str(p.wah4pc_id)))
+
+        resource = {
+            "resourceType": "Practitioner",
+            "id": p.identifier,
+            "meta": fhir_meta("Practitioner", p.updated_at),
+            "identifier": identifiers,
+            "active": True,
+            "name": [{
+                "use": "official",
+                "family": p.last_name,
+                "given": given,
+                "suffix": [p.suffix_name] if p.suffix_name else [],
+            }],
+        }
+        entries.append({"fullUrl": f"Practitioner/{p.identifier}", "resource": resource})
+
+    bundle = {
+        "resourceType": "Bundle",
+        "type": "searchset",
+        "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "total": len(entries),
+        "entry": entries,
+    }
+    return JsonResponse(bundle, status=200, content_type='application/fhir+json')
