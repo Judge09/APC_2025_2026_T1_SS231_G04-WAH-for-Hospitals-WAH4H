@@ -19,7 +19,7 @@ from patients.psgc_data import (
 
 logger = logging.getLogger(__name__)
 
-URL = os.getenv("WAH4PC_GATEWAY_URL", "https://wah4pc-gateway.echosphere.cfd")
+URL = os.getenv("WAH4PC_GATEWAY_URL", "https://wah4pc-gateway.wah.ph")
 
 # ---------------------------------------------------------------------------
 # Extension / CodeSystem base URIs — PH Core canonical URLs.
@@ -1784,7 +1784,7 @@ def encounter_to_fhir(model):
         hosp["dischargeDisposition"] = {"text": model.discharge_disposition}
     if model.pre_admission_identifier:
         hosp["preAdmissionIdentifier"] = {
-            "system": "https://wah4pc-gateway.echosphere.cfd/fhir/identifier/encounter",
+            "system": "https://wah4pc-gateway.wah.ph/fhir/identifier/encounter",
             "value":  model.pre_admission_identifier,
         }
     if hosp:

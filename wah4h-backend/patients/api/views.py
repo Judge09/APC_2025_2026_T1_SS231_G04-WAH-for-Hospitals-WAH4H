@@ -1252,7 +1252,7 @@ def webhook_process_query(request):
         or []
     )
     _raw_return_url = request.data.get('gatewayReturnUrl') or ''
-    _gateway_base = os.getenv('WAH4PC_GATEWAY_URL', 'https://wah4pc-gateway.echosphere.cfd').rstrip('/')
+    _gateway_base = os.getenv('WAH4PC_GATEWAY_URL', 'https://wah4pc-gateway.wah.ph').rstrip('/')
     _path = '/' + _raw_return_url.split('/', 3)[-1] if '/' in _raw_return_url.split('://', 1)[-1] else ''
     return_url = _gateway_base + _path
     requester_id = request.data.get('requesterId')
