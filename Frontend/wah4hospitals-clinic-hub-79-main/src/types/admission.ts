@@ -1,40 +1,101 @@
 // src/types/admission.ts
 
 export interface Admission {
-    id: string; // database ID
-    admission_id: string; // pre-generated ID from backend
-    patient: string; // ID of the patient
-    patient_details?: any; // optional nested patient info
-    admission_date: string;
-    attending_physician: string;
-    assigned_nurse: string; // added since backend provides this
-    ward: string;
-    room: string;
-    bed: string;
-    status: 'Active' | 'Discharged' | 'Transferred';
-    encounter_type: string; // can be 'Inpatient' or ICD-10 etc.
-    admitting_diagnosis: string;
-    reason_for_admission: string;
-    admission_category: 'Emergency' | 'Regular';
-    mode_of_arrival: 'Walk-in' | 'Ambulance' | 'Referral';
-    created_at?: string;
+    id: number | string;
+    encounter_id?: number;
+    identifier?: string;
+    admissionNo: string;
+    status: string;
+    priority: 'routine' | 'urgent' | 'emergency';
+    patientId: string;
+    patientName: string;
+    location: {
+        building: string;
+        ward: string;
+        room: string;
+        bed: string;
+    };
+    location_ids?: (string | number)[];
+    physician: string;
+    participant_individual_id?: number;
+    physicianId?: number; // Legacy, prefer participant_individual_id
+    serviceType: string;
+    admissionDate: string;
+    admissionTime?: string;
+    dischargeDate?: string | null;
     updated_at?: string;
+
+    // UI Aligned Fields
+    encounterType: 'IMP' | 'EMER' | 'AMB' | 'HH';
+    reasonForAdmission: string;
+    admitSource: string;
+    preAdmissionIdentifier?: string;
+    isReadmission: boolean;
+    dietPreference: string[];
+    specialArrangements: string[];
+    specialCourtesy: string[];
+
+    // Technical/Admin Fields (connected to model)
+    type: string;
+
+    diagnosis_rank: string;
+    diagnosis_use: string;
+
+    // Backend Raw fields (optional)
+    class_field?: string;
+    reason_code?: string;
+    admit_source?: string;
+    discharge_disposition?: string;
+    period_start?: string;
+    period_end?: string;
+    diet_preference?: string;
+    special_courtesy?: string;
+    special_arrangement?: string;
+    re_admission?: boolean;
+    procedures?: any[];
+
+    subject_id?: number;
+    patient_summary?: any;
+    location_summary?: any;
+    practitioner_summary?: any;
+    created_at?: string;
 }
 
-// Type used when creating a new admission (id and patient_details are not needed)
-export type NewAdmission = Omit<Admission, 'id' | 'patient_details' | 'admission_id'>;
+export interface NewAdmission {
+    patientId: string; // Internal Patient ID or Subject ID
+    patientName: string;
+    admissionDate: string;
+    physician: string; // Name
+    participant_individual_id?: number;
+    physicianId?: number; // Legacy
+    serviceType: string;
+    priority: 'routine' | 'urgent' | 'emergency';
+    location: {
+        building: string;
+        ward: string;
+        room: string;
+        bed: string;
+    };
+    location_ids?: (string | number)[];
+    admitSource: string;
+    dietPreference: string[];
+    specialArrangements: string[];
+    specialCourtesy: string[];
 
-export interface Bed {
-    id: string;
-    number: string;
-    isOccupied: boolean;
+    // Technical/Admin Fields
+    type: string;
+
+    diagnosis_rank: string;
+    diagnosis_use: string;
+
+    // Expanded fields for UI match
+    encounterType: 'IMP' | 'EMER' | 'AMB' | 'HH';
+    admissionTime: string;
+    preAdmissionIdentifier?: string;
+    isReadmission: boolean;
+    reasonForAdmission?: string;
+
+    // Backend mapping fields
+    subject_id?: number;
 }
 
-export interface Room {
-    id: string;
-    number: string;
-    ward: string;
-    capacity: number;
-    occupied: number;
-    beds: Bed[];
-}

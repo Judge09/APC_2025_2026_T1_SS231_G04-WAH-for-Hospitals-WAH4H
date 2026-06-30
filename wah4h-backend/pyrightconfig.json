@@ -1,0 +1,11 @@
+{
+    "python.analysis.extraPaths": [
+        "./",
+        "${workspaceFolder}",
+        "${workspaceFolder}/venv/Lib/site-packages"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none"
+    }
+}

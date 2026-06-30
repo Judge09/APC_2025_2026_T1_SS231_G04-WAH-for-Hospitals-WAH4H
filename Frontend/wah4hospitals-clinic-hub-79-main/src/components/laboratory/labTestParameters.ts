@@ -41,33 +41,13 @@ export const LAB_TEST_PARAMETERS: Record<string, TestParameter[]> = {
     { parameter_name: 'RBC', unit: '/hpf', reference_range: '0-2', normalMin: 0, normalMax: 2 },
     { parameter_name: 'Fat Globules', unit: '', reference_range: 'None', normalMin: undefined, normalMax: undefined },
   ],
-  blood_chemistry: [
+  blood_typing: [
+    { parameter_name: 'Blood Group (ABO)', unit: '', reference_range: '', normalMin: undefined, normalMax: undefined },
+    { parameter_name: 'Rh Factor', unit: '', reference_range: '', normalMin: undefined, normalMax: undefined },
+  ],
+  glucose_panel: [
     { parameter_name: 'Fasting Blood Sugar', unit: 'mg/dL', reference_range: '70-110', normalMin: 70, normalMax: 110 },
-    { parameter_name: 'Total Cholesterol', unit: 'mg/dL', reference_range: '<200', normalMin: 0, normalMax: 200 },
-    { parameter_name: 'Triglycerides', unit: 'mg/dL', reference_range: '<150', normalMin: 0, normalMax: 150 },
-    { parameter_name: 'HDL Cholesterol', unit: 'mg/dL', reference_range: '>40 (M), >50 (F)', normalMin: 40, normalMax: 999 },
-    { parameter_name: 'LDL Cholesterol', unit: 'mg/dL', reference_range: '<130', normalMin: 0, normalMax: 130 },
-    { parameter_name: 'Creatinine', unit: 'mg/dL', reference_range: '0.6-1.2', normalMin: 0.6, normalMax: 1.2 },
-    { parameter_name: 'Blood Urea Nitrogen', unit: 'mg/dL', reference_range: '7-20', normalMin: 7, normalMax: 20 },
-    { parameter_name: 'Uric Acid', unit: 'mg/dL', reference_range: '3.5-7.2 (M), 2.6-6.0 (F)', normalMin: 2.6, normalMax: 7.2 },
-    { parameter_name: 'SGPT (ALT)', unit: 'U/L', reference_range: '7-56', normalMin: 7, normalMax: 56 },
-    { parameter_name: 'SGOT (AST)', unit: 'U/L', reference_range: '5-40', normalMin: 5, normalMax: 40 },
-  ],
-  xray: [
-    { parameter_name: 'Findings', unit: '', reference_range: 'Normal', normalMin: undefined, normalMax: undefined },
-    { parameter_name: 'Impression', unit: '', reference_range: 'Within Normal Limits', normalMin: undefined, normalMax: undefined },
-  ],
-  ultrasound: [
-    { parameter_name: 'Findings', unit: '', reference_range: 'Normal', normalMin: undefined, normalMax: undefined },
-    { parameter_name: 'Impression', unit: '', reference_range: 'Within Normal Limits', normalMin: undefined, normalMax: undefined },
-  ],
-  ecg: [
-    { parameter_name: 'Heart Rate', unit: 'bpm', reference_range: '60-100', normalMin: 60, normalMax: 100 },
-    { parameter_name: 'PR Interval', unit: 'ms', reference_range: '120-200', normalMin: 120, normalMax: 200 },
-    { parameter_name: 'QRS Duration', unit: 'ms', reference_range: '80-120', normalMin: 80, normalMax: 120 },
-    { parameter_name: 'QT Interval', unit: 'ms', reference_range: '350-450', normalMin: 350, normalMax: 450 },
-    { parameter_name: 'Rhythm', unit: '', reference_range: 'Normal Sinus Rhythm', normalMin: undefined, normalMax: undefined },
-    { parameter_name: 'Interpretation', unit: '', reference_range: 'Within Normal Limits', normalMin: undefined, normalMax: undefined },
+    { parameter_name: 'Random Blood Sugar', unit: 'mg/dL', reference_range: '70-140', normalMin: 70, normalMax: 140 },
   ],
 };
 
@@ -90,7 +70,7 @@ export function calculateInterpretation(
 
   // Parse the result value to a number
   const numericValue = parseFloat(resultValue);
-  
+
   // If result is not a valid number, cannot calculate
   if (isNaN(numericValue)) {
     return '';

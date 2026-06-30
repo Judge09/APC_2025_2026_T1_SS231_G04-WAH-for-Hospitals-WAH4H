@@ -1,4 +1,4 @@
-export type PatientStatus = 'Stable' | 'Critical';
+export type PatientStatus = 'Stable' | 'Critical' | 'Observation' | 'Recovering';
 
 /* =========================
    VITAL SIGNS
@@ -56,10 +56,86 @@ export interface HistoryEvent {
     details?: string;
 }
 
+/* =========================
+   LABORATORY REQUESTS
+   ========================= 
+   NOTE: Laboratory operations should use laboratoryService.ts
+   These types are kept for monitoring UI compatibility only.
+   For actual lab operations, import from laboratory types.
+   */
+import { LabTestType, LabPriority, LabStatus } from './laboratory';
+
+export interface LabRequest {
+    id: string;
+    admissionId: string;
+    testName: string;
+    testCode: LabTestType;                // LOINC code / Internal Code
+    priority: LabPriority;
+    notes: string;
+    lifecycleStatus: LabStatus;
+    status_display?: string; // Backend raw status (e.g. 'draft', 'registered')
+    orderedBy: string;
+    orderedAt: string;
+    patient_name: string;
+    patient_id: string;
+    requestedBy?: string;
+    requestedAt?: string;
+    completedAt?: string;
+    // Backend returns 'results' which is an array of result objects
+    results?: {
+        parameter: string;
+        value: string;
+        unit: string;
+        referenceRange: string;
+        flag?: string;
+        interpretation?: string;
+    }[];
+}
+
+export interface LabResult {
+    findings?: string;
+    results: {
+        parameter: string;
+        value: string;
+        unit: string;
+        referenceRange: string;
+        flag?: string;
+        interpretation?: string;
+    }[];
+    interpretation?: string;
+    reportedBy: string;
+    reportedAt: string;
+}
 
 /* =========================
-   MONITORING ADMISSION
-   (UI AGGREGATE TYPE)
+   MEDICATION REQUESTS (Lifecycle-enabled)
+   ========================= */
+export interface MedicationRequest {
+    id: number;
+    admissionId: string;
+    medicationName: string;
+    quantity: number;
+    dosage: string;
+    route: string;
+    frequency: string;
+    notes: string;
+
+    // Lifecycle fields (from reference implementation)
+    lifecycleStatus: 'prescribed' | 'requested' | 'ready-for-admin' | 'administered';
+    intent: 'order' | 'proposal';
+
+    // Timestamps and actors
+    prescribedBy: string;
+    prescribedAt: string;
+    requestedBy?: string;
+    requestedAt?: string;
+    dispensedAt?: string;
+    administeredBy?: string;
+    administeredAt?: string;
+}
+
+/* =========================
+   MONITORING ADMISSION (UI AGGREGATE TYPE)
    ========================= */
 export interface MonitoringAdmission {
     id: number;                   // admission.id
@@ -67,7 +143,6 @@ export interface MonitoringAdmission {
     patientName: string;
     room: string;
     doctorName: string;
-    nurseName: string;
     status: PatientStatus;
     encounterType: string;
     admittingDiagnosis: string;
@@ -76,7 +151,6 @@ export interface MonitoringAdmission {
     modeOfArrival: string;
     admissionDate: string;
     attendingPhysician: string;
-    assignedNurse?: string;
     ward: string;
 
     // Derived / related data

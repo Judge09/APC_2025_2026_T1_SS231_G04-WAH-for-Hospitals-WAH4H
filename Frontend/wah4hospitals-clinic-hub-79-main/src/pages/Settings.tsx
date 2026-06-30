@@ -6,8 +6,7 @@ import SystemControls from '@/components/settings/SystemControls';
 import AuditTrail from '@/components/settings/AuditTrail';
 import PasswordSettings from '@/components/settings/PasswordSettings';
 import AlertSettings from '@/components/settings/AlertSettings';
-import AdminAccess from '@/components/settings/AdminAccess';
-import { Users, Settings as SettingsIcon, Clock, Lock, Bell, Crown } from 'lucide-react';
+import { Users, Settings as SettingsIcon, Clock, Lock, Bell } from 'lucide-react';
 
 const Settings = () => {
   return (
@@ -29,10 +28,6 @@ const Settings = () => {
             <Bell className="w-4 h-4" />
             Alerts
     </TabsTrigger>
-    <TabsTrigger value="access" className="flex items-center gap-2 flex-shrink-0">
-      <Crown className="w-4 h-4" />
-      Admin Access
-    </TabsTrigger>
     <TabsTrigger value="users" className="flex items-center gap-2 flex-shrink-0">
       <Users className="w-4 h-4" />
       Users
@@ -53,10 +48,6 @@ const Settings = () => {
 
         <TabsContent value="alerts" className="space-y-4">
           <AlertSettings />
-        </TabsContent>
-
-        <TabsContent value="access" className="space-y-4">
-          <AdminAccess />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">

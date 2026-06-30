@@ -1,0 +1,1752 @@
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/AdminDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/AdminDashboard.tsx
+new file mode 100644
+index 00000000..59558ac1
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/AdminDashboard.tsx
+@@ -0,0 +1,132 @@
++import React from 'react';
++import { 
++  Users, 
++  Activity, 
++  Server,
++  Database,
++  ShieldCheck,
++  AlertTriangle
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
++
++interface AdminDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const AdminDashboard: React.FC<AdminDashboardProps> = ({ visibleWidgets }) => {
++  const trafficData = [
++    { time: '00:00', users: 12 },
++    { time: '04:00', users: 8 },
++    { time: '08:00', users: 45 },
++    { time: '12:00', users: 120 },
++    { time: '16:00', users: 85 },
++    { time: '20:00', users: 32 },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {visibleWidgets.metrics && (
++        <div className="dashboard-grid">
++          <MetricCard
++            title="Active Users"
++            value="124"
++            change={5}
++            changeType="increase"
++            icon={<Users className="w-5 h-5" />}
++            color="blue"
++          />
++          <MetricCard
++            title="System Uptime"
++            value="99.9%"
++            change={0}
++            changeType="increase"
++            icon={<Server className="w-5 h-5" />}
++            color="green"
++          />
++          <MetricCard
++            title="Database Load"
++            value="34%"
++            change={2}
++            changeType="decrease"
++            icon={<Database className="w-5 h-5" />}
++            color="purple"
++          />
++          <MetricCard
++            title="Security Alerts"
++            value="0"
++            change={0}
++            changeType="increase"
++            icon={<ShieldCheck className="w-5 h-5" />}
++            color="orange"
++          />
++        </div>
++      )}
++
++      {visibleWidgets.admissions && (
++        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++          <CardHeader>
++            <CardTitle className="chart-title text-primary">Traffic Overview</CardTitle>
++            <CardDescription>System usage over the last 24 hours</CardDescription>
++          </CardHeader>
++          <CardContent>
++            <ResponsiveContainer width="100%" height={300}>
++              <AreaChart data={trafficData}>
++                <defs>
++                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
++                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
++                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
++                  </linearGradient>
++                </defs>
++                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
++                <XAxis dataKey="time" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                <Tooltip 
++                  contentStyle={{ 
++                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
++                    border: 'none',
++                    borderRadius: '8px',
++                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
++                  }} 
++                />
++                <Area type="monotone" dataKey="users" stroke="#3b82f6" fillOpacity={1} fill="url(#colorUsers)" />
++              </AreaChart>
++            </ResponsiveContainer>
++          </CardContent>
++        </Card>
++      )}
++
++      {visibleWidgets.appointments && (
++        <Card className="border-l-4 border-l-yellow-500 shadow-md">
++          <CardHeader>
++             <CardTitle className="flex items-center text-yellow-700">
++                <AlertTriangle className="w-5 h-5 mr-2" />
++                System Audit Log
++             </CardTitle>
++          </CardHeader>
++          <CardContent>
++             <div className="space-y-3">
++                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
++                   <div>
++                      <p className="font-medium text-yellow-800">Failed Login Attempt</p>
++                      <p className="text-sm text-yellow-600">IP: 192.168.1.45 - User: unknown</p>
++                   </div>
++                   <span className="text-xs font-bold text-yellow-600">Now</span>
++                </div>
++                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
++                   <div>
++                      <p className="font-medium text-gray-800">Backup Completed</p>
++                      <p className="text-sm text-gray-600">Database backup successful (2.3GB)</p>
++                   </div>
++                   <span className="text-xs font-bold text-gray-600">2h ago</span>
++                </div>
++             </div>
++          </CardContent>
++        </Card>
++      )}
++    </div>
++  );
++};
++
++export default AdminDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/BillingDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/BillingDashboard.tsx
+new file mode 100644
+index 00000000..f9b5060f
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/BillingDashboard.tsx
+@@ -0,0 +1,142 @@
++import React from 'react';
++import { 
++  FileText, 
++  DollarSign, 
++  CreditCard,
++  Briefcase
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
++import { Button } from '@/components/ui/button';
++import { cn } from '@/lib/utils';
++import StatusBadge from '@/components/ui/StatusBadge';
++
++interface BillingDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const BillingDashboard: React.FC<BillingDashboardProps> = ({ visibleWidgets }) => {
++  const revenueData = [
++    { day: 'Mon', amount: 45000 },
++    { day: 'Tue', amount: 52000 },
++    { day: 'Wed', amount: 48000 },
++    { day: 'Thu', amount: 61000 },
++    { day: 'Fri', amount: 55000 },
++    { day: 'Sat', amount: 32000 },
++    { day: 'Sun', amount: 28000 },
++  ];
++
++  const pendingClaims = [
++      { id: 'CLM-001', patient: 'Juan Dela Cruz', amount: '₱15,000', status: 'pending' },
++      { id: 'CLM-002', patient: 'Maria Santos', amount: '₱8,500', status: 'review' },
++      { id: 'CLM-003', patient: 'Pedro Reyes', amount: '₱22,000', status: 'pending' },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {visibleWidgets.metrics && (
++        <div className="dashboard-grid">
++           <MetricCard
++            title="Revenue Today"
++            value="₱55,000"
++            change={8}
++            changeType="increase"
++            icon={<DollarSign className="w-5 h-5" />}
++            color="green"
++          />
++          <MetricCard
++            title="Pending Claims"
++            value="15"
++            change={2}
++            changeType="increase"
++            icon={<FileText className="w-5 h-5" />}
++            color="orange"
++          />
++           <MetricCard
++            title="Outstanding Balance"
++            value="₱125k"
++            change={5}
++            changeType="decrease"
++            icon={<CreditCard className="w-5 h-5" />}
++            color="red"
++          />
++           <MetricCard
++            title="Insured Patients"
++            value="85%"
++            change={3}
++            changeType="increase"
++            icon={<Briefcase className="w-5 h-5" />}
++            color="blue"
++          />
++        </div>
++      )}
++
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
++        {visibleWidgets.admissions && (
++             <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++             <CardHeader>
++               <CardTitle className="chart-title text-primary">Revenue Overview</CardTitle>
++               <CardDescription>Daily revenue for the current week</CardDescription>
++             </CardHeader>
++             <CardContent>
++               <ResponsiveContainer width="100%" height={300}>
++                 <BarChart data={revenueData}>
++                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
++                   <XAxis dataKey="day" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                   <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                   <Tooltip 
++                     contentStyle={{ 
++                       backgroundColor: 'rgba(255, 255, 255, 0.95)', 
++                       border: 'none',
++                       borderRadius: '8px',
++                       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
++                     }} 
++                   />
++                   <Bar dataKey="amount" fill="#10b981" radius={[4, 4, 0, 0]} />
++                 </BarChart>
++               </ResponsiveContainer>
++             </CardContent>
++           </Card>
++        )}
++
++        {visibleWidgets.appointments && (
++           <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++           <CardHeader>
++             <CardTitle className="flex items-center text-primary">
++               <FileText className="w-5 h-5 mr-2" />
++               Claims Processing
++             </CardTitle>
++             <CardDescription>Recent insurance claims and status</CardDescription>
++           </CardHeader>
++           <CardContent>
++              <div className="space-y-4">
++                 {pendingClaims.map((claim, index) => (
++                     <div key={index} className="flex items-center space-x-4 p-3 border border-border/40 rounded-lg hover:border-primary/30 hover:bg-accent/5 transition-all group cursor-pointer">
++                       <div className="p-2 rounded-md bg-green-50 text-green-600">
++                         <DollarSign className="w-4 h-4" />
++                       </div>
++                       <div className="flex-1">
++                         <p className="font-medium text-foreground">{claim.id}</p>
++                         <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
++                           {claim.patient} • {claim.amount}
++                         </p>
++                       </div>
++                       <StatusBadge status={claim.status === 'review' ? 'warning' : 'info'} size="sm">
++                         {claim.status}
++                       </StatusBadge>
++                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
++                          <div className="w-4 h-4" >→</div>
++                       </Button>
++                     </div>
++                 ))}
++             </div>
++           </CardContent>
++         </Card>
++        )}
++      </div>
++    </div>
++  );
++};
++
++export default BillingDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DashboardHeader.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DashboardHeader.tsx
+new file mode 100644
+index 00000000..0cc7e579
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DashboardHeader.tsx
+@@ -0,0 +1,94 @@
++import React from 'react';
++import { useAuth } from '@/contexts/AuthContext';
++import { useRole } from '@/contexts/RoleContext';
++import { Layout } from 'lucide-react';
++import { Button } from '@/components/ui/button';
++import {
++  DropdownMenu,
++  DropdownMenuContent,
++  DropdownMenuLabel,
++  DropdownMenuSeparator,
++  DropdownMenuCheckboxItem,
++  DropdownMenuTrigger,
++} from "@/components/ui/dropdown-menu";
++
++// Define the widget types for type safety
++export type DashboardWidget = 'metrics' | 'admissions' | 'appointments' | 'patients';
++
++interface DashboardHeaderProps {
++  visibleWidgets: Record<DashboardWidget, boolean>;
++  toggleWidget: (widget: DashboardWidget) => void;
++  widgetLabels: Record<DashboardWidget, string>;
++}
++
++const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
++  visibleWidgets, 
++  toggleWidget, 
++  widgetLabels 
++}) => {
++  const { user } = useAuth();
++  const { currentRole } = useRole();
++
++  const getGreeting = () => {
++    const hour = new Date().getHours();
++    if (hour < 12) return 'Good morning';
++    if (hour < 18) return 'Good afternoon';
++    return 'Good evening';
++  };
++
++  const getRoleLabel = (role: string) => {
++    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
++  };
++
++  return (
++    <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-6 rounded-2xl border border-blue-100/50 backdrop-blur-sm shadow-sm grid grid-cols-1 md:grid-cols-3 items-center gap-4">
++      {/* Greeting Section */}
++      <div>
++        <h1 className="text-2xl font-bold text-gray-900">
++          {getGreeting()}, {user?.first_name ? `Dr. ${user.last_name}` : 'Doctor'}!
++        </h1>
++        <div className="flex items-center mt-1 space-x-2">
++           <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium border border-blue-200 uppercase tracking-wide">
++             {getRoleLabel(currentRole)} Workspace
++           </span>
++           <p className="text-gray-600 text-sm">Here's your daily overview.</p>
++        </div>
++      </div>
++
++      {/* Date Display */}
++      <div className="bg-white/80 dark:bg-card/80 backdrop-blur-md px-8 py-3 rounded-2xl shadow-sm border border-blue-100/50 flex flex-col items-center justify-self-center">
++         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mb-1">Today is</p>
++         <p className="text-lg font-bold text-foreground leading-none">
++            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
++         </p>
++      </div>
++
++      {/* Actions / Customization */}
++      <div className="flex justify-end">
++          <DropdownMenu>
++            <DropdownMenuTrigger asChild>
++              <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-600/70 hover:text-blue-700 hover:bg-blue-200/30 rounded-full">
++                <Layout className="w-5 h-5" />
++                <span className="sr-only">Customize Dashboard</span>
++              </Button>
++            </DropdownMenuTrigger>
++            <DropdownMenuContent align="end" className="w-56">
++                <DropdownMenuLabel>Dashboard Widgets</DropdownMenuLabel>
++                <DropdownMenuSeparator />
++                {Object.entries(widgetLabels).map(([key, label]) => (
++                  <DropdownMenuCheckboxItem
++                    key={key}
++                    checked={visibleWidgets[key as DashboardWidget]}
++                    onCheckedChange={() => toggleWidget(key as DashboardWidget)}
++                  >
++                    {label}
++                  </DropdownMenuCheckboxItem>
++                ))}
++            </DropdownMenuContent>
++          </DropdownMenu>
++      </div>
++    </div>
++  );
++};
++
++export default DashboardHeader;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DoctorDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DoctorDashboard.tsx
+new file mode 100644
+index 00000000..8f3cc061
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/DoctorDashboard.tsx
+@@ -0,0 +1,221 @@
++import React, { useEffect, useState } from 'react';
++import { 
++  Users, 
++  FileText, 
++  Activity, 
++  Stethoscope, 
++  Bed,
++  AlertTriangle 
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import StatusBadge from '@/components/ui/StatusBadge';
++import { Button } from '@/components/ui/button';
++import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
++import { cn } from '@/lib/utils';
++import { admissionService } from '@/services/admissionService';
++
++// Props for customization
++interface DoctorDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ visibleWidgets }) => {
++  const [admittedCount, setAdmittedCount] = useState<number>(0);
++
++  useEffect(() => {
++    const fetchAdmissions = async () => {
++      try {
++        const data = await admissionService.getAll();
++        // Count patients with status 'in-progress'
++        const activeAdmissions = data.filter(a => a.status === 'in-progress').length;
++        setAdmittedCount(activeAdmissions);
++      } catch (error) {
++        console.error("Failed to fetch dashboard data", error);
++      }
++    };
++    fetchAdmissions();
++  }, []);
++
++  // Mock Data
++  const admissionData = [
++    { month: 'Jan', admissions: 120, discharges: 115 },
++    { month: 'Feb', admissions: 135, discharges: 128 },
++    { month: 'Mar', admissions: 148, discharges: 142 },
++    { month: 'Apr', admissions: 162, discharges: 158 },
++    { month: 'May', admissions: 175, discharges: 168 },
++    { month: 'Jun', admissions: 188, discharges: 182 }
++  ];
++
++  const myPatients = [
++    { id: 'P001', name: 'Juan Dela Cruz', condition: 'Hypertension', room: '201A', status: 'stable' },
++    { id: 'P002', name: 'Maria Santos', condition: 'Diabetes', room: '202B', status: 'critical' },
++    { id: 'P004', name: 'Ana Garcia', condition: 'Pneumonia', room: '203A', status: 'stable' }
++  ];
++
++  const tasks = [
++    { id: 1, title: 'Review Lab Results (Blood Chem)', count: 3, urgent: true, icon: <Activity className="w-4 h-4" /> },
++    { id: 2, title: 'Discharge Summaries Pending', count: 2, urgent: false, icon: <FileText className="w-4 h-4" /> },
++    { id: 3, title: 'New Consultation Requests', count: 5, urgent: true, icon: <Users className="w-4 h-4" /> },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {/* Key Metrics - tailored for Doctor */}
++      {visibleWidgets.metrics && (
++        <div className="dashboard-grid">
++          <MetricCard
++            title="Admitted Patients"
++            value={admittedCount.toString()}
++            change={2}
++            changeType="increase"
++            icon={<Users className="w-5 h-5" />}
++            color="blue"
++          />
++          <MetricCard
++            title="Consultations Today"
++            value="8"
++            change={0}
++            changeType="increase"
++            icon={<Stethoscope className="w-5 h-5" />}
++            color="purple"
++          />
++          <MetricCard
++            title="Pending Lab Reviews"
++            value="5"
++            change={3}
++            changeType="increase"
++            icon={<Activity className="w-5 h-5" />}
++            color="orange"
++          />
++          <MetricCard
++            title="Ready for Discharge"
++            value="2"
++            change={1}
++            changeType="increase"
++            icon={<FileText className="w-5 h-5" />}
++            color="green"
++          />
++        </div>
++      )}
++
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
++        {/* Patient Trends Chart */}
++        {visibleWidgets.admissions && (
++          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++            <CardHeader>
++              <CardTitle className="chart-title text-primary">Patient Outcome Trends</CardTitle>
++              <CardDescription>Admissions vs Discharges (6 months)</CardDescription>
++            </CardHeader>
++            <CardContent>
++              <ResponsiveContainer width="100%" height={300}>
++                <LineChart data={admissionData} margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
++                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
++                  <XAxis 
++                    dataKey="month" 
++                    stroke="#6b7280" 
++                    fontSize={12} 
++                    tickLine={false} 
++                    axisLine={false} 
++                    label={{ value: 'Month', position: 'insideBottom', offset: -10, style: { fill: '#6b7280', fontSize: '14px', fontWeight: 'bold' } }}
++                  />
++                  <YAxis 
++                    stroke="#6b7280" 
++                    fontSize={12} 
++                    tickLine={false} 
++                    axisLine={false}
++                    label={{ value: 'Patient Count', angle: -90, position: 'insideLeft', style: { fill: '#6b7280', fontSize: '14px', fontWeight: 'bold', textAnchor: 'middle' } }}
++                  />
++                  <Tooltip 
++                    contentStyle={{ 
++                      backgroundColor: 'rgba(255, 255, 255, 0.95)', 
++                      border: 'none',
++                      borderRadius: '8px',
++                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
++                    }} 
++                  />
++                  <Line type="monotone" dataKey="admissions" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} />
++                  <Line type="monotone" dataKey="discharges" stroke="#10b981" strokeWidth={3} dot={false} />
++                </LineChart>
++              </ResponsiveContainer>
++            </CardContent>
++          </Card>
++        )}
++
++        {/* Priority Actions */}
++        {visibleWidgets.appointments && (
++          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++            <CardHeader>
++              <CardTitle className="flex items-center text-primary">
++                <FileText className="w-5 h-5 mr-2" />
++                Priority Action Items
++              </CardTitle>
++              <CardDescription>Clinical tasks requiring attention</CardDescription>
++            </CardHeader>
++            <CardContent>
++              <div className="space-y-4">
++                {tasks.map((task, index) => (
++                    <div key={index} className="flex items-center space-x-4 p-3 border border-border/40 rounded-lg hover:border-primary/30 hover:bg-accent/5 transition-all group cursor-pointer">
++                      <div className={cn("p-2 rounded-md", task.urgent ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600")}>
++                        {task.icon}
++                      </div>
++                      <div className="flex-1">
++                        <p className="font-medium text-foreground">{task.title}</p>
++                        <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
++                          {task.urgent ? 'Urgent Priority' : 'Normal Priority'}
++                        </p>
++                      </div>
++                      <div className={cn(
++                        "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
++                        task.urgent ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
++                      )}>
++                        {task.count}
++                      </div>
++                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
++                         <div className="w-4 h-4" >→</div>
++                      </Button>
++                    </div>
++                ))}
++              </div>
++            </CardContent>
++          </Card>
++        )}
++      </div>
++
++      {/* My Patients List */}
++      {visibleWidgets.patients && (
++        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++          <CardHeader>
++            <CardTitle className="flex items-center text-primary">
++              <Stethoscope className="w-5 h-5 mr-2" />
++              My Current Patients
++            </CardTitle>
++          </CardHeader>
++          <CardContent>
++            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
++              {myPatients.map((patient) => (
++                <div key={patient.id} className="flex items-center p-4 rounded-xl hover:bg-muted/50 transition-colors border border-border/50 hover:border-primary/20 bg-card/50">
++                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md mr-4 text-white font-bold text-lg">
++                    {patient.name.charAt(0)}
++                  </div>
++                  <div className="flex-1">
++                    <p className="font-semibold text-foreground">{patient.name}</p>
++                    <p className="text-xs text-muted-foreground mb-2">Room {patient.room} • {patient.condition}</p>
++                    <StatusBadge 
++                      status={patient.status === 'critical' ? 'error' : patient.status === 'stable' ? 'success' : 'warning'}
++                      className="text-xs py-0.5"
++                    >
++                      {patient.status}
++                    </StatusBadge>
++                  </div>
++                </div>
++              ))}
++            </div>
++          </CardContent>
++        </Card>
++      )}
++    </div>
++  );
++};
++
++export default DoctorDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/LabDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/LabDashboard.tsx
+new file mode 100644
+index 00000000..a64d5434
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/LabDashboard.tsx
+@@ -0,0 +1,103 @@
++import React from 'react';
++import { 
++  FileText, 
++  Activity, 
++  FlaskConical,
++  Microscope,
++  AlertOctagon
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import { Button } from '@/components/ui/button';
++import { cn } from '@/lib/utils';
++import StatusBadge from '@/components/ui/StatusBadge';
++
++interface LabDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const LabDashboard: React.FC<LabDashboardProps> = ({ visibleWidgets }) => {
++  const pendingTests = [
++    { id: 1, type: 'Complete Blood Count', patient: 'Juan Dela Cruz', priority: 'urgent', status: 'pending' },
++    { id: 2, type: 'Urinalysis', patient: 'Maria Santos', priority: 'normal', status: 'processing' },
++    { id: 3, type: 'Lipid Profile', patient: 'Pedro Reyes', priority: 'normal', status: 'pending' },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {visibleWidgets.metrics && (
++        <div className="dashboard-grid">
++           <MetricCard
++            title="Pending Tests"
++            value="42"
++            change={12}
++            changeType="increase"
++            icon={<FlaskConical className="w-5 h-5" />}
++            color="blue"
++          />
++          <MetricCard
++            title="Results Ready"
++            value="18"
++            change={5}
++            changeType="increase"
++            icon={<FileText className="w-5 h-5" />}
++            color="green"
++          />
++           <MetricCard
++            title="Critical Values"
++            value="3"
++            change={1}
++            changeType="increase"
++            icon={<AlertOctagon className="w-5 h-5" />}
++            color="red"
++          />
++           <MetricCard
++            title="Equipment Status"
++            value="98%"
++            change={0}
++            changeType="increase"
++            icon={<Microscope className="w-5 h-5" />}
++            color="purple"
++          />
++        </div>
++      )}
++
++      {visibleWidgets.appointments && (
++        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++          <CardHeader>
++            <CardTitle className="flex items-center text-primary">
++              <FlaskConical className="w-5 h-5 mr-2" />
++              Laboratory Queue
++            </CardTitle>
++            <CardDescription>Specimens processing and pending analysis</CardDescription>
++          </CardHeader>
++          <CardContent>
++             <div className="space-y-4">
++                {pendingTests.map((test, index) => (
++                    <div key={index} className="flex items-center space-x-4 p-3 border border-border/40 rounded-lg hover:border-primary/30 hover:bg-accent/5 transition-all group cursor-pointer">
++                      <div className={cn("p-2 rounded-md", test.priority === 'urgent' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600")}>
++                        <Activity className="w-4 h-4" />
++                      </div>
++                      <div className="flex-1">
++                        <p className="font-medium text-foreground">{test.type}</p>
++                        <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
++                          Patient: {test.patient}
++                        </p>
++                      </div>
++                      <StatusBadge status={test.status === 'processing' ? 'info' : 'pending'} size="sm">
++                        {test.status}
++                      </StatusBadge>
++                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
++                         <div className="w-4 h-4" >→</div>
++                      </Button>
++                    </div>
++                ))}
++            </div>
++          </CardContent>
++        </Card>
++      )}
++    </div>
++  );
++};
++
++export default LabDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/NurseDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/NurseDashboard.tsx
+new file mode 100644
+index 00000000..e68790d8
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/NurseDashboard.tsx
+@@ -0,0 +1,175 @@
++import React, { useEffect, useState } from 'react';
++import { 
++  Users, 
++  Activity, 
++  Clock,
++  HeartPulse,
++  Syringe,
++  AlertCircle,
++  FlaskConical,
++  Pill
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import StatusBadge from '@/components/ui/StatusBadge';
++import { Button } from '@/components/ui/button';
++import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
++import { cn } from '@/lib/utils';
++import { admissionService } from '@/services/admissionService';
++import { laboratoryService } from '@/services/laboratoryService';
++import pharmacyService from '@/services/pharmacyService';
++
++interface NurseDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const NurseDashboard: React.FC<NurseDashboardProps> = ({ visibleWidgets }) => {
++  const [admittedCount, setAdmittedCount] = useState<number>(0);
++  const [labCount, setLabCount] = useState<number>(0);
++  const [medsCount, setMedsCount] = useState<number>(0);
++
++  useEffect(() => {
++    const fetchData = async () => {
++      try {
++        // Fetch Admissions
++        const admissions = await admissionService.getAll();
++        const activeAdmissions = admissions.filter(a => a.status === 'in-progress').length;
++        setAdmittedCount(activeAdmissions);
++
++        // Fetch Lab Requests (Requested + Verified/Pending)
++        const labReqs = await laboratoryService.getLabRequests({ status: 'requested' });
++        setLabCount(labReqs.count);
++
++        // Fetch Medication Requests (Pending/Active)
++        const activeMeds = await pharmacyService.getRequests('active');
++        // Fetch Prescribed Requests (Draft)
++        const prescribedMeds = await pharmacyService.getRequests('prescribed');
++        setMedsCount(activeMeds.length + prescribedMeds.length);
++
++      } catch (error) {
++        console.error("Failed to fetch dashboard data", error);
++      }
++    };
++    fetchData();
++  }, []);
++
++  // Mock Data
++  const shiftActivity = [
++    { hour: '6am', checked: 12 },
++    { hour: '8am', checked: 45 },
++    { hour: '10am', checked: 32 },
++    { hour: '12pm', checked: 28 },
++    { hour: '2pm', checked: 38 },
++    { hour: '4pm', checked: 15 }
++  ];
++
++  const tasks = [
++    { id: 1, title: 'Vitals Check - Room 204', time: '10:00 AM', urgent: true, icon: <HeartPulse className="w-4 h-4" /> },
++    { id: 2, title: 'Administer Meds - Room 301', time: '10:15 AM', urgent: true, icon: <Syringe className="w-4 h-4" /> },
++    { id: 3, title: 'Patient Turning - Room 202', time: '11:00 AM', urgent: false, icon: <Activity className="w-4 h-4" /> },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {visibleWidgets.metrics && (
++        <div className="dashboard-grid">
++          <MetricCard
++            title="Admitted Patients"
++            value={admittedCount.toString()}
++            change={0}
++            changeType="increase"
++            icon={<Users className="w-5 h-5" />}
++            color="blue"
++          />
++          <MetricCard
++            title="Lab Requests"
++            value={labCount.toString()}
++            change={2}
++            changeType="increase"
++            icon={<FlaskConical className="w-5 h-5" />}
++            color="orange"
++          />
++          <MetricCard
++            title="Medication Request"
++            value={medsCount.toString()}
++            change={1}
++            changeType="increase"
++            icon={<Pill className="w-5 h-5" />}
++            color="purple"
++          />
++          <MetricCard
++            title="Alerts"
++            value="1"
++            change={0}
++            changeType="increase"
++            icon={<AlertCircle className="w-5 h-5" />}
++            color="red"
++          />
++        </div>
++      )}
++
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
++        {visibleWidgets.admissions && (
++          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++            <CardHeader>
++              <CardTitle className="chart-title text-primary">Shift Activity</CardTitle>
++              <CardDescription>Patient interactions per hour</CardDescription>
++            </CardHeader>
++            <CardContent>
++              <ResponsiveContainer width="100%" height={300}>
++                <BarChart data={shiftActivity}>
++                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
++                  <XAxis dataKey="hour" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
++                  <Tooltip 
++                    contentStyle={{ 
++                      backgroundColor: 'rgba(255, 255, 255, 0.95)', 
++                      border: 'none',
++                      borderRadius: '8px',
++                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
++                    }} 
++                  />
++                  <Bar dataKey="checked" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
++                </BarChart>
++              </ResponsiveContainer>
++            </CardContent>
++          </Card>
++        )}
++
++        {visibleWidgets.appointments && (
++          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++            <CardHeader>
++              <CardTitle className="flex items-center text-primary">
++                <Clock className="w-5 h-5 mr-2" />
++                Upcoming Tasks
++              </CardTitle>
++              <CardDescription>Scheduled nursing duties</CardDescription>
++            </CardHeader>
++            <CardContent>
++               <div className="space-y-4">
++                {tasks.map((task, index) => (
++                    <div key={index} className="flex items-center space-x-4 p-3 border border-border/40 rounded-lg hover:border-primary/30 hover:bg-accent/5 transition-all group cursor-pointer">
++                      <div className={cn("p-2 rounded-md", task.urgent ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600")}>
++                        {task.icon}
++                      </div>
++                      <div className="flex-1">
++                        <p className="font-medium text-foreground">{task.title}</p>
++                        <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
++                          Due at {task.time}
++                        </p>
++                      </div>
++                      <StatusBadge status={task.urgent ? 'error' : 'info'} size="sm">
++                        {task.urgent ? 'Urgent' : 'Routine'}
++                      </StatusBadge>
++                    </div>
++                ))}
++              </div>
++            </CardContent>
++          </Card>
++        )}
++      </div>
++    </div>
++  );
++};
++
++export default NurseDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/PharmacistDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/PharmacistDashboard.tsx
+new file mode 100644
+index 00000000..6433dece
+--- /dev/null
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/dashboards/PharmacistDashboard.tsx
+@@ -0,0 +1,97 @@
++import React from 'react';
++import { 
++  FileText, 
++  Activity, 
++  AlertTriangle,
++  Pill,
++  Package
++} from 'lucide-react';
++import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
++import MetricCard from '@/components/ui/MetricCard';
++import { Button } from '@/components/ui/button';
++import { cn } from '@/lib/utils';
++
++interface PharmacistDashboardProps {
++  visibleWidgets: Record<string, boolean>;
++}
++
++const PharmacistDashboard: React.FC<PharmacistDashboardProps> = ({ visibleWidgets }) => {
++  const tasks = [
++    { id: 1, title: 'Prescription Verification', count: 8, urgent: true, icon: <FileText className="w-4 h-4" /> },
++    { id: 2, title: 'Low Stock Alerts', count: 15, urgent: true, icon: <AlertTriangle className="w-4 h-4" /> },
++    { id: 3, title: 'Dispensing Queue', count: 12, urgent: false, icon: <Activity className="w-4 h-4" /> },
++  ];
++
++  return (
++    <div className="space-y-6">
++      {visibleWidgets.metrics && (
++        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
++           <MetricCard
++            title="Prescriptions Pending"
++            value="24"
++            change={8}
++            changeType="increase"
++            icon={<FileText className="w-5 h-5" />}
++            color="blue"
++          />
++          <MetricCard
++            title="Dispensing Queue"
++            value="12"
++            change={2}
++            changeType="decrease"
++            icon={<Pill className="w-5 h-5" />}
++            color="orange"
++          />
++           <MetricCard
++            title="Low Stock Items"
++            value="15"
++            change={5}
++            changeType="increase"
++            icon={<Package className="w-5 h-5" />}
++            color="red"
++          />
++        </div>
++      )}
++
++      {visibleWidgets.appointments && (
++        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-border/50">
++          <CardHeader>
++            <CardTitle className="flex items-center text-primary">
++              <Pill className="w-5 h-5 mr-2" />
++              Pharmacy Queue
++            </CardTitle>
++            <CardDescription>Items ready for dispensing or verification</CardDescription>
++          </CardHeader>
++          <CardContent>
++             <div className="space-y-4">
++                {tasks.map((task, index) => (
++                    <div key={index} className="flex items-center space-x-4 p-3 border border-border/40 rounded-lg hover:border-primary/30 hover:bg-accent/5 transition-all group cursor-pointer">
++                      <div className={cn("p-2 rounded-md", task.urgent ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600")}>
++                        {task.icon}
++                      </div>
++                      <div className="flex-1">
++                        <p className="font-medium text-foreground">{task.title}</p>
++                        <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
++                          {task.urgent ? 'High Priority' : 'Routine'}
++                        </p>
++                      </div>
++                      <div className={cn(
++                        "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
++                        task.urgent ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
++                      )}>
++                        {task.count}
++                      </div>
++                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
++                         <div className="w-4 h-4" >→</div>
++                      </Button>
++                    </div>
++                ))}
++              </div>
++          </CardContent>
++        </Card>
++      )}
++    </div>
++  );
++};
++
++export default PharmacistDashboard;
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/ui/StatusBadge.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/ui/StatusBadge.tsx
+index 03a71109..7356656c 100644
+--- a/Frontend/wah4hospitals-clinic-hub-79-main/src/components/ui/StatusBadge.tsx
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/components/ui/StatusBadge.tsx
+@@ -1,13 +1,13 @@
+-
+ import React from 'react';
++import { cn } from '@/lib/utils';
+ 
+-interface StatusBadgeProps {
++interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+   status: 'success' | 'warning' | 'error' | 'info' | 'pending';
+   children: React.ReactNode;
+   size?: 'sm' | 'md' | 'lg';
+ }
+ 
+-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md' }) => {
++const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md', className, ...props }) => {
+   const statusClasses = {
+     success: 'badge-success',
+     warning: 'badge-warning',
+@@ -23,7 +23,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md'
+   };
+ 
+   return (
+-    <span className={`badge ${statusClasses[status]} ${sizeClasses[size]}`}>
++    <span className={cn("badge", statusClasses[status], sizeClasses[size], className)} {...props}>
+       {children}
+     </span>
+   );
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/pages/ModernDashboard.tsx b/Frontend/wah4hospitals-clinic-hub-79-main/src/pages/ModernDashboard.tsx
+index cd1dfa5b..c5dc4c64 100644
+--- a/Frontend/wah4hospitals-clinic-hub-79-main/src/pages/ModernDashboard.tsx
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/pages/ModernDashboard.tsx
+@@ -1,272 +1,82 @@
++import React, { useState, useEffect } from 'react';
++import { useRole } from '@/contexts/RoleContext';
++import DashboardHeader, { DashboardWidget } from '@/components/dashboards/DashboardHeader';
+ 
+-import React from 'react';
+-import { 
+-  Users, 
+-  Bed, 
+-  FileText, 
+-  DollarSign, 
+-  Activity, 
+-  AlertTriangle,
+-  Calendar,
+-  Stethoscope
+-} from 'lucide-react';
+-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+-import MetricCard from '@/components/ui/MetricCard';
+-import StatusBadge from '@/components/ui/StatusBadge';
+-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
++// Role-Specific Dashboard Imports
++import DoctorDashboard from '@/components/dashboards/DoctorDashboard';
++import NurseDashboard from '@/components/dashboards/NurseDashboard';
++import AdminDashboard from '@/components/dashboards/AdminDashboard';
++import PharmacistDashboard from '@/components/dashboards/PharmacistDashboard';
++import LabDashboard from '@/components/dashboards/LabDashboard';
++import BillingDashboard from '@/components/dashboards/BillingDashboard';
+ 
+ const ModernDashboard = () => {
+-  const admissionData = [
+-    { month: 'Jan', admissions: 120, discharges: 115 },
+-    { month: 'Feb', admissions: 135, discharges: 128 },
+-    { month: 'Mar', admissions: 148, discharges: 142 },
+-    { month: 'Apr', admissions: 162, discharges: 158 },
+-    { month: 'May', admissions: 175, discharges: 168 },
+-    { month: 'Jun', admissions: 188, discharges: 182 }
+-  ];
++  const { currentRole } = useRole();
+ 
+-  const currentPatients = [
+-    { id: 'P001', name: 'Juan Dela Cruz', condition: 'Hypertension', room: '201A', status: 'stable' },
+-    { id: 'P002', name: 'Maria Santos', condition: 'Diabetes', room: '202B', status: 'critical' },
+-    { id: 'P003', name: 'Pedro Reyes', condition: 'COVID-19', room: '301C', status: 'recovering' },
+-    { id: 'P004', name: 'Ana Garcia', condition: 'Pneumonia', room: '203A', status: 'stable' }
+-  ];
++  // Widget Visibility State - Persisted in LocalStorage
++  const [visibleWidgets, setVisibleWidgets] = useState<Record<DashboardWidget, boolean>>(() => {
++    const saved = localStorage.getItem('dashboardWidgets');
++    return saved ? JSON.parse(saved) : {
++      metrics: true,
++      admissions: true,
++      appointments: true,
++      patients: true
++    };
++  });
+ 
+-  const upcomingAppointments = [
+-    { time: '09:00 AM', patient: 'Carlos Mendoza', type: 'Consultation' },
+-    { time: '10:30 AM', patient: 'Elena Rodriguez', type: 'Follow-up' },
+-    { time: '02:00 PM', patient: 'Miguel Torres', type: 'Surgery' },
+-    { time: '03:30 PM', patient: 'Sofia Hernandez', type: 'Lab Review' }
+-  ];
++  // Save preferences when changed
++  useEffect(() => {
++    localStorage.setItem('dashboardWidgets', JSON.stringify(visibleWidgets));
++  }, [visibleWidgets]);
+ 
+-  return (
+-    <div className="space-y-6">
+-      {/* Welcome Section */}
+-      <div className="glass-card p-6">
+-        <div className="flex items-center justify-between">
+-          <div>
+-            <h1 className="text-2xl font-bold text-gray-900">Good morning, Dr. Santos!</h1>
+-            <p className="text-gray-600 mt-1">Here's what's happening at your hospital today.</p>
+-          </div>
+-          <div className="text-right">
+-            <p className="text-sm text-gray-500">Today</p>
+-            <p className="font-semibold text-gray-900">{new Date().toLocaleDateString('en-US', { 
+-              weekday: 'long', 
+-              year: 'numeric', 
+-              month: 'long', 
+-              day: 'numeric' 
+-            })}</p>
+-          </div>
+-        </div>
+-      </div>
++  const toggleWidget = (widget: DashboardWidget) => {
++    setVisibleWidgets(prev => ({
++      ...prev,
++      [widget]: !prev[widget]
++    }));
++  };
+ 
+-      {/* Key Metrics */}
+-      <div className="dashboard-grid">
+-        <MetricCard
+-          title="Total Patients"
+-          value="184"
+-          change={12}
+-          changeType="increase"
+-          icon={<Users className="w-6 h-6" />}
+-          color="blue"
+-        />
+-        <MetricCard
+-          title="Bed Occupancy"
+-          value="87%"
+-          change={5}
+-          changeType="increase"
+-          icon={<Bed className="w-6 h-6" />}
+-          color="green"
+-        />
+-        <MetricCard
+-          title="PhilHealth Claims"
+-          value="₱2.4M"
+-          change={8}
+-          changeType="increase"
+-          icon={<FileText className="w-6 h-6" />}
+-          color="purple"
+-        />
+-        <MetricCard
+-          title="Revenue Today"
+-          value="₱125K"
+-          change={3}
+-          changeType="decrease"
+-          icon={<DollarSign className="w-6 h-6" />}
+-          color="orange"
+-        />
+-      </div>
++  // Widget Labels for Customization Menu
++  const WIDGET_LABELS: Record<DashboardWidget, string> = {
++    metrics: 'Key Metrics Cards',
++    admissions: 'Analytics & Charts',
++    appointments: 'Tasks & Actions',
++    patients: 'Patient Lists / Queue'
++  };
+ 
+-      {/* Charts and Analytics */}
+-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+-        {/* Admissions Chart */}
+-        <Card className="card-modern">
+-          <CardHeader>
+-            <CardTitle className="chart-title">Patient Admissions & Discharges</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <ResponsiveContainer width="100%" height={300}>
+-              <LineChart data={admissionData}>
+-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+-                <XAxis dataKey="month" stroke="#666" />
+-                <YAxis stroke="#666" />
+-                <Tooltip 
+-                  contentStyle={{ 
+-                    backgroundColor: 'white', 
+-                    border: '1px solid #e0e0e0',
+-                    borderRadius: '8px',
+-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+-                  }} 
+-                />
+-                <Line 
+-                  type="monotone" 
+-                  dataKey="admissions" 
+-                  stroke="#3b82f6" 
+-                  strokeWidth={3}
+-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+-                />
+-                <Line 
+-                  type="monotone" 
+-                  dataKey="discharges" 
+-                  stroke="#10b981" 
+-                  strokeWidth={3}
+-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+-                />
+-              </LineChart>
+-            </ResponsiveContainer>
+-          </CardContent>
+-        </Card>
++  /**
++   * Dynamic Dashboard Renderer based on User Role
++   * This keeps the main file clean and delegates logic to specialized components
++   */
++  const renderRoleBasedContent = () => {
++    switch (currentRole) {
++      case 'doctor':
++        return <DoctorDashboard visibleWidgets={visibleWidgets} />;
++      case 'nurse':
++        return <NurseDashboard visibleWidgets={visibleWidgets} />;
++      case 'lab_technician':
++         return <LabDashboard visibleWidgets={visibleWidgets} />;
++      case 'pharmacist':
++         return <PharmacistDashboard visibleWidgets={visibleWidgets} />;
++      case 'billing_clerk':
++         return <BillingDashboard visibleWidgets={visibleWidgets} />;
++      // Admin/Fallback
++      default:
++         return <AdminDashboard visibleWidgets={visibleWidgets} />;
++    }
++  };
+ 
+-        {/* Department Overview */}
+-        <Card className="card-modern">
+-          <CardHeader>
+-            <CardTitle className="chart-title">Department Patient Load</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <ResponsiveContainer width="100%" height={300}>
+-              <BarChart data={[
+-                { dept: 'Emergency', patients: 45 },
+-                { dept: 'ICU', patients: 28 },
+-                { dept: 'Surgery', patients: 32 },
+-                { dept: 'Pediatrics', patients: 38 },
+-                { dept: 'Maternity', patients: 22 }
+-              ]}>
+-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+-                <XAxis dataKey="dept" stroke="#666" />
+-                <YAxis stroke="#666" />
+-                <Tooltip 
+-                  contentStyle={{ 
+-                    backgroundColor: 'white', 
+-                    border: '1px solid #e0e0e0',
+-                    borderRadius: '8px',
+-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+-                  }} 
+-                />
+-                <Bar dataKey="patients" fill="url(#gradient)" radius={[4, 4, 0, 0]} />
+-                <defs>
+-                  <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+-                    <stop offset="0%" stopColor="#8b5cf6" />
+-                    <stop offset="100%" stopColor="#3b82f6" />
+-                  </linearGradient>
+-                </defs>
+-              </BarChart>
+-            </ResponsiveContainer>
+-          </CardContent>
+-        </Card>
+-      </div>
+-
+-      {/* Recent Activity and Appointments */}
+-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+-        {/* Recent Patients */}
+-        <Card className="card-modern">
+-          <CardHeader>
+-            <CardTitle className="chart-title flex items-center">
+-              <Activity className="w-5 h-5 mr-2" />
+-              Current Patients
+-            </CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="space-y-4">
+-              {currentPatients.map((patient) => (
+-                <div key={patient.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+-                  <div className="flex items-center space-x-3">
+-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+-                      <span className="text-white text-sm font-medium">
+-                        {patient.name.charAt(0)}
+-                      </span>
+-                    </div>
+-                    <div>
+-                      <p className="font-medium text-gray-900">{patient.name}</p>
+-                      <p className="text-sm text-gray-500">{patient.condition} • Room {patient.room}</p>
+-                    </div>
+-                  </div>
+-                  <StatusBadge 
+-                    status={
+-                      patient.status === 'critical' ? 'error' :
+-                      patient.status === 'stable' ? 'success' : 'warning'
+-                    }
+-                  >
+-                    {patient.status}
+-                  </StatusBadge>
+-                </div>
+-              ))}
+-            </div>
+-          </CardContent>
+-        </Card>
++  return (
++    <div className="space-y-6">
++      <DashboardHeader 
++        visibleWidgets={visibleWidgets} 
++        toggleWidget={toggleWidget} 
++        widgetLabels={WIDGET_LABELS}
++      />
+ 
+-        {/* Upcoming Appointments */}
+-        <Card className="card-modern">
+-          <CardHeader>
+-            <CardTitle className="chart-title flex items-center">
+-              <Calendar className="w-5 h-5 mr-2" />
+-              Today's Appointments
+-            </CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="space-y-4">
+-              {upcomingAppointments.map((appointment, index) => (
+-                <div key={index} className="flex items-center space-x-4 p-3 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+-                  <div className="text-center">
+-                    <p className="text-sm font-medium text-blue-600">{appointment.time}</p>
+-                  </div>
+-                  <div className="flex-1">
+-                    <p className="font-medium text-gray-900">{appointment.patient}</p>
+-                    <p className="text-sm text-gray-500">{appointment.type}</p>
+-                  </div>
+-                  <Stethoscope className="w-4 h-4 text-gray-400" />
+-                </div>
+-              ))}
+-            </div>
+-          </CardContent>
+-        </Card>
++      <div className="fade-in-up">
++        {renderRoleBasedContent()}
+       </div>
+-
+-      {/* System Alerts */}
+-      <Card className="card-modern border-l-4 border-l-yellow-500">
+-        <CardHeader>
+-          <CardTitle className="chart-title flex items-center text-yellow-700">
+-            <AlertTriangle className="w-5 h-5 mr-2" />
+-            System Alerts
+-          </CardTitle>
+-        </CardHeader>
+-        <CardContent>
+-          <div className="space-y-3">
+-            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+-              <div>
+-                <p className="font-medium text-yellow-800">Low Medicine Stock</p>
+-                <p className="text-sm text-yellow-600">Paracetamol inventory is running low (15 units remaining)</p>
+-              </div>
+-              <StatusBadge status="warning">Action Required</StatusBadge>
+-            </div>
+-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+-              <div>
+-                <p className="font-medium text-blue-800">PhilHealth Claim Pending</p>
+-                <p className="text-sm text-blue-600">3 claims awaiting approval for processing</p>
+-              </div>
+-              <StatusBadge status="info">Review</StatusBadge>
+-            </div>
+-          </div>
+-        </CardContent>
+-      </Card>
+     </div>
+   );
+ };
+diff --git a/Frontend/wah4hospitals-clinic-hub-79-main/src/services/dischargeService.ts b/Frontend/wah4hospitals-clinic-hub-79-main/src/services/dischargeService.ts
+index ce6bfe48..9962327e 100644
+--- a/Frontend/wah4hospitals-clinic-hub-79-main/src/services/dischargeService.ts
++++ b/Frontend/wah4hospitals-clinic-hub-79-main/src/services/dischargeService.ts
+@@ -13,11 +13,11 @@ import type {
+ const api: AxiosInstance = axios.create({
+   baseURL:
+     import.meta.env.BACKEND_DISCHARGE_8000
+-      ? `${import.meta.env.BACKEND_DISCHARGE_8000}discharge-records/`
++      ? `${import.meta.env.BACKEND_DISCHARGE_8000}discharges/`
+       : import.meta.env.LOCAL_8000
+-        ? `${import.meta.env.LOCAL_8000}/api/discharge/discharge-records/`
++        ? `${import.meta.env.LOCAL_8000}/api/discharge/discharges/`
+         : import.meta.env.BACKEND_DISCHARGE
+-          ? `${import.meta.env.BACKEND_DISCHARGE}discharge-records/`
++          ? `${import.meta.env.BACKEND_DISCHARGE}discharges/`
+           : undefined,
+   headers: {
+     "Content-Type": "application/json",
+diff --git a/wah4h-backend/discharge/serializers.py b/wah4h-backend/discharge/serializers.py
+index 8ad89741..98fd88a4 100644
+--- a/wah4h-backend/discharge/serializers.py
++++ b/wah4h-backend/discharge/serializers.py
+@@ -4,8 +4,33 @@ from patients.models import Patient
+ from admission.models import Encounter
+ from accounts.models import Practitioner
+ 
++from datetime import date, datetime
+ 
+ class DischargeSerializer(serializers.ModelSerializer):
++    # Field Aliases for Frontend Compatibility
++    patient = serializers.IntegerField(source='patient_id', read_only=True)
++    admission = serializers.IntegerField(source='encounter_id', read_only=True)
++    
++    # Enriched Fields
++    patientName = serializers.SerializerMethodField()
++    room = serializers.SerializerMethodField()
++    age = serializers.SerializerMethodField()
++    condition = serializers.SerializerMethodField()
++    department = serializers.SerializerMethodField()
++    admissionDate = serializers.SerializerMethodField()
++    physician = serializers.SerializerMethodField()
++    status = serializers.CharField(source='workflow_status', read_only=True)
++    estimatedDischarge = serializers.SerializerMethodField()
++    
++    # Discharged Patient fields
++    finalDiagnosis = serializers.SerializerMethodField()
++    dischargeSummary = serializers.CharField(source='summary_of_stay', read_only=True)
++    followUpRequired = serializers.SerializerMethodField()
++    followUpPlan = serializers.CharField(source='follow_up_plan', read_only=True)
++    dischargeDate = serializers.SerializerMethodField()
++
++    requirements = serializers.SerializerMethodField()
++    
+     """
+     Simplified serializer for Discharge records.
+     Uses direct database queries for enrichment (simple and maintainable for MVP).
+@@ -137,4 +162,83 @@ class DischargeSerializer(serializers.ModelSerializer):
+             'billingClearance': bool(obj.billing_cleared_datetime),
+             'nursingNotes': False,
+             'followUpScheduled': bool(obj.follow_up_plan)
+-        }
+\ No newline at end of file
++        }
++        extra_kwargs = {
++            'discharge_datetime': {'required': False},
++            'workflow_status': {'required': False},
++        }
++
++    def get_patientName(self, obj):
++        if hasattr(obj, 'patient_obj') and obj.patient_obj:
++            return f"{obj.patient_obj.first_name} {obj.patient_obj.last_name}"
++        return "Unknown Patient"
++
++    def get_room(self, obj):
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj:
++             if hasattr(obj.encounter_obj, 'location_obj') and obj.encounter_obj.location_obj:
++                 return obj.encounter_obj.location_obj.name
++             return "Unassigned"
++        return "Unassigned"
++
++    def get_age(self, obj):
++        if hasattr(obj, 'patient_obj') and obj.patient_obj and obj.patient_obj.birthdate:
++            today = date.today()
++            born = obj.patient_obj.birthdate
++            return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
++        return 0
++
++    def get_condition(self, obj):
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj:
++             return obj.encounter_obj.reason_code or "Under Observation"
++        return "Stable"
++
++    def get_department(self, obj):
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj:
++             return obj.encounter_obj.service_type or "General"
++        return "General"
++
++    def get_admissionDate(self, obj):
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj and obj.encounter_obj.period_start:
++             return obj.encounter_obj.period_start.isoformat()
++        return datetime.now().date().isoformat()
++
++    def get_physician(self, obj):
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj:
++            if hasattr(obj.encounter_obj, 'practitioner_obj') and obj.encounter_obj.practitioner_obj:
++                p = obj.encounter_obj.practitioner_obj
++                return f"Dr. {p.first_name} {p.last_name}"
++        return "Dr. On-Duty" 
++
++    def get_estimatedDischarge(self, obj):
++        if obj.notice_datetime:
++            return obj.notice_datetime.isoformat()
++        if hasattr(obj, 'encounter_obj') and obj.encounter_obj and obj.encounter_obj.period_end:
++            return obj.encounter_obj.period_end.isoformat()
++        return (datetime.now().date()).isoformat()
++
++    def get_requirements(self, obj):
++        return {
++            "finalDiagnosis": bool(obj.summary_of_stay),
++            "physicianSignature": True, 
++            "medicationReconciliation": bool(obj.discharge_instructions),
++            "dischargeSummary": bool(obj.summary_of_stay),
++            "billingClearance": bool(obj.billing_cleared_datetime),
++            "nursingNotes": True, 
++            "followUpScheduled": bool(obj.follow_up_plan),
++        }
++
++    def get_finalDiagnosis(self, obj):
++        if obj.summary_of_stay and "Diagnosis:" in obj.summary_of_stay:
++            try:
++                return obj.summary_of_stay.split("Diagnosis:")[1].split("\n")[0].strip()
++            except:
++                pass
++        return "Pending Diagnosis"
++
++    def get_dischargeDate(self, obj):
++        if obj.discharge_datetime:
++            return obj.discharge_datetime.isoformat()
++        return None
++
++    def get_followUpRequired(self, obj):
++        return bool(obj.follow_up_plan)
+\ No newline at end of file
+diff --git a/wah4h-backend/discharge/views.py b/wah4h-backend/discharge/views.py
+index b03a002e..936f5b11 100644
+--- a/wah4h-backend/discharge/views.py
++++ b/wah4h-backend/discharge/views.py
+@@ -1,7 +1,8 @@
+-from rest_framework import viewsets, status, response
++from rest_framework import viewsets, status
+ from rest_framework.decorators import action
++from rest_framework.response import Response
++from django.utils import timezone
+ from django.db import transaction
+-from django.shortcuts import get_object_or_404
+ from .models import Discharge
+ from .serializers import DischargeSerializer
+ from admission.models import Encounter
+@@ -12,6 +13,10 @@ from datetime import datetime
+ import logging
+ 
+ logger = logging.getLogger(__name__)
++from patients.models import Patient
++from admission.models import Encounter
++from billing.models import Invoice
++from accounts.models import Practitioner, Location
+ 
+ class DischargeViewSet(viewsets.ModelViewSet):
+     """
+@@ -129,4 +134,197 @@ class DischargeViewSet(viewsets.ModelViewSet):
+         discharge_record.save()
+         
+         serializer = self.get_serializer(discharge_record)
+-        return response.Response(serializer.data)
+\ No newline at end of file
++        return response.Response(serializer.data)
++
++    def _attach_related_objects(self, queryset):
++        instances = list(queryset)
++        patient_ids = set()
++        encounter_ids = set()
++        
++        for instance in instances:
++            if instance.patient_id: patient_ids.add(instance.patient_id)
++            if instance.encounter_id: encounter_ids.add(instance.encounter_id)
++        
++        # Optimize: Fetch only needed fields if possible, but for now fetch all
++        patients = {p.id: p for p in Patient.objects.filter(id__in=patient_ids)}
++        encounters = {e.encounter_id: e for e in Encounter.objects.filter(encounter_id__in=encounter_ids)}
++        
++        practitioner_ids = set()
++        location_ids = set()
++        
++        for enc in encounters.values():
++            if enc.participant_individual_id: practitioner_ids.add(enc.participant_individual_id)
++            if enc.location_id: location_ids.add(enc.location_id)
++                
++        practitioners = {p.practitioner_id: p for p in Practitioner.objects.filter(practitioner_id__in=practitioner_ids)}
++        locations = {l.location_id: l for l in Location.objects.filter(location_id__in=location_ids)}
++        
++        for instance in instances:
++            instance.patient_obj = patients.get(instance.patient_id)
++            instance.encounter_obj = encounters.get(instance.encounter_id)
++            if instance.encounter_obj:
++                instance.encounter_obj.practitioner_obj = practitioners.get(instance.encounter_obj.participant_individual_id)
++                instance.encounter_obj.location_obj = locations.get(instance.encounter_obj.location_id)
++            
++        return instances
++
++    def list(self, request, *args, **kwargs):
++        queryset = self.filter_queryset(self.get_queryset())
++        instances = self._attach_related_objects(queryset)
++        serializer = self.get_serializer(instances, many=True)
++        return Response(serializer.data)
++
++    def retrieve(self, request, *args, **kwargs):
++        instance = self.get_object()
++        try:
++            instance.patient_obj = Patient.objects.get(id=instance.patient_id)
++        except Patient.DoesNotExist:
++            instance.patient_obj = None
++            
++        try:
++            enc = Encounter.objects.get(encounter_id=instance.encounter_id)
++            if enc.participant_individual_id:
++                try: enc.practitioner_obj = Practitioner.objects.get(practitioner_id=enc.participant_individual_id)
++                except Practitioner.DoesNotExist: enc.practitioner_obj = None
++            
++            if enc.location_id:
++                try: enc.location_obj = Location.objects.get(location_id=enc.location_id)
++                except Location.DoesNotExist: enc.location_obj = None
++                    
++            instance.encounter_obj = enc
++        except Encounter.DoesNotExist:
++            instance.encounter_obj = None
++            
++        serializer = self.get_serializer(instance)
++        return Response(serializer.data)
++
++    @action(detail=False, methods=['get'])
++    def pending(self, request):
++        queryset = Discharge.objects.filter(workflow_status__in=['pending', 'ready'])
++        instances = self._attach_related_objects(queryset)
++        serializer = self.get_serializer(instances, many=True)
++        return Response(serializer.data)
++
++    @action(detail=False, methods=['get'])
++    def discharged(self, request):
++        queryset = Discharge.objects.filter(workflow_status='discharged')
++        instances = self._attach_related_objects(queryset)
++        serializer = self.get_serializer(instances, many=True)
++        return Response(serializer.data)
++
++    @action(detail=False, methods=['get', 'post'])
++    def from_billing(self, request):
++        if request.method == 'GET':
++            eligible_invoices = Invoice.objects.filter(status__in=['issued', 'balanced']).select_related() 
++            active_discharge_patient_ids = Discharge.objects.filter(workflow_status__in=['pending', 'ready', 'discharged']).values_list('patient_id', flat=True)
++            eligible_invoices = eligible_invoices.exclude(subject_id__in=active_discharge_patient_ids)
++            invoices = list(eligible_invoices[:50])
++            patient_ids = [inv.subject_id for inv in invoices]
++            patients = {p.id: p for p in Patient.objects.filter(id__in=patient_ids)}
++            
++            latest_encounters = {}
++            if patient_ids:
++                for pid in patient_ids:
++                    enc = Encounter.objects.filter(subject_id=pid).order_by('-encounter_id').first()
++                    if enc: latest_encounters[pid] = enc
++            
++            loc_ids = {e.location_id for e in latest_encounters.values() if e.location_id}
++            locations = {l.location_id: l for l in Location.objects.filter(location_id__in=loc_ids)}
++            
++            results = []
++            for inv in invoices:
++                pat = patients.get(inv.subject_id)
++                if not pat: continue
++                enc = latest_encounters.get(pat.id)
++                room_name = "Unassigned"
++                if enc and enc.location_id:
++                    loc = locations.get(enc.location_id)
++                    if loc: room_name = loc.name
++                
++                results.append({
++                    "billing_id": inv.invoice_id,
++                    "patient_name": f"{pat.first_name} {pat.last_name}",
++                    "hospital_id": pat.patient_id,
++                    "room": room_name,
++                    "age": pat.age,
++                    "department": enc.service_type if enc else "General",
++                    "admission_date": inv.invoice_datetime.strftime("%Y-%m-%d") if inv.invoice_datetime else "N/A",
++                    "attending_physician": "Dr. On-Duty",
++                    "condition": "Stable",
++                })
++            return Response({"patients": results})
++            
++        elif request.method == 'POST':
++            billing_ids = request.data.get('billing_ids', [])
++            created_count = 0
++            errors = []
++            invoices = Invoice.objects.filter(invoice_id__in=billing_ids)
++            for inv in invoices:
++                if Discharge.objects.filter(patient_id=inv.subject_id, workflow_status__in=['pending', 'ready']).exists():
++                    errors.append({"error": f"Patient {inv.subject_id} already in discharge queue."})
++                    continue
++                encounter_id = 0
++                latest_encounter = Encounter.objects.filter(subject_id=inv.subject_id).order_by('-encounter_id').first()
++                if latest_encounter: encounter_id = latest_encounter.encounter_id
++                
++                Discharge.objects.create(
++                    patient_id=inv.subject_id,
++                    encounter_id=encounter_id,
++                    workflow_status='pending',
++                    notice_datetime=timezone.now(),
++                    billing_cleared_datetime=timezone.now()
++                )
++                created_count += 1
++            return Response({"created": created_count, "errors": errors})
++
++    @action(detail=True, methods=['post'])
++    def process_discharge(self, request, pk=None):
++        instance = self.get_object()
++        data = request.data
++        
++        with transaction.atomic():
++            diagnosis = data.get('finalDiagnosis', '')
++            summary = data.get('hospitalStaySummary', '')
++            meds = data.get('dischargeMedications', '')
++            instructions = data.get('dischargeInstructions', '')
++            
++            if diagnosis:
++                instance.summary_of_stay = f"Diagnosis: {diagnosis}\n\nSummary: {summary}"
++            else:
++                instance.summary_of_stay = summary
++            
++            full_instructions = instructions
++            if meds:
++                full_instructions = f"{instructions}\n\nMedications: {meds}"
++            instance.discharge_instructions = full_instructions
++            
++            instance.follow_up_plan = data.get('followUpPlan', instance.follow_up_plan)
++            instance.pending_items = data.get('pendingItems', instance.pending_items)
++            
++            instance.workflow_status = 'discharged'
++            instance.discharge_datetime = timezone.now()
++            instance.save()
++            
++            if instance.encounter_id:
++                try:
++                    encounter = Encounter.objects.get(encounter_id=instance.encounter_id)
++                    encounter.status = 'finished'
++                    encounter.period_end = timezone.now().date()
++                    encounter.location_status = 'discharged'
++                    encounter.save()
++                except Encounter.DoesNotExist:
++                    pass
++        
++        try: instance.patient_obj = Patient.objects.get(id=instance.patient_id)
++        except Patient.DoesNotExist: instance.patient_obj = None
++        serializer = self.get_serializer(instance)
++        return Response(serializer.data)
++
++    @action(detail=True, methods=['patch'])
++    def update_requirements(self, request, pk=None):
++        instance = self.get_object()
++        reqs = request.data.get('requirements', {})
++        if reqs.get('dischargeSummary'): instance.summary_of_stay = "Completed" 
++        if reqs.get('billingClearance'): instance.billing_cleared_datetime = timezone.now()
++        instance.save()
++        return Response(status=status.HTTP_200_OK)
+\ No newline at end of file

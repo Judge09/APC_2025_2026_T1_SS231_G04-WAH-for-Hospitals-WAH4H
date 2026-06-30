@@ -76,10 +76,7 @@ const ModulesCategory = () => {
     {
       name: "Administration",
       modules: [
-        { id: 'appointments', name: 'Appointments', icon: <Calendar className="w-4 h-4" />, description: "Schedule management" },
-        { id: 'philhealth', name: 'PhilHealth', icon: <FileText className="w-4 h-4" />, description: "Insurance claims" },
-        { id: 'statistics', name: 'Statistics', icon: <BarChart3 className="w-4 h-4" />, description: "Hospital performance" },
-        { id: 'erp', name: 'ERP', icon: <Building2 className="w-4 h-4" />, description: "Resource planning" }
+        { id: 'statistics', name: 'Statistics', icon: <BarChart3 className="w-4 h-4" />, description: "Hospital performance" }
       ]
     },
     {

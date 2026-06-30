@@ -2,12 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PendingItem {
   id: string;
   name: string;
-  status: 'missing' | 'completed' | 'pending';
+  status: boolean;
   description: string;
   required: boolean;
 }
@@ -25,87 +26,74 @@ interface DischargeRequirements {
 interface PendingItemsSectionProps {
   requirements: DischargeRequirements;
   className?: string;
+  onRequirementChange?: (requirementKey: keyof DischargeRequirements, value: boolean) => void;
+  readOnly?: boolean;
 }
 
 export const PendingItemsSection: React.FC<PendingItemsSectionProps> = ({
   requirements,
-  className = ""
+  className = "",
+  onRequirementChange,
+  readOnly = false
 }) => {
   const pendingItems: PendingItem[] = [
     {
-      id: 'final-diagnosis',
+      id: 'finalDiagnosis',
       name: 'Final Diagnosis',
-      status: requirements.finalDiagnosis ? 'completed' : 'missing',
+      status: requirements.finalDiagnosis,
       description: 'Complete final diagnosis documentation required',
       required: true
     },
     {
-      id: 'physician-signature',
+      id: 'physicianSignature',
       name: 'Physician Signature',
-      status: requirements.physicianSignature ? 'completed' : 'missing',
+      status: requirements.physicianSignature,
       description: 'Attending physician signature on discharge orders',
       required: true
     },
     {
-      id: 'medication-reconciliation',
+      id: 'medicationReconciliation',
       name: 'Medication Reconciliation',
-      status: requirements.medicationReconciliation ? 'completed' : 'missing',
+      status: requirements.medicationReconciliation,
       description: 'Complete medication reconciliation and discharge prescriptions',
       required: true
     },
     {
-      id: 'discharge-summary',
+      id: 'dischargeSummary',
       name: 'Discharge Summary',
-      status: requirements.dischargeSummary ? 'completed' : 'missing',
+      status: requirements.dischargeSummary,
       description: 'Complete discharge summary with treatment details',
       required: true
     },
     {
-      id: 'billing-clearance',
+      id: 'billingClearance',
       name: 'Billing Clearance',
-      status: requirements.billingClearance ? 'completed' : 'missing',
+      status: requirements.billingClearance,
       description: 'Billing department clearance for discharge',
       required: true
     },
     {
-      id: 'nursing-notes',
+      id: 'nursingNotes',
       name: 'Nursing Notes',
-      status: requirements.nursingNotes ? 'completed' : 'missing',
+      status: requirements.nursingNotes,
       description: 'Final nursing assessment and care notes',
       required: false
     },
     {
-      id: 'follow-up',
+      id: 'followUpScheduled',
       name: 'Follow-up Scheduled',
-      status: requirements.followUpScheduled ? 'completed' : 'pending',
+      status: requirements.followUpScheduled,
       description: 'Follow-up appointments scheduled if required',
       required: false
     }
   ];
 
-  const missingRequired = pendingItems.filter(item => item.required && item.status === 'missing');
-  const completedItems = pendingItems.filter(item => item.status === 'completed');
-  const pendingOptional = pendingItems.filter(item => !item.required && item.status !== 'completed');
+  const missingRequired = pendingItems.filter(item => item.required && !item.status);
+  const completedItems = pendingItems.filter(item => item.status);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'missing':
-        return <X className="w-4 h-4 text-destructive" />;
-      default:
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-      case 'missing':
-        return <Badge className="bg-destructive/10 text-destructive">Missing</Badge>;
-      default:
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+  const handleCheckboxChange = (itemId: string, checked: boolean) => {
+    if (onRequirementChange && !readOnly) {
+      onRequirementChange(itemId as keyof DischargeRequirements, checked);
     }
   };
 
@@ -134,32 +122,38 @@ export const PendingItemsSection: React.FC<PendingItemsSectionProps> = ({
           {pendingItems.map((item) => (
             <div
               key={item.id}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                item.status === 'missing' && item.required
-                  ? 'border-destructive/20 bg-destructive/5'
-                  : item.status === 'completed'
+              className={`flex items-center gap-3 p-3 rounded-lg border ${!item.status && item.required
+                ? 'border-destructive/20 bg-destructive/5'
+                : item.status
                   ? 'border-green-200 bg-green-50'
                   : 'border-muted bg-muted/30'
-              }`}
+                }`}
             >
-              <div className="flex items-center gap-3 flex-1">
-                {getStatusIcon(item.status)}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${item.required ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {item.name}
-                      {item.required && <span className="text-destructive">*</span>}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
+              <Checkbox
+                id={item.id}
+                checked={item.status}
+                onCheckedChange={(checked) => handleCheckboxChange(item.id, checked as boolean)}
+                disabled={readOnly}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <label
+                  htmlFor={item.id}
+                  className={`flex items-center gap-2 cursor-pointer ${readOnly ? 'cursor-default' : ''}`}
+                >
+                  <span className={`font-medium ${item.required ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {item.name}
+                    {item.required && <span className="text-destructive">*</span>}
+                  </span>
+                  {item.status && <CheckCircle className="w-4 h-4 text-green-600" />}
+                </label>
+                <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
               </div>
-              {getStatusBadge(item.status)}
             </div>
           ))}
         </div>
 
-        {missingRequired.length === 0 && pendingOptional.length === 0 && (
+        {missingRequired.length === 0 && (
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800 font-medium">

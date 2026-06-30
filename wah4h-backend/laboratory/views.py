@@ -1,319 +1,427 @@
-from rest_framework import viewsets, status
+"""
+Laboratory Views
+=================
+Enhanced viewsets with filtering, pagination, and search capabilities.
+Follows the pattern established in the monitoring module.
+"""
+
+
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny  # ✅ Changed from IsAuthenticated
-from django.utils import timezone
+from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import LabRequest, LabResult, TestParameter
+from .models import DiagnosticReport, LabTestDefinition, Specimen, ImagingStudy
 from .serializers import (
-    LabRequestListSerializer,
-    LabRequestDetailSerializer,
-    LabRequestCreateSerializer,
-    LabRequestUpdateSerializer,
-    LabResultSerializer,
-    LabResultCreateSerializer,
-    TestParameterSerializer,
-    AddParameterSerializer
+    DiagnosticReportSerializer,
+    LabTestDefinitionSerializer,
+    SpecimenSerializer,
+    ImagingStudySerializer
 )
 
 
-class LabRequestViewSet(viewsets.ModelViewSet):
+class StandardResultsSetPagination(PageNumberPagination):
     """
-    ViewSet for Lab Requests
-    Handles CRUD operations and status updates
+    Standard pagination configuration for laboratory resources.
     """
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
+class DiagnosticReportViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for DiagnosticReport (lab test requests and results).
     
-    queryset = LabRequest.objects.select_related(
-        'admission',
-        'admission__patient',  # ✅ Access patient through admission
-        'requesting_doctor'
-    ).prefetch_related('result__parameters')
-    permission_classes = [AllowAny]  # ✅ Changed to AllowAny for MVP
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['status', 'priority', 'test_type', 'requesting_doctor']
-    search_fields = [
-        'request_id', 
-        'admission__admission_id',
-        'admission__patient__patient_id', 
-        'admission__patient__first_name', 
-        'admission__patient__last_name'
+    Filtering Strategy:
+        - Filter directly on Integer FK fields (subject_id, encounter_id), NOT resolved names.
+        - Allows frontend to query by IDs without database joins.
+    
+    Filters:
+        - subject_id: Patient ID (integer)
+        - encounter_id: Encounter ID (integer)
+        - performer_id: Practitioner ID (integer)
+        - status: Report status (registered, partial, preliminary, final, amended, corrected, cancelled)
+        - code_code: Test code
+        - category_code: Category code
+    
+    Ordering:
+        - Default: Most recent first (-issued_datetime)
+        - Available: issued_datetime, effective_datetime, created_at, updated_at
+    
+    Search:
+        - code_code, code_display, conclusion
+    """
+    queryset = DiagnosticReport.objects.all()
+    serializer_class = DiagnosticReportSerializer
+    pagination_class = StandardResultsSetPagination
+    
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter
     ]
-    ordering_fields = ['created_at', 'updated_at', 'priority']
-    ordering = ['-created_at']
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
+        """
+        Use lightweight serializer for list views to optimize performance.
+        """
         if self.action == 'list':
-            return LabRequestListSerializer
-        elif self.action == 'create':
-            return LabRequestCreateSerializer
-        elif self.action in ['update', 'partial_update']:
-            return LabRequestUpdateSerializer
-        return LabRequestDetailSerializer
+            # Import locally to avoid circular dependency if any, though here it is in same file
+            from .serializers import DiagnosticReportListSerializer
+            return DiagnosticReportListSerializer
+        return DiagnosticReportSerializer
     
-    def create(self, request, *args, **kwargs):
-        """Create new lab request"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
-        # Return full details of created request
-        instance = serializer.instance
-        detail_serializer = LabRequestDetailSerializer(instance)
-        headers = self.get_success_headers(detail_serializer.data)
-        
-        return Response(
-            detail_serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
+    # Filter on Integer FK fields directly (e.g., subject_id, NOT subject)
+    filterset_fields = {
+        'subject_id': ['exact'],
+        'encounter_id': ['exact'],
+        'performer_id': ['exact'],
+        'requester_id': ['exact'],
+        'status': ['exact', 'in'],
+        'code_code': ['exact', 'icontains'],
+        'category_code': ['exact'],
+        'priority': ['exact'],  # Enable priority filtering
+        'issued_datetime': ['exact', 'isnull'],
+    }
     
-    @action(detail=False, methods=['get'])
-    def dashboard_stats(self, request):
-        """
-        Get dashboard statistics
-        GET /api/laboratory/requests/dashboard_stats/
-        """
-        today = timezone.now().date()
-        
-        pending_count = self.queryset.filter(status='pending').count()
-        in_progress_count = self.queryset.filter(status='in_progress').count()
-        completed_today_count = self.queryset.filter(
-            status='completed',
-            updated_at__date=today
-        ).count()
-        
-        return Response({
-            'pending': pending_count,
-            'in_progress': in_progress_count,
-            'completed_today': completed_today_count
-        })
+    ordering_fields = [
+        'issued_datetime',
+        'effective_datetime',
+        'created_at',
+        'updated_at',
+        'diagnostic_report_id',
+    ]
+    ordering = ['-issued_datetime']  # Default: Most recent first
     
-    @action(detail=True, methods=['post'])
-    def start_processing(self, request, pk=None):
+    search_fields = [
+        'code_code',
+        'code_display',
+        'conclusion',
+        'identifier',
+    ]
+
+    def perform_create(self, serializer):
         """
-        Start processing a pending request
-        POST /api/laboratory/requests/{id}/start_processing/
+        Custom create behavior to auto-assign requester if not provided.
         """
-        lab_request = self.get_object()
+        user = self.request.user
+        # Check if requester_id is present in the validated data
+        requester_id = serializer.validated_data.get('requester_id')
         
-        if lab_request.status != 'pending':
-            return Response(
-                {'error': 'Only pending requests can be started'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        lab_request.status = 'in_progress'
-        lab_request.save()
-        
-        serializer = LabRequestDetailSerializer(lab_request)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def by_status(self, request, pk=None):
-        """
-        Get requests filtered by status
-        GET /api/laboratory/requests/by_status/?status=pending
-        """
-        status_filter = request.query_params.get('status', None)
-        
-        if status_filter:
-            queryset = self.queryset.filter(status=status_filter)
+        if not requester_id and user.is_authenticated:
+            # Auto-assign to current user (User ID = Practitioner ID in this system)
+            serializer.save(requester_id=user.id)
         else:
-            queryset = self.queryset
-        
-        serializer = LabRequestListSerializer(queryset, many=True)
+            serializer.save()
+
+    def list(self, request, *args, **kwargs):
+        """
+        Optimized list view with manual pre-fetching to solve N+1 problem.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context=self._get_prefetch_context(page))
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True, context=self._get_prefetch_context(queryset))
         return Response(serializer.data)
 
+    def _get_prefetch_context(self, queryset):
+        """
+        Helper to fetch related entities in bulk and return context maps.
+        """
+        # 1. Extract IDs
+        subject_ids = set()
+        practitioner_ids = set() # For both requester and performer
 
-class LabResultViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Lab Results
-    Handles encoding and updating test results
-    """
-    
-    queryset = LabResult.objects.select_related(
-        'lab_request',
-        'lab_request__admission',
-        'lab_request__admission__patient',  # ✅ Access patient through admission
-        'lab_request__requesting_doctor',
-        'performed_by'
-    ).prefetch_related('parameters')
-    permission_classes = [AllowAny]  # ✅ Changed to AllowAny for MVP
-    serializer_class = LabResultSerializer
-    
-    def get_serializer_class(self):
-        """Return appropriate serializer based on action"""
-        if self.action == 'create':
-            return LabResultCreateSerializer
-        return LabResultSerializer
-    
-    def create(self, request, *args, **kwargs):
-        """
-        Create new lab result (encode results)
-        Automatically updates request status to completed
-        """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        for report in queryset:
+            if report.subject_id:
+                subject_ids.add(report.subject_id)
+            if report.requester_id:
+                practitioner_ids.add(report.requester_id)
+            if report.performer_id:
+                practitioner_ids.add(report.performer_id)
         
-        # Set finalized_at timestamp
-        lab_result = serializer.save(finalized_at=timezone.now())
-        
-        # Return full result details
-        detail_serializer = LabResultSerializer(lab_result)
-        headers = self.get_success_headers(detail_serializer.data)
-        
-        return Response(
-            detail_serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-    
-    @action(detail=True, methods=['post'])
-    def add_parameter(self, request, pk=None):
-        """
-        Add a test parameter to existing result
-        POST /api/laboratory/results/{id}/add_parameter/
-        Body: {
-            "parameter_name": "Hemoglobin",
-            "result_value": "14.5",
-            "unit": "g/dL",
-            "reference_range": "12-16",
-            "interpretation": "normal"
-        }
-        """
-        lab_result = self.get_object()
-        serializer = AddParameterSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            # Create new test parameter
-            parameter = TestParameter.objects.create(
-                lab_result=lab_result,
-                **serializer.validated_data
-            )
+        # 2. Bulk Fetch
+        patients_map = {}
+        if subject_ids:
+            from patients.models import Patient
+            patients = Patient.objects.filter(id__in=subject_ids)
+            patients_map = {p.id: p for p in patients}
+
+        practitioners_map = {}
+        users_map = {}
+        if practitioner_ids:
+            from accounts.models import Practitioner
+            from django.contrib.auth.models import User
             
-            param_serializer = TestParameterSerializer(parameter)
-            return Response(param_serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=True, methods=['patch'])
-    def update_parameter(self, request, pk=None):
-        """
-        Update a specific test parameter
-        PATCH /api/laboratory/results/{id}/update_parameter/
-        Body: {
-            "parameter_id": 1,
-            "result_value": "15.0",
-            "interpretation": "normal"
+            # Try fetching as Practitioners first
+            practitioners = Practitioner.objects.filter(practitioner_id__in=practitioner_ids)
+            practitioners_map = {p.practitioner_id: p for p in practitioners}
+            
+            # Find IDs that weren't found in Practitioner table (fallback to User)
+            missing_ids = practitioner_ids - set(practitioners_map.keys())
+            if missing_ids:
+                users = User.objects.filter(id__in=missing_ids)
+                users_map = {u.id: u for u in users}
+
+        return {
+            'patients_map': patients_map,
+            'practitioners_map': practitioners_map,
+            'users_map': users_map
         }
+
+    def get_object(self):
         """
-        lab_result = self.get_object()
-        parameter_id = request.data.get('parameter_id')
-        
-        if not parameter_id:
-            return Response(
-                {'error': 'parameter_id is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        Resilient get_object: supports lookup by integer ID (PK) OR string identifier.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs.get(lookup_url_kwarg)
+
         try:
-            parameter = TestParameter.objects.get(
-                id=parameter_id,
-                lab_result=lab_result
-            )
-        except TestParameter.DoesNotExist:
-            return Response(
-                {'error': 'Parameter not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        serializer = TestParameterSerializer(
-            parameter,
-            data=request.data,
-            partial=True
-        )
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=True, methods=['delete'])
-    def delete_parameter(self, request, pk=None):
-        """
-        Delete a specific test parameter
-        DELETE /api/laboratory/results/{id}/delete_parameter/?parameter_id=1
-        """
-        lab_result = self.get_object()
-        parameter_id = request.query_params.get('parameter_id')
-        
-        if not parameter_id:
-            return Response(
-                {'error': 'parameter_id is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            parameter = TestParameter.objects.get(
-                id=parameter_id,
-                lab_result=lab_result
-            )
-            parameter.delete()
-            return Response(
-                {'message': 'Parameter deleted successfully'},
-                status=status.HTTP_204_NO_CONTENT
-            )
-        except TestParameter.DoesNotExist:
-            return Response(
-                {'error': 'Parameter not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-    
+            # If it's a digit, treat as standard PK lookup
+            # Check string content because int("LAB-123") throws, but int("123") works
+            if str(lookup_value).isdigit():
+                return super().get_object()
+            
+            # Otherwise, try lookup by identifier
+            from django.shortcuts import get_object_or_404
+            obj = get_object_or_404(queryset, identifier=lookup_value)
+            self.check_object_permissions(self.request, obj)
+            return obj
+        except Exception:
+            # Fallback to default behavior if anything goes wrong
+            return super().get_object()
+
     @action(detail=True, methods=['post'])
     def finalize(self, request, pk=None):
         """
-        Finalize lab result (set finalized_at timestamp)
-        POST /api/laboratory/results/{id}/finalize/
+        Finalize/Release a diagnostic report.
+        Strict FHIR Workflow:
+        1. Status -> 'final'
+        2. issued_datetime -> Now() (Release Time)
+        3. results_interpreter -> Current User (Verifier/Releaser)
         """
-        lab_result = self.get_object()
+        instance = self.get_object()
+        from django.utils import timezone
         
-        if lab_result.finalized_at:
-            return Response(
-                {'error': 'Result already finalized'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # 1. Update Status
+        instance.status = 'final'
         
-        lab_result.finalized_at = timezone.now()
-        lab_result.lab_request.status = 'completed'
-        lab_result.lab_request.save()
-        lab_result.save()
+        # 2. Set Released Date (Issued) if not already set
+        if not instance.issued_datetime:
+            instance.issued_datetime = timezone.now()
+            
+        # 3. Set Verifier/Releaser (Results Interpreter)
+        # In this system, User ID = Practitioner ID (OneToOne PK)
+        if request.user.is_authenticated:
+            instance.results_interpreter_id = request.user.id
+            
+        instance.save()
         
-        serializer = LabResultSerializer(lab_result)
-        return Response(serializer.data)
+        return Response(self.get_serializer(instance).data)
+
+    @action(detail=False, methods=['get'])
+    def dashboard_stats(self, request):
+        """
+        Get dashboard statistics efficiently.
+        Returns counts of pending, in-progress, and completed reports.
+        """
+        from django.db.models import Count, Q
+        from django.utils import timezone
+        
+        today = timezone.localdate()
+        
+        # Efficient aggregation query instead of fetching all objects
+        stats = DiagnosticReport.objects.aggregate(
+            # Pending: Requested in Monitoring but not yet verified/approved by Nurse
+            pending=Count('diagnostic_report_id', filter=Q(status__in=['requested', 'draft'])),
+            # In-Progress (Active Queue): Verified by Nurse and ready for encoding or partially encoded
+            in_progress=Count('diagnostic_report_id', filter=Q(status__in=['verified', 'registered', 'preliminary', 'partial'])),
+            # To Release: Completed but NOT yet issued (released)
+            to_release=Count('diagnostic_report_id', filter=Q(
+                status__in=['completed', 'final', 'amended', 'corrected'],
+                issued_datetime__isnull=True
+            )),
+            # Released Today: Issued today
+            released_today=Count('diagnostic_report_id', filter=Q(
+                status__in=['completed', 'final', 'amended', 'corrected'],
+                issued_datetime__isnull=False,
+                issued_datetime__date=today
+            ))
+        )
+        
+        return Response(stats)
+
+    @action(detail=True, methods=['get'], url_path='pdf')
+    def generate_pdf(self, request, pk=None):
+        """
+        Generate PDF report for a diagnostic report.
+        """
+        from .pdf_generator import LabResultPDFView
+        from django.http import HttpResponse
+        
+        instance = self.get_object()
+        
+        pdf_buffer = LabResultPDFView.generate_pdf(instance)
+        
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        filename = f"LabResult_{instance.diagnostic_report_id}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        """
+        Update the status of a diagnostic report.
+        Accepts: { "status": "...", "results": ..., "conclusion": ... }
+        Uses serializer to ensure proper data handling (including JSON results).
+        """
+        instance = self.get_object()
+        
+        # We use the serializer to validate and save the update
+        # This ensures that 'results' -> 'result_data' mapping in the serializer is executed
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            # Auto-set issued_datetime when transitioning to completed/final
+            new_status = request.data.get('status')
+            # AUTO-RELEASE LOGIC REMOVED
+            # We do NOT want to auto-set issued_datetime here.
+            # The 'finalize' action is responsible for setting issued_datetime (Release Date).
+            # This allows a 2-step process: Encode (Final) -> Review -> Release (Finalize).
+            serializer.save()
+                
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TestParameterViewSet(viewsets.ModelViewSet):
+
+
+
+class LabTestDefinitionViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Test Parameters
-    Handles individual parameter CRUD operations
+    ViewSet for LabTestDefinition (test catalog/lookup table).
+    
+    Filters:
+        - code: Test code
+        - category: Test category
+        - status: Active/inactive
+    
+    Ordering:
+        - Default: code (alphabetical)
+        - Available: code, display, category
+    
+    Search:
+        - code, display, category
     """
     
-    queryset = TestParameter.objects.select_related('lab_result')
-    permission_classes = [AllowAny]  # ✅ Changed to AllowAny for MVP
-    serializer_class = TestParameterSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['lab_result', 'interpretation']
+    queryset = LabTestDefinition.objects.all()
+    serializer_class = LabTestDefinitionSerializer
+    pagination_class = StandardResultsSetPagination
     
-    def get_queryset(self):
-        """Filter by lab_result if provided"""
-        queryset = super().get_queryset()
-        lab_result_id = self.request.query_params.get('lab_result_id', None)
-        
-        if lab_result_id:
-            queryset = queryset.filter(lab_result_id=lab_result_id)
-        
-        return queryset
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter
+    ]
+    
+    filterset_fields = {
+        'code': ['exact', 'icontains'],
+        'category': ['exact', 'icontains'],
+        'status': ['exact'],
+    }
+    
+    ordering_fields = ['code', 'display', 'category', 'created_at']
+    ordering = ['code']
+    
+    search_fields = ['code', 'display', 'category']
+
+
+class SpecimenViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Specimen (specimen tracking).
+    
+    Filters:
+        - subject_id: Patient ID
+        - type: Specimen type
+        - status: Specimen status
+    
+    Ordering:
+        - Default: Most recent first (-collection_datetime)
+        - Available: collection_datetime, received_time
+    
+    Search:
+        - type, note
+    """
+    
+    queryset = Specimen.objects.all()
+    serializer_class = SpecimenSerializer
+    pagination_class = StandardResultsSetPagination
+    
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter
+    ]
+    
+    filterset_fields = {
+        'subject_id': ['exact'],
+        'type': ['exact', 'icontains'],
+        'status': ['exact'],
+        'collector_id': ['exact'],
+    }
+    
+    ordering_fields = ['collection_datetime', 'received_time', 'created_at']
+    ordering = ['-collection_datetime']
+    
+    search_fields = ['type', 'note', 'collection_body_site']
+
+
+class ImagingStudyViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for ImagingStudy (imaging study records).
+    
+    Filters:
+        - subject_id: Patient ID
+        - encounter_id: Encounter ID
+        - modality: Imaging modality
+        - status: Study status
+    
+    Ordering:
+        - Default: Most recent first (-started)
+        - Available: started, created_at
+    
+    Search:
+        - modality, description, note
+    """
+    
+    queryset = ImagingStudy.objects.all()
+    serializer_class = ImagingStudySerializer
+    pagination_class = StandardResultsSetPagination
+    
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter
+    ]
+    
+    filterset_fields = {
+        'subject_id': ['exact'],
+        'encounter_id': ['exact'],
+        'modality': ['exact', 'icontains'],
+        'status': ['exact'],
+        'interpreter_id': ['exact'],
+    }
+    
+    ordering_fields = ['started', 'created_at']
+    ordering = ['-started']
+    
+    search_fields = ['modality', 'description', 'note']

@@ -1,0 +1,81 @@
+================================================================================
+PATIENT MODULE AUDIT - Current State
+Generated: 2026-02-09
+================================================================================
+
+PATIENT MODEL FIELDS (wah4h-backend/patients/models.py):
+- id, patient_id (unique, indexed)
+- Name: first_name, last_name, middle_name, suffix_name
+- Demographics: gender, birthdate, civil_status, nationality, religion
+- Health: philhealth_id, blood_type, pwd_type
+- Occupation: occupation, education
+- Contact: mobile_number
+- Address: address_line, address_city, address_district, address_state,
+  address_postal_code, address_country
+- Emergency: contact_first_name, contact_last_name, contact_mobile_number,
+  contact_relationship
+- Flags: indigenous_flag, indigenous_group, consent_flag, image_url
+- Timestamps: created_at, updated_at
+
+PATIENT ENDPOINTS (wah4h-backend/patients/urls.py):
+- /api/patients/ (CRUD via PatientViewSet)
+- /api/patients/conditions/ (ConditionViewSet)
+- /api/patients/allergies/ (AllergyViewSet)
+- /api/patients/immunizations/ (ImmunizationViewSet)
+- /api/patients/wah4pc/fetch (POST - request patient from WAH4PC)
+- /api/patients/wah4pc/send (POST - push patient to WAH4PC)
+- /api/patients/wah4pc/transactions/ (GET - list WAH4PC transactions)
+- /api/patients/webhooks/receive (POST - receive WAH4PC webhook)
+- /api/patients/webhooks/process-query (POST - process WAH4PC query)
+
+WAH4PC FUNCTIONS (wah4h-backend/patients/wah4pc.py):
+- request_patient(target_id, philhealth_id)
+- patient_to_fhir(patient)
+- push_patient(target_id, patient)
+- _get_extension(extensions, url)
+- fhir_to_dict(fhir)
+
+FRONTEND COMPONENTS (Frontend/.../src/components/patients/):
+- AllergyModal.tsx
+- ClinicalDataTabs.tsx
+- ConditionModal.tsx
+- DeletePatientModal.tsx
+- EditPatientModal.tsx
+- ImmunizationModal.tsx
+- PatientActions.tsx
+- PatientDetailSections.tsx
+- PatientDetailsModal.tsx
+- PatientFilters.tsx
+- PatientRegistrationModal.tsx (4-STEP WIZARD)
+- PatientTable.tsx
+
+REGISTRATION FORM PAGES (PatientRegistrationModal):
+Page 1: Basic Info (name, birthdate, gender, civil status, blood type, PWD, indigenous)
+Page 2: Contact & Address (mobile, PSGC address)
+Page 3: Emergency Contact (name, number, relationship)
+Page 4: Additional Info (nationality, religion, occupation, education, PhilHealth, consent)
+
+DATABASE STATUS:
+- Patient count: 5
+- Sample patient:
+  * ID: WAH-2026-00001
+  * Name: Jhon Lloyd R Nicolas
+  * Gender: male, Birthdate: 2026-02-03
+  * Civil Status: M (Married)
+  * PhilHealth: 12345678912
+  * Blood Type: B-, PWD: speech
+  * Contact: 09358811834
+  * Address: Sucat, NCR
+  * Emergency: Iyah Nicolas (spouse) - 09358811834
+
+ISSUES / NOTES:
+- None detected
+- WAH4PC integration functional (fetch/push/webhook)
+- 4-step registration wizard with validation schemas
+- Clinical data modules (Condition, Allergy, Immunization) implemented
+- PSGC address integration active
+- Patient ACL service present (patient_acl.py)
+
+================================================================================
+STATUS: OPERATIONAL - All systems functional
+================================================================================

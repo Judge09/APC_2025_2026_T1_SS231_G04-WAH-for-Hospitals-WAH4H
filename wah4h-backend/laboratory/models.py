@@ -1,191 +1,146 @@
 from django.db import models
-from django.utils import timezone
-from admissions.models import Admission  # ✅ Changed from patients
-from accounts.models import User
+from core.models import FHIRResourceModel
 
 
-class LabRequest(models.Model):
+class LabTestDefinition(FHIRResourceModel):
     """
-    Laboratory Request Model
-    Tracks lab test requests from doctors for admitted patients
+    Service Catalog (Charge Master) for Laboratory Tests.
+    Links lab tests to billing system via code (SKU).
     """
+    test_id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=100)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    turnaround_time = models.CharField(max_length=100, null=True, blank=True)
     
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('in_progress', 'In-Progress'),
-        ('completed', 'Completed'),
-    ]
+    # Optimization: Dynamic Reference Ranges
+    unit = models.CharField(max_length=50, blank=True, null=True, help_text="Measurement unit (e.g. mg/dL)")
+    normal_range = models.JSONField(
+        default=dict, 
+        blank=True, 
+        help_text="JSON structure for ranges, e.g. {'male': '13.5-17.5', 'female': '12.0-15.5'}"
+    )
+
+    class Meta:
+        db_table = 'laboratory_test_definition'
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class DiagnosticReport(FHIRResourceModel):
+    """
+    FHIR DiagnosticReport - Unified Order-to-Result Model (Trinity Approach).
+    Handles complete lifecycle: Order (registered) → In-Progress (partial) → Complete (final).
+    No separate ServiceRequest/Order model needed.
+    """
+    diagnostic_report_id = models.AutoField(primary_key=True)
+    subject_id = models.BigIntegerField(db_index=True)
+    encounter_id = models.BigIntegerField(db_index=True)
     
+    # Billing Traceability
+    billing_reference = models.CharField(max_length=100, null=True, blank=True, db_index=True, help_text="Reference to the Claim/Invoice generated")
+    
+    # Trinity Approach: Requester vs Performer
+    requester_id = models.BigIntegerField(
+        db_index=True, 
+        null=True, 
+        blank=True,
+        help_text="Doctor/Nurse who ordered the test (from Monitoring module)"
+    )
+    performer_id = models.BigIntegerField(
+        db_index=True, 
+        null=True, 
+        blank=True,
+        help_text="Lab technician who performed/processed the test"
+    )
+    
+    # Priority field for urgent test flagging
     PRIORITY_CHOICES = [
         ('routine', 'Routine'),
+        ('urgent', 'Urgent'),
         ('stat', 'STAT'),
     ]
-    
-    TEST_TYPE_CHOICES = [
-        ('cbc', 'Complete Blood Count (CBC)'),
-        ('urinalysis', 'Urinalysis'),
-        ('fecalysis', 'Fecalysis'),
-        ('xray', 'X-Ray'),
-        ('ultrasound', 'Ultrasound'),
-        ('ecg', 'ECG'),
-        ('blood_chemistry', 'Blood Chemistry'),
-    ]
-    
-    id = models.AutoField(primary_key=True)
-    request_id = models.CharField(max_length=20, unique=True, editable=False)
-    
-    # ✅ Changed from patient to admission
-    admission = models.ForeignKey(
-        Admission, 
-        on_delete=models.CASCADE, 
-        related_name='lab_requests'
-    )
-    
-    requesting_doctor = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='requested_lab_tests',
-        limit_choices_to={'role': 'doctor'}
-    )
-    test_type = models.CharField(max_length=50, choices=TEST_TYPE_CHOICES)
     priority = models.CharField(
-        max_length=20, 
-        choices=PRIORITY_CHOICES, 
-        default='routine'
-    )
-    clinical_reason = models.TextField(
-        blank=True,
-        help_text="Clinical reason or diagnosis for the test"
-    )
-    status = models.CharField(
-        max_length=20, 
-        choices=STATUS_CHOICES, 
-        default='pending'
-    )
-    created_at = models.DateTimeField(default=timezone.now, editable=False)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Lab Request'
-        verbose_name_plural = 'Lab Requests'
-    
-    def save(self, *args, **kwargs):
-        if not self.request_id:
-            # Auto-generate request_id as LR-1001, LR-1002, etc.
-            last_request = LabRequest.objects.order_by('-id').first()
-            if last_request and last_request.request_id.startswith('LR-'):
-                last_num = int(last_request.request_id.split('-')[1])
-                next_num = last_num + 1
-            else:
-                next_num = 1001
-            self.request_id = f"LR-{next_num}"
-        super().save(*args, **kwargs)
-    
-    # ✅ Helper property to access patient through admission
-    @property
-    def patient(self):
-        """Access patient through admission"""
-        return self.admission.patient
-    
-    def __str__(self):
-        return f"{self.request_id} - {self.admission.admission_id} - {self.get_test_type_display()}"
-
-
-class LabResult(models.Model):
-    """
-    Laboratory Result Model
-    Stores the encoded results for a lab request
-    One-to-one relationship with LabRequest
-    """
-    
-    id = models.AutoField(primary_key=True)
-    lab_request = models.OneToOneField(
-        LabRequest,
-        on_delete=models.CASCADE,
-        related_name='result'
-    )
-    medical_technologist = models.CharField(
-        max_length=100,
-        help_text="Name of the Medical Technologist"
-    )
-    prc_number = models.CharField(
-        max_length=50,
-        help_text="PRC License Number"
-    )
-    remarks = models.TextField(
-        blank=True,
-        help_text="Overall clinical interpretation or remarks"
-    )
-    performed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='performed_lab_tests',
-        limit_choices_to={'role': 'lab_technician'}
-    )
-    finalized_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now, editable=False)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Lab Result'
-        verbose_name_plural = 'Lab Results'
-    
-    def __str__(self):
-        return f"Result for {self.lab_request.request_id}"
-
-
-class TestParameter(models.Model):
-    """
-    Test Parameter Model
-    Stores individual test parameters/results for a lab result
-    Multiple parameters can exist for one lab result
-    """
-    
-    INTERPRETATION_CHOICES = [
-        ('normal', 'Normal'),
-        ('high', 'High'),
-        ('low', 'Low'),
-    ]
-    
-    id = models.AutoField(primary_key=True)
-    lab_result = models.ForeignKey(
-        LabResult,
-        on_delete=models.CASCADE,
-        related_name='parameters'
-    )
-    parameter_name = models.CharField(
-        max_length=100,
-        help_text="e.g., Hemoglobin, WBC, RBC"
-    )
-    result_value = models.CharField(
-        max_length=50,
-        help_text="The actual result value"
-    )
-    unit = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="e.g., g/dL, cells/μL"
-    )
-    reference_range = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="e.g., 12-16 for Min-Max"
-    )
-    interpretation = models.CharField(
         max_length=20,
-        choices=INTERPRETATION_CHOICES,
-        blank=True
+        choices=PRIORITY_CHOICES,
+        default='routine',
+        db_index=True,
+        help_text="Test priority level"
     )
-    created_at = models.DateTimeField(default=timezone.now, editable=False)
     
+    results_interpreter_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    specimen_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    based_on_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    imaging_study_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    code_code = models.CharField(max_length=100, null=True, blank=True)
+    code_display = models.CharField(max_length=100, null=True, blank=True)
+    category_code = models.CharField(max_length=100, null=True, blank=True)
+    category_display = models.CharField(max_length=100, null=True, blank=True)
+    conclusion = models.CharField(max_length=255, null=True, blank=True)
+    conclusion_code = models.CharField(max_length=100, null=True, blank=True)
+    conclusion_display = models.CharField(max_length=100, null=True, blank=True)
+    effective_datetime = models.DateTimeField(null=True, blank=True)
+    effective_period_start = models.DateField(null=True, blank=True)
+    effective_period_end = models.DateField(null=True, blank=True)
+    issued_datetime = models.DateTimeField(null=True, blank=True)
+
+    
+    # Flexible field to store the full result payload (parameters + metadata)
+    # This allows storing the exact form data from the frontend without complex observation mapping
+    result_data = models.JSONField(null=True, blank=True)
+
     class Meta:
-        ordering = ['id']
-        verbose_name = 'Test Parameter'
-        verbose_name_plural = 'Test Parameters'
-    
-    def __str__(self):
-        return f"{self.parameter_name}: {self.result_value} {self.unit}"
+        db_table = 'laboratory_diagnostic_report'
+        indexes = [
+            models.Index(fields=['status', 'priority'], name='lab_status_priority_idx'),
+            models.Index(fields=['encounter_id', 'status'], name='lab_encounter_status_idx'),
+        ]
+
+
+class DiagnosticReportResult(models.Model):
+    diagnostic_report_result_id = models.AutoField(primary_key=True)
+    diagnostic_report = models.ForeignKey(
+        DiagnosticReport,
+        on_delete=models.CASCADE,
+        related_name='results',
+        db_column='diagnostic_report_id'
+    )
+    observation_id = models.BigIntegerField(db_index=True)
+    item_sequence = models.IntegerField()
+
+    class Meta:
+        db_table = 'laboratory_diagnostic_report_result'
+        ordering = ['item_sequence']
+
+
+class Specimen(FHIRResourceModel):
+    specimen_id = models.AutoField(primary_key=True)
+    subject_id = models.BigIntegerField(db_index=True)
+    type = models.CharField(max_length=100, null=True, blank=True)
+    collection_datetime = models.DateTimeField(null=True, blank=True)
+    collection_method = models.CharField(max_length=255, null=True, blank=True)
+    collection_body_site = models.CharField(max_length=255, null=True, blank=True)
+    collector_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    received_time = models.DateTimeField(null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'laboratory_specimen'
+
+
+class ImagingStudy(FHIRResourceModel):
+    imaging_study_id = models.AutoField(primary_key=True)
+    subject_id = models.BigIntegerField(db_index=True)
+    encounter_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    started = models.DateTimeField(null=True, blank=True)
+    modality = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    number_of_series = models.IntegerField(null=True, blank=True)
+    number_of_instances = models.IntegerField(null=True, blank=True)
+    interpreter_id = models.BigIntegerField(db_index=True, null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'laboratory_imaging_study'

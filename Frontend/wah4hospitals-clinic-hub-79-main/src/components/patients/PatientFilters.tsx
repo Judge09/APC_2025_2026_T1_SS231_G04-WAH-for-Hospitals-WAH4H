@@ -25,7 +25,7 @@ interface PatientFiltersProps {
 
 // Predefined options
 const STATUS_OPTIONS = ['Active', 'Inactive'];
-const GENDER_OPTIONS = ['M', 'F'];
+const GENDER_OPTIONS = ['male', 'female'];
 const CIVIL_STATUS_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
 
 export const PatientFilters: React.FC<PatientFiltersProps> = ({
@@ -44,7 +44,7 @@ export const PatientFilters: React.FC<PatientFiltersProps> = ({
         checked={activeFilters[filterType].includes(option)}
         onCheckedChange={() => handleFilterChange(filterType, option)}
       >
-        {filterType === 'gender' ? (option === 'M' ? 'Male' : 'Female') : option}
+        {filterType === 'gender' ? (option === 'male' ? 'Male' : 'Female') : option}
       </DropdownMenuCheckboxItem>
     ));
   };

@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, FileText, Beaker } from 'lucide-react';
 import { LabRequest, TestParameterFormData, LabResultFormData, LabInterpretation } from '../../types/laboratory';
-import { getTestParameters, calculateInterpretation } from './labTestParameters';
+import { getTestParameters, calculateInterpretation } from './labTestParameters'; // Keeping for generic fallback
+import { labPanelsArray } from '@/config/labParameters';
+import { LabPanelForm } from '../LabParameterField';
 
 interface LabResultEncodingModalProps {
     isOpen: boolean;
@@ -15,281 +17,247 @@ interface LabResultEncodingModalProps {
 }
 
 export const LabResultEncodingModal: React.FC<LabResultEncodingModalProps> = ({ isOpen, onClose, request, onSubmit }) => {
-    const [parameters, setParameters] = useState<TestParameterFormData[]>([
-        { parameter_name: '', result_value: '', unit: '', reference_range: '', interpretation: '' }
-    ]);
-    const [parameterMetadata, setParameterMetadata] = useState<Map<number, { normalMin?: number; normalMax?: number }>>(new Map());
+    // Metadata state
     const [medTech, setMedTech] = useState('');
     const [prcNumber, setPrcNumber] = useState('');
     const [overallRemarks, setOverallRemarks] = useState('');
 
-    // Load predefined parameters when modal opens or request changes
+    // Form Data State for Configured Panels (CBC, CMP, Lipid, etc.)
+    // Matches ResultFormState structure (flat dictionary)
+    const [formData, setFormData] = useState<Record<string, string>>({});
+
+    // Interpretation logic removed as per requirements (no automatic flagging)
+
+
+    // Load predefined parameters and local draft when modal opens
     useEffect(() => {
         if (isOpen && request) {
-            const templates = getTestParameters(request.test_type);
-            if (templates.length > 0) {
-                const initialParameters = templates.map(template => ({
-                    parameter_name: template.parameter_name,
-                    result_value: '',
-                    unit: template.unit,
-                    reference_range: template.reference_range,
-                    interpretation: '' as LabInterpretation
-                }));
-                setParameters(initialParameters);
-                
-                // Store metadata for auto-calculation
-                const metadata = new Map();
-                templates.forEach((template, index) => {
-                    metadata.set(index, {
-                        normalMin: template.normalMin,
-                        normalMax: template.normalMax
-                    });
-                });
-                setParameterMetadata(metadata);
+            const draft = localStorage.getItem(`lab_draft_${request.id}`);
+            if (draft) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    setFormData(parsed.formData || {});
+                    setMedTech(parsed.medTech || '');
+                    setPrcNumber(parsed.prcNumber || '');
+                    setOverallRemarks(parsed.overallRemarks || '');
+                } catch (e) {
+                    setFormData({});
+                }
+            } else {
+                setFormData({});
             }
         }
     }, [isOpen, request]);
 
+    // Save draft automatically as user types
+    useEffect(() => {
+        if (isOpen && request) {
+            const draft = { formData, medTech, prcNumber, overallRemarks };
+            localStorage.setItem(`lab_draft_${request.id}`, JSON.stringify(draft));
+        }
+    }, [formData, medTech, prcNumber, overallRemarks, isOpen, request]);
+
     if (!isOpen || !request) return null;
 
-    const handleAddRow = () => {
-        // Add a blank row for custom parameters
-        setParameters([...parameters, { parameter_name: '', result_value: '', unit: '', reference_range: '', interpretation: '' }]);
-        // Custom parameters don't have metadata for auto-calculation
-        const newMetadata = new Map(parameterMetadata);
-        newMetadata.set(parameters.length, { normalMin: undefined, normalMax: undefined });
-        setParameterMetadata(newMetadata);
-    };
+    // Convert Configured Panels Data to API Parameter Format
+    const panelsToParameters = (): TestParameterFormData[] => {
+        const results: TestParameterFormData[] = [];
 
-    const handleRemoveRow = (index: number) => {
-        if (parameters.length > 1) {
-            const newParameters = [...parameters];
-            newParameters.splice(index, 1);
-            setParameters(newParameters);
-        }
-    };
+        // Iterate through all configured panels
+        labPanelsArray.forEach(panel => {
+            panel.parameters.forEach(param => {
+                const value = formData[param.formKey];
+                if (value && value.trim() !== '') {
+                    // Only include filled fields
+                    // Interpretation is now explicitly empty to disable automatic flagging
+                    const apiInterp: LabInterpretation | '' = '';
 
-    const updateRow = (index: number, field: keyof TestParameterFormData, value: string) => {
-        const newParameters = [...parameters];
-        newParameters[index] = { ...newParameters[index], [field]: value };
-        
-        // Auto-calculate interpretation when result_value changes
-        if (field === 'result_value') {
-            const metadata = parameterMetadata.get(index);
-            if (metadata) {
-                const interpretation = calculateInterpretation(
-                    value,
-                    metadata.normalMin,
-                    metadata.normalMax
-                );
-                newParameters[index].interpretation = interpretation;
-            }
-        }
-        
-        setParameters(newParameters);
+                    // Hide reference range if both low and high are 0 (e.g. Qualitative tests)
+                    const refRange = (param.refLow === 0 && param.refHigh === 0) ? '' : `${param.refLow}-${param.refHigh}`;
+
+                    results.push({
+                        parameter_name: param.label,
+                        result_value: value,
+                        unit: param.unit,
+                        reference_range: refRange,
+                        interpretation: apiInterp
+                    });
+                }
+            });
+        });
+
+        // Also add Urinalysis/Fecalysis/Other fields if they are in formData but not in panels
+        // (If we added them to labParameters.ts, they would be covered above. For now, we assume labParameters.ts covers the core blood tests)
+        // Note: You should ideally add Urinalysis params to labParameters.ts to fully unify this.
+
+        return results;
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
+        // Always use Panels data
+        const finalParameters = panelsToParameters();
+
         const resultData: LabResultFormData = {
             lab_request: request.id,
             medical_technologist: medTech,
             prc_number: prcNumber,
             remarks: overallRemarks,
-            // performed_by is optional - don't send it for now (MVP)
-            parameters: parameters
+            parameters: finalParameters
         };
 
         onSubmit(request.id, resultData);
-        
-        // Reset form - reload predefined parameters
-        const templates = getTestParameters(request.test_type);
-        if (templates.length > 0) {
-            const resetParameters = templates.map(template => ({
-                parameter_name: template.parameter_name,
-                result_value: '',
-                unit: template.unit,
-                reference_range: template.reference_range,
-                interpretation: '' as LabInterpretation
-            }));
-            setParameters(resetParameters);
-            
-            // Reset metadata
-            const metadata = new Map();
-            templates.forEach((template, index) => {
-                metadata.set(index, {
-                    normalMin: template.normalMin,
-                    normalMax: template.normalMax
-                });
-            });
-            setParameterMetadata(metadata);
-        }
+
+        // Clear Draft
+        localStorage.removeItem(`lab_draft_${request.id}`);
+
+        // Reset
         setMedTech('');
         setPrcNumber('');
         setOverallRemarks('');
+        setFormData({});
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="border-b px-6 py-4 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900">Encode Lab Results</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-gray-500">Request ID: {request.request_id}</span>
-                            <Badge variant="secondary">{request.test_type_display}</Badge>
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-purple-600 text-white px-6 py-4 rounded-t-lg flex items-center justify-between z-10">
+                    <div className="flex items-center gap-3">
+                        <FileText size={24} />
+                        <div>
+                            <h3 className="text-lg font-semibold">Encode Lab Results</h3>
+                            <p className="text-sm text-purple-100 mt-0.5">
+                                Request ID: {request.request_id} • {request.test_type_display}
+                            </p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={onClose}><X className="w-5 h-5" /></Button>
+                    <button
+                        onClick={onClose}
+                        className="text-white hover:bg-purple-700 rounded-full p-1 transition-colors"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    <div className="bg-gray-50 p-4 rounded-md grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span className="text-gray-500 block">Patient</span>
-                            <span className="font-medium">{request.patient_name}</span>
-                        </div>
-                        <div>
-                            <span className="text-gray-500 block">Doctor</span>
-                            <span className="font-medium">{request.doctor_name || 'N/A'}</span>
+                <form onSubmit={handleSubmit} className="p-6">
+                    {/* Patient Info */}
+                    <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-purple-600 font-medium mb-1">Patient</p>
+                                <p className="font-semibold text-purple-900">{request.patient_name}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-purple-600 font-medium mb-1">Doctor</p>
+                                <p className="font-semibold text-purple-900">{request.doctor_name || 'Unknown'}</p>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-lg font-medium">Test Results</h3>
-                            <Button type="button" size="sm" variant="outline" onClick={handleAddRow}>
-                                <Plus className="w-4 h-4 mr-1" /> Add Custom Parameter
-                            </Button>
-                        </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                                <Beaker size={16} />
+                                Test Results
+                            </h4>
 
-                        <div className="space-y-3">
-                            {parameters.map((row, index) => {
-                                const isPredefinedParameter = getTestParameters(request.test_type)
-                                    .some(t => t.parameter_name === row.parameter_name);
-                                const hasAutoInterpretation = parameterMetadata.get(index)?.normalMin !== undefined;
-                                
-                                return (
-                                <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-md">
-                                    <div className="col-span-3">
-                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Parameter / Test Name</label>
-                                        <Input
-                                            value={row.parameter_name}
-                                            onChange={e => updateRow(index, 'parameter_name', e.target.value)}
-                                            placeholder="e.g. Hemoglobin"
-                                            required
-                                            readOnly={isPredefinedParameter}
-                                            className={isPredefinedParameter ? 'bg-gray-100 cursor-not-allowed' : ''}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Result</label>
-                                        <Input
-                                            value={row.result_value}
-                                            onChange={e => updateRow(index, 'result_value', e.target.value)}
-                                            placeholder="Value"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Unit</label>
-                                        <Input
-                                            value={row.unit || ''}
-                                            onChange={e => updateRow(index, 'unit', e.target.value)}
-                                            placeholder="e.g. g/dL"
-                                            readOnly={isPredefinedParameter}
-                                            className={isPredefinedParameter ? 'bg-gray-100' : ''}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Ref. Range</label>
-                                        <Input
-                                            value={row.reference_range || ''}
-                                            onChange={e => updateRow(index, 'reference_range', e.target.value)}
-                                            placeholder="Min - Max"
-                                            readOnly={isPredefinedParameter}
-                                            className={isPredefinedParameter ? 'bg-gray-100' : ''}
-                                        />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Interpretation</label>
-                                        {hasAutoInterpretation ? (
-                                            <div className={`w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm font-medium text-center ${
-                                                row.interpretation === 'high' ? 'text-red-600 bg-red-50' :
-                                                row.interpretation === 'low' ? 'text-orange-600 bg-orange-50' :
-                                                row.interpretation === 'normal' ? 'text-green-600 bg-green-50' : 'text-gray-500'
-                                            }`}>
-                                                {row.interpretation ? row.interpretation.charAt(0).toUpperCase() + row.interpretation.slice(1) : '--'}
-                                            </div>
-                                        ) : (
-                                            <select
-                                                className={`w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm font-medium ${
-                                                    row.interpretation === 'high' ? 'text-red-600 bg-red-50' :
-                                                    row.interpretation === 'low' ? 'text-orange-600 bg-orange-50' :
-                                                    row.interpretation === 'normal' ? 'text-green-600 bg-green-50' : 'text-gray-700'
-                                                }`}
-                                                value={row.interpretation || ''}
-                                                onChange={e => updateRow(index, 'interpretation', e.target.value)}
-                                            >
-                                                <option value="">--</option>
-                                                <option value="normal">Normal</option>
-                                                <option value="high">High</option>
-                                                <option value="low">Low</option>
-                                            </select>
-                                        )}
-                                    </div>
-                                    <div className="col-span-1 pt-6 text-center">
-                                        {!isPredefinedParameter && (
-                                            <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => handleRemoveRow(index)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <h3 className="text-lg font-medium mb-2">Technician Details</h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Medical Technologist *</label>
-                                    <Input
-                                        required
-                                        value={medTech}
-                                        onChange={e => setMedTech(e.target.value)}
-                                        placeholder="Name of MedTech"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">PRC Number *</label>
-                                    <Input
-                                        required
-                                        value={prcNumber}
-                                        onChange={e => setPrcNumber(e.target.value)}
-                                        placeholder="License Number"
-                                    />
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                    Standardized Panel
+                                </Badge>
                             </div>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-medium mb-2">Remarks / Conclusion</h3>
-                            <Textarea
-                                className="h-32"
-                                value={overallRemarks}
-                                onChange={e => setOverallRemarks(e.target.value)}
-                                placeholder="Overall clinical interpretation or remarks..."
-                            />
+
+                        {/* Standard Panels Mode */}
+                        <div className="space-y-6 mb-8">
+                            {(() => {
+                                // Filter panels based on test type
+                                const testTypeToPanels: Record<string, string[]> = {
+                                    // Hematology
+                                    'cbc': ['cbc'],
+                                    'blood_typing': ['blood_typing'],
+                                    // Microscopy
+                                    'urinalysis': ['urinalysis'],
+                                    'fecalysis': ['fecalysis'],
+                                    // Chemistry
+                                    'fbs': ['glucose_panel'],
+                                    'rbs': ['glucose_panel'],
+                                    'glucose_panel': ['glucose_panel'],
+                                };
+
+                                const testTypeKey = request.test_type.toLowerCase();
+                                const matchingPanelIds = testTypeToPanels[testTypeKey] || [];
+                                const filteredPanels = labPanelsArray.filter(panel => matchingPanelIds.includes(panel.id));
+
+                                if (filteredPanels.length === 0) {
+                                    return (
+                                        <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200 border-dashed">
+                                            <p className="text-gray-500">No standard panel configuration found for "<strong>{request.test_type_display}</strong>".</p>
+                                            <p className="text-sm text-gray-400 mt-1">Please contact the system administrator to configure this test.</p>
+                                        </div>
+                                    );
+                                }
+
+                                return filteredPanels.map((panel) => (
+                                    <LabPanelForm
+                                        key={panel.id}
+                                        panelId={panel.id}
+                                        title={panel.title}
+                                        color={panel.color}
+                                        parameters={panel.parameters}
+                                        formData={formData}
+                                        onFieldChange={(fieldKey, value) => setFormData(prev => ({ ...prev, [fieldKey]: value }))}
+                                    />
+                                ));
+                            })()}
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" className="bg-green-600 hover:bg-green-700">Finalize & Submit Results</Button>
+                    {/* Technician Info */}
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">Technician Information</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Medical Technologist *</label>
+                                <Input
+                                    required
+                                    value={medTech}
+                                    onChange={e => setMedTech(e.target.value)}
+                                    placeholder="Name of MedTech"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">PRC Number *</label>
+                                <Input
+                                    required
+                                    value={prcNumber}
+                                    onChange={e => setPrcNumber(e.target.value)}
+                                    placeholder="License Number"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Remarks / Conclusion</h3>
+                        <Textarea
+                            className="h-24 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            value={overallRemarks}
+                            onChange={e => setOverallRemarks(e.target.value)}
+                            placeholder="Overall clinical interpretation or remarks..."
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                        <Button type="button" variant="outline" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </Button>
+                        <Button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                            Finalize Results
+                        </Button>
                     </div>
                 </form>
             </div>

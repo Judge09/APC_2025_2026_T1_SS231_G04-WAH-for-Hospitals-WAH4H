@@ -51,24 +51,26 @@ export const AdmissionTable: React.FC<AdmissionTableProps> = ({
           )}
 
           {admissions.map((admission) => (
-            <tr key={admission.id} className="border-b hover:bg-gray-50">
+            <tr key={admission.encounter_id} className="border-b hover:bg-gray-50">
               <td className="py-4 px-4 font-medium">
-                {admission.patient_details
-                  ? `${admission.patient_details.last_name}, ${admission.patient_details.first_name}`
+                {admission.patient_summary
+                  ? (admission.patient_summary.full_name || `${admission.patient_summary.last_name}, ${admission.patient_summary.first_name}`)
                   : 'Unknown Patient'}
               </td>
-              {/* Display backend admission_id */}
-              <td className="py-4 px-4">{admission.admission_id ?? admission.id}</td>
+              {/* Display backend identifier */}
+              <td className="py-4 px-4">{admission.identifier}</td>
               <td className="py-4 px-4">
-                {new Date(admission.admission_date).toLocaleString()}
+                {admission.period_start ? new Date(admission.period_start).toLocaleString() : 'N/A'}
               </td>
-              <td className="py-4 px-4">{admission.attending_physician || 'N/A'}</td>
               <td className="py-4 px-4">
-                {admission.ward} - {admission.room} / {admission.bed}
+                {admission.practitioner_summary?.full_name || admission.practitioner_summary?.name || 'N/A'}
+              </td>
+              <td className="py-4 px-4">
+                {admission.location_summary?.name || 'N/A'}
               </td>
               <td className="py-4 px-4">
                 <Badge className={getStatusBadgeClass(admission.status)}>
-                  {admission.status}
+                  {admission.status.toUpperCase()}
                 </Badge>
               </td>
               <td className="py-4 px-4">

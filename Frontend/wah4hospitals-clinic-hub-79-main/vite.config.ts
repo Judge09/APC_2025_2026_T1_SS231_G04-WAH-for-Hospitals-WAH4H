@@ -9,6 +9,16 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 3000,
   },
+  // Disable sourcemaps for dev and build to avoid "No sources are declared" errors
+  build: {
+    sourcemap: false,
+  },
+  optimizeDeps: {
+    // Prevent esbuild from generating sourcemaps for dependency pre-bundling
+    esbuildOptions: {
+      sourcemap: false,
+    },
+  },
   plugins: [
     react(),
     mode === 'development' &&

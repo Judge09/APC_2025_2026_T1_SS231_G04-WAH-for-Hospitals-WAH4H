@@ -1,80 +1,23 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-
-interface MedicineItem {
-  id: number;
-  name: string;
-  dosage: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-interface DiagnosticItem {
-  id: number;
-  name: string;
-  cost: number;
-}
-
-interface BillingRecord {
-  id: number;
-  patientId: number;
-  isFinalized: boolean;
-  finalizedDate?: string;
-  patientName: string;
-  hospitalId: string;
-  admissionDate: string;
-  dischargeDate: string;
-  roomWard: string;
-  roomType: string;
-  numberOfDays: number;
-  ratePerDay: number;
-  attendingPhysicianFee: number;
-  specialistFee: number;
-  surgeonFee: number;
-  otherProfessionalFees: number;
-  medicines: MedicineItem[];
-  dietType: string;
-  mealsPerDay: number;
-  dietDuration: number;
-  costPerMeal: number;
-  diagnostics: DiagnosticItem[];
-  suppliesCharge: number;
-  procedureCharge: number;
-  nursingCharge: number;
-  miscellaneousCharge: number;
-  discount: number;
-  philhealthCoverage: number;
-}
+import { Invoice } from '@/services/billingService';
 
 interface PatientBillPrintProps {
-  billingRecord: BillingRecord;
+  invoice: Invoice;
+  patientName: string;
   onClose?: () => void;
 }
 
-const PatientBillPrint: React.FC<PatientBillPrintProps> = ({ billingRecord, onClose }) => {
-  // Calculations
-  const totalRoomCharge = billingRecord.numberOfDays * billingRecord.ratePerDay;
-  const totalProfessionalFees = billingRecord.attendingPhysicianFee + billingRecord.specialistFee + billingRecord.surgeonFee + billingRecord.otherProfessionalFees;
-  const totalMedicineCharge = billingRecord.medicines.reduce((total, med) => total + (med.quantity * med.unitPrice), 0);
-  const totalDietaryCharge = billingRecord.mealsPerDay * billingRecord.dietDuration * billingRecord.costPerMeal;
-  const totalDiagnosticsCharge = billingRecord.diagnostics.reduce((total, diag) => total + diag.cost, 0);
-  
-  const subtotal = totalRoomCharge + totalProfessionalFees + totalMedicineCharge + 
-                  totalDietaryCharge + totalDiagnosticsCharge + billingRecord.suppliesCharge + 
-                  billingRecord.procedureCharge + billingRecord.nursingCharge + billingRecord.miscellaneousCharge;
-  
-  const totalDiscount = billingRecord.discount + billingRecord.philhealthCoverage;
-  const finalTotal = subtotal - totalDiscount;
-
+const PatientBillPrint: React.FC<PatientBillPrintProps> = ({ invoice, patientName, onClose }) => {
   const handlePrint = () => {
     window.print();
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-PH', { 
-      style: 'currency', 
-      currency: 'PHP' 
-    }).format(amount);
+  const formatCurrency = (amount: number | string) => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP'
+    }).format(Number(amount));
   };
 
   const formatDate = (dateString: string) => {
@@ -86,92 +29,109 @@ const PatientBillPrint: React.FC<PatientBillPrintProps> = ({ billingRecord, onCl
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8 print:hidden">
-        <h1 className="text-2xl font-bold mb-4 text-center">Patient Bill - {billingRecord.patientName}</h1>
-        <div className="flex justify-center gap-4">
-          <Button onClick={handlePrint}>Print Bill</Button>
+    <div className="p-8 max-w-4xl mx-auto bg-white min-h-screen">
+      <div className="mb-8 print:hidden flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+        <div>
+          <h1 className="text-xl font-bold">Print Preview</h1>
+          <p className="text-sm text-gray-500">Invoice #{invoice.identifier}</p>
+        </div>
+        <div className="flex gap-3">
+          <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90">Print Bill</Button>
           {onClose && (
-            <Button onClick={onClose}>Close</Button>
+            <Button variant="outline" onClick={onClose}>Close</Button>
           )}
         </div>
       </div>
 
-      <div className="bg-background">
+      <div className="print:p-0">
         {/* Hospital Header */}
-        <div className="text-center mb-8 pb-6 border-b-2 border-border">
+        <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
           <h1 className="text-2xl font-bold mb-2">WELLNESS ADVANCED HOSPITAL</h1>
           <p className="text-sm mb-1">123 Healthcare Avenue, Medical District, Metro Manila, Philippines</p>
           <p className="text-sm mb-4">+63 (02) 8123-4567 | emergency@wah.ph</p>
-          <h2 className="text-lg font-bold uppercase tracking-wide">HOSPITAL BILL STATEMENT</h2>
+          <h2 className="text-lg font-bold uppercase tracking-wide bg-gray-100 py-1">HOSPITAL BILL STATEMENT</h2>
         </div>
 
-        {/* Patient Information */}
-        <div className="mb-6">
-          <h3 className="text-base font-bold mb-3 uppercase">Patient Information</h3>
-          <div className="space-y-1 ml-4">
-            <p><span className="font-medium">Name:</span> {billingRecord.patientName}</p>
-            <p><span className="font-medium">Hospital ID:</span> {billingRecord.hospitalId}</p>
-            <p><span className="font-medium">Room/Ward:</span> {billingRecord.roomWard} ({billingRecord.roomType})</p>
-          </div>
-        </div>
-
-        {/* Stay Information */}
-        <div className="mb-6">
-          <h3 className="text-base font-bold mb-3 uppercase">Stay Information</h3>
-          <div className="space-y-1 ml-4">
-            <p><span className="font-medium">Admission Date:</span> {formatDate(billingRecord.admissionDate)}</p>
-            <p><span className="font-medium">Discharge Date:</span> {formatDate(billingRecord.dischargeDate)}</p>
-            <p><span className="font-medium">Length of Stay:</span> {billingRecord.numberOfDays} days</p>
-          </div>
-        </div>
-
-        {/* Billing Details */}
-        <div className="mb-6">
-          <h3 className="text-base font-bold mb-3 uppercase">Billing Details</h3>
-          
-          {/* Room Charges */}
-          <div className="ml-4 mb-4">
-            <h4 className="font-semibold mb-2">Room Charges</h4>
-            <div className="ml-4 space-y-1">
-              <p><span className="font-medium">Room Type:</span> {billingRecord.roomType}</p>
-              <p><span className="font-medium">Rate per Day:</span> {formatCurrency(billingRecord.ratePerDay)}</p>
-              <p className="font-bold"><span>Total:</span> {formatCurrency(totalRoomCharge)}</p>
+        {/* Patient and Invoice Info */}
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          <div>
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Patient Information</h3>
+            <div className="space-y-1">
+              <p className="font-bold text-lg">{patientName}</p>
+              <p className="text-sm text-gray-600">Patient ID: {invoice.subject_id}</p>
             </div>
           </div>
-
-          {/* Professional Fees */}
-          <div className="ml-4 mb-4">
-            <h4 className="font-semibold mb-2">Professional Fees</h4>
-            <div className="ml-4">
-              <p className="font-bold"><span>Total Professional Fees:</span> {formatCurrency(totalProfessionalFees)}</p>
+          <div className="text-right">
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Invoice Information</h3>
+            <div className="space-y-1">
+              <p className="font-bold text-lg">#{invoice.identifier}</p>
+              <p className="text-sm text-gray-600">Date: {formatDate(invoice.invoice_datetime)}</p>
+              <p className="text-sm text-gray-600 uppercase font-medium">Status: {invoice.status}</p>
             </div>
-          </div>
-
-          {/* Other Charges */}
-          <div className="ml-4 mb-4">
-            <h4 className="font-semibold mb-2">Other Charges</h4>
           </div>
         </div>
 
-        {/* Bill Summary */}
-        <div className="mb-6 pt-4 border-t-2 border-border">
-          <h3 className="text-base font-bold mb-3 uppercase">Bill Summary</h3>
-          <div className="ml-4 space-y-2">
-            <p className="text-lg"><span className="font-bold">Subtotal:</span> <span className="font-bold">{formatCurrency(subtotal)}</span></p>
-            
-            {billingRecord.discount > 0 && (
-              <p className="text-lg"><span className="font-bold">Discount:</span> <span className="font-bold">-{formatCurrency(billingRecord.discount)}</span></p>
-            )}
-            
-            {billingRecord.philhealthCoverage > 0 && (
-              <p className="text-lg"><span className="font-bold">PhilHealth Coverage:</span> <span className="font-bold">-{formatCurrency(billingRecord.philhealthCoverage)}</span></p>
-            )}
-            
-            <div className="pt-2 border-t border-border">
-              <p className="text-xl font-bold"><span>Total Amount Due:</span> <span>{formatCurrency(finalTotal)}</span></p>
+        {/* Billing Table */}
+        <div className="mb-8">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b-2 border-gray-200">
+                <th className="py-2 font-bold text-sm uppercase">Description</th>
+                <th className="py-2 font-bold text-sm uppercase text-center">Type</th>
+                <th className="py-2 font-bold text-sm uppercase text-right">Qty</th>
+                <th className="py-2 font-bold text-sm uppercase text-right">Unit Price</th>
+                <th className="py-2 font-bold text-sm uppercase text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.line_items.map((item) => (
+                <tr key={item.id} className="border-b border-gray-100">
+                  <td className="py-3">{item.description}</td>
+                  <td className="py-3 text-center">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-gray-200 uppercase font-medium">
+                      {item.sequence}
+                    </span>
+                  </td>
+                  <td className="py-3 text-right">{item.quantity}</td>
+                  <td className="py-3 text-right">{formatCurrency(item.unit_price)}</td>
+                  <td className="py-3 text-right font-medium">{formatCurrency(item.net_value)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals */}
+        <div className="flex justify-end">
+          <div className="w-full max-w-xs space-y-2">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-600">Subtotal:</span>
+              <span>{formatCurrency(invoice.total_gross_value)}</span>
+            </div>
+            {/* Logic for discounts can be added here if part of data model */}
+            <div className="flex justify-between py-4 text-xl font-bold bg-gray-50 px-4 mt-4">
+              <span>Total Due:</span>
+              <span className="text-primary">{formatCurrency(invoice.total_net_value)}</span>
             </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-20 grid grid-cols-2 gap-12">
+          <div className="text-center">
+            <div className="border-b border-gray-400 mb-2 mt-8"></div>
+            <p className="text-xs text-gray-500 font-bold uppercase">Patient Signature</p>
+          </div>
+          <div className="text-center">
+            <div className="border-b border-gray-400 mb-2 mt-8"></div>
+            <p className="text-xs text-gray-500 font-bold uppercase">Cashier Signature</p>
+          </div>
+        </div>
+
+        <div className="mt-12 text-center text-[10px] text-gray-400 space-y-1">
+          <p>Thank you for choosing Wellness Advanced Hospital.</p>
+          <p>This is an official hospital bill statement. For inquiries, please visit our billing department.</p>
+          <p>© 2026 Wellness Advanced Hospital. All rights reserved.</p>
         </div>
       </div>
     </div>

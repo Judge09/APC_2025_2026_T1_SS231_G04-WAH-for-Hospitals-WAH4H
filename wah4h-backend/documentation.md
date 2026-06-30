@@ -1,0 +1,1 @@
+Set LOGIN_USE_OTP = True in wah4h/settings.py, save the file, and restart the Django dev server with `python manage.py runserver` to re-enable OTP for login; do not modify any other code.

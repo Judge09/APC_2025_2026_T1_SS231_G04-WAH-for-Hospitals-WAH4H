@@ -1,13 +1,13 @@
-
 import React from 'react';
+import { cn } from '@/lib/utils';
 
-interface StatusBadgeProps {
+interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   status: 'success' | 'warning' | 'error' | 'info' | 'pending';
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md' }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md', className, ...props }) => {
   const statusClasses = {
     success: 'badge-success',
     warning: 'badge-warning',
@@ -23,7 +23,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children, size = 'md'
   };
 
   return (
-    <span className={`badge ${statusClasses[status]} ${sizeClasses[size]}`}>
+    <span className={cn("badge", statusClasses[status], sizeClasses[size], className)} {...props}>
       {children}
     </span>
   );

@@ -12,55 +12,58 @@ export interface DischargeRequirements {
 
 export interface DischargeRecord {
   id: number;
-  patient: number;
-  admission?: number;
-  patientName: string;
+  patient_id: number;
+  encounter_id: number;
+  patient_name: string;
   room: string;
-  admissionDate: string;
+  admission_date: string;
+  discharge_date: string;
   condition: string;
   status: 'pending' | 'ready' | 'discharged';
-  physician: string;
+  physician_name: string;
   department: string;
-  age: number;
-  estimatedDischarge?: string;
+  age: number | string;
+  birthdate?: string;
+  estimated_discharge?: string;
   requirements: DischargeRequirements;
-  dischargeDate?: string;
-  finalDiagnosis?: string;
-  dischargeSummary?: string;
-  followUpRequired?: boolean;
-  followUpPlan?: string;
+  final_diagnosis?: string;
+  discharge_summary?: string;
+  follow_up_required?: boolean;
+  follow_up_plan?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface PendingPatient {
   id: number;
-  patientName: string;
+  patient_name: string;
   room: string;
-  admissionDate: string;
+  admission_date: string;
   condition: string;
   status: 'pending' | 'ready' | 'discharged';
-  physician: string;
+  physician_name: string;
   department: string;
-  age: number;
-  estimatedDischarge: string;
+  age: number | string;
+  birthdate?: string;
+  estimated_discharge?: string;
   requirements: DischargeRequirements;
 }
 
 export interface DischargedPatient {
   id: number;
-  patientName: string;
+  patient_name: string;
   room: string;
-  admissionDate: string;
-  dischargeDate: string;
+  admission_date: string;
+  discharge_date: string;
   condition: string;
-  physician: string;
+  physician_name: string;
   department: string;
-  age: number;
-  finalDiagnosis: string;
-  dischargeSummary: string;
-  followUpRequired: boolean;
-  followUpPlan?: string;
+  age: number | string;
+  birthdate?: string;
+  final_diagnosis?: string;
+  discharge_summary?: string;
+  follow_up_required?: boolean;
+  follow_up_plan?: string;
 }
 
 export interface DischargeForm {
@@ -75,15 +78,15 @@ export interface DischargeForm {
 }
 
 export interface NewDischargeRecord {
-  patient: number;
-  admission?: number;
-  patientName: string;
+  patient_id: number;
+  encounter_id?: number;
+  patient_name: string;
   room: string;
-  admissionDate: string;
+  admission_date: string;
   condition: string;
   status?: 'pending' | 'ready' | 'discharged';
-  physician: string;
+  physician_name: string;
   department: string;
   age: number;
-  estimatedDischarge?: string;
+  estimated_discharge?: string;
 }

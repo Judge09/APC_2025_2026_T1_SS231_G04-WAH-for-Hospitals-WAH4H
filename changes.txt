@@ -1,0 +1,3 @@
+Frontend/wah4hospitals-clinic-hub-79-main/src/services/dischargeService.ts
+wah4h-backend/discharge/serializers.py
+wah4h-backend/discharge/views.py

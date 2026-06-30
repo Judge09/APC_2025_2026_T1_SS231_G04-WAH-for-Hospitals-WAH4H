@@ -85,42 +85,6 @@ export const LAB_PARAMETERS: Record<string, LabParameterTemplate[]> = {
     { parameter_name: 'Potassium (K)', unit: 'mmol/L', reference_range: '3.5-5.1' },
     { parameter_name: 'Chloride (Cl)', unit: 'mmol/L', reference_range: '98-107' },
   ],
-
-  xray: [
-    { parameter_name: 'Examination Type', unit: '', reference_range: 'N/A' },
-    { parameter_name: 'View/Position', unit: '', reference_range: 'N/A' },
-    { parameter_name: 'Image Quality', unit: '', reference_range: 'Adequate/Good/Excellent' },
-    { parameter_name: 'Findings', unit: '', reference_range: 'See Remarks' },
-    { parameter_name: 'Heart Size', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'Lung Fields', unit: '', reference_range: 'Clear' },
-    { parameter_name: 'Bone Structure', unit: '', reference_range: 'Intact' },
-    { parameter_name: 'Soft Tissues', unit: '', reference_range: 'Unremarkable' },
-  ],
-
-  ultrasound: [
-    { parameter_name: 'Organ/Area Examined', unit: '', reference_range: 'N/A' },
-    { parameter_name: 'Image Quality', unit: '', reference_range: 'Adequate/Good/Excellent' },
-    { parameter_name: 'Organ Size', unit: 'cm', reference_range: 'Within Normal Limits' },
-    { parameter_name: 'Echogenicity', unit: '', reference_range: 'Homogeneous' },
-    { parameter_name: 'Masses/Lesions', unit: '', reference_range: 'None Seen' },
-    { parameter_name: 'Fluid Collections', unit: '', reference_range: 'None' },
-    { parameter_name: 'Vascularity', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'Other Findings', unit: '', reference_range: 'See Remarks' },
-  ],
-
-  ecg: [
-    { parameter_name: 'Heart Rate', unit: 'bpm', reference_range: '60-100' },
-    { parameter_name: 'Rhythm', unit: '', reference_range: 'Normal Sinus Rhythm' },
-    { parameter_name: 'PR Interval', unit: 'ms', reference_range: '120-200' },
-    { parameter_name: 'QRS Duration', unit: 'ms', reference_range: '80-120' },
-    { parameter_name: 'QT Interval', unit: 'ms', reference_range: '350-440' },
-    { parameter_name: 'QTc (Corrected QT)', unit: 'ms', reference_range: '<450' },
-    { parameter_name: 'P Wave', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'QRS Complex', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'ST Segment', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'T Wave', unit: '', reference_range: 'Normal' },
-    { parameter_name: 'Axis', unit: 'degrees', reference_range: '-30 to +90' },
-  ],
 };
 
 /**
@@ -137,8 +101,6 @@ export const TEST_TYPE_NAMES: Record<string, string> = {
   cbc: 'Complete Blood Count (CBC)',
   urinalysis: 'Urinalysis',
   fecalysis: 'Fecalysis',
-  xray: 'X-Ray',
-  ultrasound: 'Ultrasound',
-  ecg: 'ECG',
   blood_chemistry: 'Blood Chemistry',
+  lipid_panel: 'Lipid Panel',
 };

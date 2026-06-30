@@ -16,7 +16,6 @@ const PasswordSettings = () => {
       alert('New passwords do not match');
       return;
     }
-    console.log('Password change requested');
     // Handle password change logic here
   };
 

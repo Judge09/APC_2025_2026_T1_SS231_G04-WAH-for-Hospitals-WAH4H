@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
   Card,
   CardContent,
@@ -17,24 +16,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Utensils, Activity, Edit } from 'lucide-react';
 import { DietaryOrder } from '../../types/monitoring';
+import monitoringService from '../../services/monitoringService';
+import { toast } from 'sonner';
 
 interface DietaryTabProps {
   admissionId: string;
+  patientId: number; // Added for service call
   order?: DietaryOrder;
   onSaved?: (order: DietaryOrder) => void;
 }
 
-const API_BASE =
-  import.meta.env.BACKEND_MONITORING_8000
-    ? `${import.meta.env.BACKEND_MONITORING_8000}monitoring/dietary-orders/`
-    : import.meta.env.LOCAL_8000
-      ? `${import.meta.env.LOCAL_8000}/api/monitoring/dietary-orders/`
-      : `${import.meta.env.BACKEND_MONITORING}monitoring/dietary-orders/`;
-
 export const DietaryTab: React.FC<DietaryTabProps> = ({
   admissionId,
+  patientId,
   order: initialOrder,
   onSaved,
 }) => {
@@ -53,26 +49,13 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Helper: convert backend response to frontend format
-  const mapBackendOrder = (data: any): DietaryOrder => ({
-    id: data.id,
-    admissionId: data.admission,
-    dietType: data.diet_type,
-    allergies: data.allergies,
-    npoResponse: data.npo_response,
-    activityLevel: data.activity_level,
-    orderedBy: data.ordered_by,
-    lastUpdated: data.last_updated,
-  });
-
-  // Always fetch latest order from backend
+  // Fetch latest order from backend using service
   useEffect(() => {
     const fetchOrder = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}?admission=${admissionId}`);
-        if (res.data.length > 0) {
-          const orderData = mapBackendOrder(res.data[0]);
+        const orderData = await monitoringService.getDietary(Number(admissionId));
+        if (orderData) {
           setCurrentOrder(orderData);
           setDietType(orderData.dietType);
           setAllergies(orderData.allergies.join(', '));
@@ -86,6 +69,7 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
         }
       } catch (err) {
         console.error('Failed to fetch dietary order:', err);
+        toast.error('Failed to load dietary order');
       } finally {
         setLoading(false);
       }
@@ -95,107 +79,149 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
   }, [admissionId]);
 
   const handleSave = async () => {
-    const payload = {
-      admission: Number(admissionId),
-      diet_type: dietType,
+    const orderData: DietaryOrder = {
+      id: currentOrder?.id,
+      admissionId,
+      dietType,
       allergies: allergies
         ? allergies.split(',').map(a => a.trim()).filter(Boolean)
         : [],
-      npo_response: isNPO,
-      activity_level: activityLevel,
-      ordered_by: 'Dr. Current User',
+      npoResponse: isNPO,
+      activityLevel,
+      orderedBy: 'Dr. Current User', // TODO: Get from auth context
+      lastUpdated: new Date().toISOString(),
     };
 
     try {
       setSaving(true);
-      let res;
-      if (currentOrder?.id) {
-        res = await axios.put(`${API_BASE}${currentOrder.id}/`, payload);
-      } else {
-        res = await axios.post(API_BASE, payload);
-      }
-
-      const updatedOrder = mapBackendOrder(res.data);
-      setCurrentOrder(updatedOrder);
-      setDietType(updatedOrder.dietType);
-      setAllergies(updatedOrder.allergies.join(', '));
-      setIsNPO(updatedOrder.npoResponse);
-      setActivityLevel(updatedOrder.activityLevel);
-      setOrderedBy(updatedOrder.orderedBy);
-      setLastUpdated(updatedOrder.lastUpdated);
-      onSaved?.(updatedOrder);
+      await monitoringService.saveDietary(orderData, patientId);
+      
+      setCurrentOrder(orderData);
+      onSaved?.(orderData);
       setIsEditing(false);
+      toast.success('Dietary order saved successfully');
     } catch (err: any) {
-      console.error('Dietary save failed:', err.response?.data);
-      alert(
-        'Failed to save dietary order:\n' +
-        JSON.stringify(err.response?.data, null, 2)
-      );
+      console.error('Dietary save failed:', err);
+      toast.error('Failed to save dietary order. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p>Loading dietary order…</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading dietary order...</span>
+      </div>
+    );
+  }
 
   // Editing UI
   if (isEditing) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Update Dietary & Activity Orders</CardTitle>
+      <Card className="shadow-md">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+          <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Utensils className="w-6 h-6 text-orange-600" />
+            Update Dietary & Activity Orders
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Diet Type</Label>
+        <CardContent className="space-y-6 pt-6">
+          {/* NPO Alert */}
+          <div className="border-2 border-red-300 rounded-lg p-4 bg-red-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+                <div>
+                  <Label className="text-lg font-bold text-red-800 cursor-pointer">NPO (Nothing by Mouth)</Label>
+                  <p className="text-sm text-red-600 mt-1">Patient should receive no oral food or fluids</p>
+                </div>
+              </div>
+              <Switch checked={isNPO} onCheckedChange={setIsNPO} className="data-[state=checked]:bg-red-600" />
+            </div>
+          </div>
+
+          {/* Diet Type */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Utensils className="w-4 h-4" />
+              Diet Type
+            </Label>
             <Select value={dietType} onValueChange={setDietType} disabled={isNPO}>
-              <SelectTrigger>
+              <SelectTrigger className={isNPO ? 'opacity-50' : ''}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Regular">Regular</SelectItem>
-                <SelectItem value="Soft">Soft</SelectItem>
-                <SelectItem value="Low Salt">Low Salt</SelectItem>
-                <SelectItem value="Diabetic">Diabetic</SelectItem>
-                <SelectItem value="Clear Liquids">Clear Liquids</SelectItem>
+                <SelectItem value="Regular">Regular Diet</SelectItem>
+                <SelectItem value="Soft">Soft Diet</SelectItem>
+                <SelectItem value="Low Salt">Low Salt/Sodium</SelectItem>
+                <SelectItem value="Diabetic">Diabetic Diet</SelectItem>
+                <SelectItem value="Clear Liquids">Clear Liquids Only</SelectItem>
+                <SelectItem value="Full Liquids">Full Liquids</SelectItem>
               </SelectContent>
             </Select>
+            {isNPO && (
+              <p className="text-xs text-red-600">NPO status overrides diet selection</p>
+            )}
           </div>
 
-          <div className="flex items-center space-x-2 border p-3 rounded bg-red-50">
-            <Switch checked={isNPO} onCheckedChange={setIsNPO} />
-            <Label className="font-bold text-red-700">NPO (Nothing by Mouth)</Label>
-          </div>
-
+          {/* Allergies */}
           {!isNPO && (
-            <div>
-              <Label>Allergies</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Food Allergies & Restrictions</Label>
               <Textarea
                 value={allergies}
                 onChange={e => setAllergies(e.target.value)}
-                placeholder="Peanuts, Seafood…"
+                placeholder="Enter allergies separated by commas (e.g., Peanuts, Seafood, Dairy)"
+                className="min-h-[80px]"
               />
+              <p className="text-xs text-gray-500">Separate multiple allergies with commas</p>
             </div>
           )}
 
-          <div>
-            <Label>Activity Level</Label>
+          {/* Activity Level */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Activity Level
+            </Label>
             <Select value={activityLevel} onValueChange={setActivityLevel}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Bed Rest">Bed Rest</SelectItem>
-                <SelectItem value="Bathroom Privileges">Bathroom Privileges</SelectItem>
-                <SelectItem value="Ambulatory">Ambulatory</SelectItem>
-                <SelectItem value="As Tolerated">As Tolerated</SelectItem>
+                <SelectItem value="Bed Rest">Bed Rest - No Activity</SelectItem>
+                <SelectItem value="Bathroom Privileges">Bathroom Privileges Only</SelectItem>
+                <SelectItem value="Ambulatory">Ambulatory - With Assistance</SelectItem>
+                <SelectItem value="As Tolerated">As Tolerated - Independent</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : 'Save & Notify Dietary'}</Button>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditing(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                'Save & Notify Dietary'
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -204,36 +230,103 @@ export const DietaryTab: React.FC<DietaryTabProps> = ({
 
   // Display UI
   return (
-    <Card>
-      <CardHeader className="flex justify-between items-center">
-        <CardTitle>Dietary Order Details</CardTitle>
-        <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
+    <Card className="shadow-md">
+      <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Utensils className="w-6 h-6 text-orange-600" />
+            <CardTitle className="text-xl font-bold text-gray-900">Dietary Order Details</CardTitle>
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => setIsEditing(true)}
+            className="hover:bg-orange-50"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Orders
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p><strong>Diet Type:</strong> {currentOrder?.dietType}</p>
-        <p><strong>Admission:</strong> {currentOrder?.admissionId}</p>
-        <p><strong>Ordered By:</strong> {currentOrder?.orderedBy}</p>
-        <p><strong>Last Updated:</strong> {currentOrder?.lastUpdated ? new Date(currentOrder.lastUpdated).toLocaleString() : '—'}</p>
-        <p><strong>NPO:</strong> {currentOrder?.npoResponse ? 'Yes' : 'No'}</p>
+      <CardContent className="space-y-6 pt-6">
+        {/* NPO Status Alert */}
+        {currentOrder?.npoResponse && (
+          <div className="border-2 border-red-300 rounded-lg p-4 bg-red-50">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+              <div>
+                <p className="font-bold text-red-800 text-lg">NPO Status Active</p>
+                <p className="text-sm text-red-600">Patient should receive no oral food or fluids</p>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div>
-          <Label className="text-gray-500">Allergies</Label>
+        {/* Main Information Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Diet Type</Label>
+            <div className="flex items-center gap-2 bg-orange-50 rounded-lg p-3 border border-orange-200">
+              <Utensils className="w-5 h-5 text-orange-600" />
+              <span className="text-lg font-semibold text-gray-900">
+                {currentOrder?.dietType || '—'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Activity Level</Label>
+            <div className="flex items-center gap-2 bg-blue-50 rounded-lg p-3 border border-blue-200">
+              <Activity className="w-5 h-5 text-blue-600" />
+              <span className="text-lg font-semibold text-gray-900">
+                {currentOrder?.activityLevel || '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Allergies Section */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Food Allergies & Restrictions</Label>
           {Array.isArray(currentOrder?.allergies) && currentOrder.allergies.length > 0 ? (
-            <div className="flex flex-wrap gap-2 mt-1">
-              {currentOrder.allergies.map((a, i) => (
-                <span key={i} className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-sm">{a}</span>
+            <div className="flex flex-wrap gap-2">
+              {currentOrder.allergies.map((allergy, i) => (
+                <span 
+                  key={i} 
+                  className="inline-flex items-center gap-1 px-3 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium border border-red-200"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {allergy}
+                </span>
               ))}
             </div>
           ) : (
-            <p className="italic text-gray-500">None recorded</p>
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <p className="text-sm text-gray-500 italic">No allergies recorded</p>
+            </div>
           )}
         </div>
 
-        <div>
-          <Label className="text-gray-500">Activity Level</Label>
-          <div className="flex items-center mt-1">
-            <AlertCircle className="w-4 h-4 mr-2 text-indigo-500" />
-            <span>{currentOrder?.activityLevel}</span>
+        {/* Order Metadata */}
+        <div className="border-t pt-6 space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Ordered By:</span>
+            <span className="font-semibold text-gray-900">{currentOrder?.orderedBy || '—'}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Last Updated:</span>
+            <span className="font-semibold text-gray-900">
+              {currentOrder?.lastUpdated 
+                ? new Date(currentOrder.lastUpdated).toLocaleString('en-PH', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : '—'
+              }
+            </span>
           </div>
         </div>
       </CardContent>

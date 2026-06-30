@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserX, FileText, CheckCircle, Search, Filter, X, Plus, AlertTriangle, Users, Download } from 'lucide-react';
+import { UserX, FileText, CheckCircle, Search, Filter, X, Plus, AlertTriangle, Users, Download, RefreshCw, Trash2 } from 'lucide-react';
 import { PrintButton } from '@/components/ui/PrintButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,50 +25,18 @@ import { DischargeStatusBadge } from '@/components/discharge/DischargeStatusBadg
 import { PendingItemsSection } from '@/components/discharge/PendingItemsSection';
 import { DischargedPatientsReport } from '@/components/discharge/DischargedPatientsReport';
 import { dischargeService } from '@/services/dischargeService';
+import { useToast } from '@/hooks/use-toast';
 
-interface DischargeRequirements {
-  finalDiagnosis: boolean;
-  physicianSignature: boolean;
-  medicationReconciliation: boolean;
-  dischargeSummary: boolean;
-  billingClearance: boolean;
-  nursingNotes: boolean;
-  followUpScheduled: boolean;
-}
-
-interface PendingPatient {
-  id: number;
-  patientName: string;
-  room: string;
-  admissionDate: string;
-  condition: string;
-  status: 'pending' | 'ready' | 'discharged';
-  physician: string;
-  department: string;
-  age: number;
-  estimatedDischarge: string;
-  requirements: DischargeRequirements;
-}
-
-interface DischargedPatient {
-  id: number;
-  patientName: string;
-  room: string;
-  admissionDate: string;
-  dischargeDate: string;
-  condition: string;
-  physician: string;
-  department: string;
-  age: number;
-  finalDiagnosis: string;
-  dischargeSummary: string;
-  followUpRequired: boolean;
-  followUpPlan?: string;
-}
+import {
+  DischargeRequirements,
+  PendingPatient,
+  DischargedPatient,
+  DischargeRecord
+} from '@/types/discharge';
 
 const Discharge = () => {
+  const { toast } = useToast();
   const [pendingDischarges, setPendingDischarges] = useState<PendingPatient[]>([]);
-
   const [dischargedPatients, setDischargedPatients] = useState<DischargedPatient[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,25 +60,96 @@ const Discharge = () => {
   });
 
   const [isAddRecordModalOpen, setIsAddRecordModalOpen] = useState(false);
-  const [newRecordForm, setNewRecordForm] = useState({
-    patient: '',
-    patientName: '',
-    room: '',
-    admissionDate: '',
-    condition: '',
-    physician: '',
-    department: '',
-    age: '',
-    estimatedDischarge: ''
-  });
-
-  const [isBillingImportModalOpen, setIsBillingImportModalOpen] = useState(false);
   const [billingPatients, setBillingPatients] = useState<any[]>([]);
   const [selectedBillingIds, setSelectedBillingIds] = useState<number[]>([]);
   const [isLoadingBilling, setIsLoadingBilling] = useState(false);
 
+  // Load discharge data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Fetch pending discharges
+        const pendingData = await dischargeService.getPending();
+        setPendingDischarges(pendingData as any);
+
+        // Fetch discharged patients
+        const dischargedData = await dischargeService.getDischarged();
+        setDischargedPatients(dischargedData as any);
+      } catch (error) {
+        console.error('Error loading discharge data:', error);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleSyncFromAdmissions = async () => {
+    try {
+      const result = await dischargeService.syncFromAdmissions();
+
+      if (result.success) {
+        toast({
+          title: "Sync Successful",
+          description: result.message || `Synced ${result.created} patient(s) from admissions`,
+        });
+
+        // Reload pending discharges to show newly synced patients
+        const pendingData = await dischargeService.getPending();
+        setPendingDischarges(pendingData as any);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Sync Failed",
+          description: result.error || 'Unknown error'
+        });
+      }
+    } catch (error) {
+      console.error('Error syncing from admissions:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sync from admissions. Please try again."
+      });
+    }
+  };
+
+  const handleRequirementChange = async (patientId: number, requirementKey: string, value: boolean) => {
+    try {
+      // Find the patient to get current requirements
+      const patient = pendingDischarges.find(p => p.id === patientId);
+      if (!patient) return;
+
+      // Update requirements
+      const updatedRequirements = {
+        ...patient.requirements,
+        [requirementKey]: value
+      };
+
+      // Call API to update
+      await dischargeService.updateRequirements(patientId, updatedRequirements);
+
+      // Update local state
+      setPendingDischarges(prev => prev.map(p =>
+        p.id === patientId
+          ? { ...p, requirements: updatedRequirements }
+          : p
+      ));
+
+      // If this is the selected patient, update it too
+      if (selectedPatient?.id === patientId) {
+        setSelectedPatient(prev => prev ? { ...prev, requirements: updatedRequirements } : null);
+      }
+    } catch (error) {
+      console.error('Error updating requirement:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update requirement. Please try again."
+      });
+    }
+  };
+
   const handlePrintDischarge = () => {
-    console.log('Printing discharge report...');
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
@@ -133,7 +172,7 @@ const Discharge = () => {
   const handleProcessDischarge = (patient: PendingPatient) => {
     setSelectedPatient(patient);
     setDischargeForm({
-      patientId: patient.patientName,
+      patientId: patient.patient_name,
       finalDiagnosis: '',
       hospitalStaySummary: '',
       dischargeMedications: '',
@@ -145,62 +184,20 @@ const Discharge = () => {
     setIsDischargeModalOpen(true);
   };
 
-  const handleAddNewRecord = () => {
-    if (!newRecordForm.patientName || !newRecordForm.room || !newRecordForm.admissionDate ||
-      !newRecordForm.condition || !newRecordForm.physician || !newRecordForm.department ||
-      !newRecordForm.age) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    const newRecord: PendingPatient = {
-      id: Date.now(),
-      patientName: newRecordForm.patientName,
-      room: newRecordForm.room,
-      admissionDate: newRecordForm.admissionDate,
-      condition: newRecordForm.condition,
-      status: 'pending',
-      physician: newRecordForm.physician,
-      department: newRecordForm.department,
-      age: parseInt(newRecordForm.age),
-      estimatedDischarge: newRecordForm.estimatedDischarge || '',
-      requirements: {
-        finalDiagnosis: false,
-        physicianSignature: false,
-        medicationReconciliation: false,
-        dischargeSummary: false,
-        billingClearance: false,
-        nursingNotes: false,
-        followUpScheduled: false
-      }
-    };
-
-    setPendingDischarges(prev => [...prev, newRecord]);
-    setIsAddRecordModalOpen(false);
-    setNewRecordForm({
-      patient: '',
-      patientName: '',
-      room: '',
-      admissionDate: '',
-      condition: '',
-      physician: '',
-      department: '',
-      age: '',
-      estimatedDischarge: ''
-    });
-    alert(`Discharge record created successfully for ${newRecordForm.patientName}`);
-  };
-
   const handleLoadBillingPatients = async () => {
     setIsLoadingBilling(true);
     try {
       const response = await dischargeService.getFromBilling();
       setBillingPatients(response.patients || []);
       setSelectedBillingIds([]);
-      setIsBillingImportModalOpen(true);
+      setIsAddRecordModalOpen(true);
     } catch (error) {
       console.error('Error loading billing patients:', error);
-      alert('Failed to load patients from billing');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load patients from billing records. Please try again."
+      });
     } finally {
       setIsLoadingBilling(false);
     }
@@ -216,47 +213,60 @@ const Discharge = () => {
 
   const handleImportFromBilling = async () => {
     if (selectedBillingIds.length === 0) {
-      alert('Please select at least one patient to import');
+      toast({
+        variant: "destructive",
+        title: "Selection Required",
+        description: "Please select at least one patient to add"
+      });
       return;
     }
 
+    setIsLoadingBilling(true);
     try {
       const response = await dischargeService.createFromBilling(selectedBillingIds);
-      alert(`Successfully imported ${response.created} patient(s) for discharge`);
 
-      // Reload the discharge records
-      // In a real app, you'd fetch from the API here
-      if (response.records && response.records.length > 0) {
-        const newRecords = response.records.map((record: any) => ({
-          id: record.id,
-          patientName: record.patientName,
-          room: record.room,
-          admissionDate: record.admissionDate,
-          condition: record.condition,
-          status: record.status,
-          physician: record.physician,
-          department: record.department,
-          age: record.age,
-          estimatedDischarge: record.estimatedDischarge || '',
-          requirements: record.requirements
-        }));
-        setPendingDischarges(prev => [...prev, ...newRecords]);
+      if (response.errors && response.errors.length > 0) {
+        const errorMessages = response.errors.map((err: any) => err.error).join('\n');
+        toast({
+          variant: "destructive",
+          title: "Partial Success",
+          description: `Some records could not be added. Successfully added: ${response.created} patient(s)`
+        });
+      } else {
+        toast({
+          title: "Import Successful",
+          description: `Successfully added ${response.created} patient(s) to discharge queue`
+        });
       }
 
-      setIsBillingImportModalOpen(false);
+      // Reload pending discharges
+      const pendingData = await dischargeService.getPending();
+      setPendingDischarges(pendingData);
+
+      setIsAddRecordModalOpen(false);
       setBillingPatients([]);
       setSelectedBillingIds([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error importing from billing:', error);
-      alert('Failed to import patients from billing');
+      toast({
+        variant: "destructive",
+        title: "Import Failed",
+        description: error?.response?.data?.error || 'Failed to add patients from billing'
+      });
+    } finally {
+      setIsLoadingBilling(false);
     }
   };
 
-  const handleSubmitDischarge = () => {
+  const handleSubmitDischarge = async () => {
     if (!selectedPatient) return;
 
     if (!dischargeForm.finalDiagnosis || !dischargeForm.hospitalStaySummary) {
-      alert('Please fill in all required fields');
+      toast({
+        variant: "destructive",
+        title: "Missing Fields",
+        description: "Please fill in all required fields"
+      });
       return;
     }
 
@@ -269,43 +279,59 @@ const Discharge = () => {
       selectedPatient.requirements.billingClearance;
 
     if (!allRequiredCompleted) {
-      alert('All required discharge items must be completed before final discharge');
+      toast({
+        variant: "destructive",
+        title: "Incomplete Requirements",
+        description: "All required discharge items must be completed before final discharge"
+      });
       return;
     }
 
-    // Move patient to discharged list
-    const dischargedPatient: DischargedPatient = {
-      id: Date.now(),
-      patientName: selectedPatient.patientName,
-      room: selectedPatient.room,
-      admissionDate: selectedPatient.admissionDate,
-      dischargeDate: new Date().toISOString().split('T')[0],
-      condition: selectedPatient.condition,
-      physician: selectedPatient.physician,
-      department: selectedPatient.department,
-      age: selectedPatient.age,
-      finalDiagnosis: dischargeForm.finalDiagnosis,
-      dischargeSummary: dischargeForm.hospitalStaySummary,
-      followUpRequired: !!dischargeForm.followUpPlan,
-      followUpPlan: dischargeForm.followUpPlan
-    };
+    try {
+      // Call backend API to process discharge
+      await dischargeService.processDischarge(selectedPatient.id, {
+        patientId: selectedPatient.id,
+        finalDiagnosis: dischargeForm.finalDiagnosis,
+        hospitalStaySummary: dischargeForm.hospitalStaySummary,
+        dischargeMedications: dischargeForm.dischargeMedications,
+        dischargeInstructions: dischargeForm.dischargeInstructions,
+        followUpPlan: dischargeForm.followUpPlan,
+        billingStatus: dischargeForm.billingStatus,
+        pendingItems: dischargeForm.pendingItems
+      });
 
-    setDischargedPatients(prev => [...prev, dischargedPatient]);
-    setPendingDischarges(prev => prev.filter(p => p.id !== selectedPatient.id));
+      toast({
+        title: "Discharge Completed",
+        description: `Discharge completed successfully for ${selectedPatient.patient_name}`,
+      });
 
-    alert(`Discharge completed successfully for ${selectedPatient.patientName}`);
-    setIsDischargeModalOpen(false);
-    setSelectedPatient(null);
-    setDischargeForm({
-      patientId: '',
-      finalDiagnosis: '',
-      hospitalStaySummary: '',
-      dischargeMedications: '',
-      dischargeInstructions: '',
-      followUpPlan: '',
-      billingStatus: '',
-      pendingItems: ''
-    });
+      // Reload data
+      const pendingData = await dischargeService.getPending();
+      setPendingDischarges(pendingData as any);
+
+      const dischargedData = await dischargeService.getDischarged();
+      setDischargedPatients(dischargedData as any);
+
+      setIsDischargeModalOpen(false);
+      setSelectedPatient(null);
+      setDischargeForm({
+        patientId: '',
+        finalDiagnosis: '',
+        hospitalStaySummary: '',
+        dischargeMedications: '',
+        dischargeInstructions: '',
+        followUpPlan: '',
+        billingStatus: '',
+        pendingItems: ''
+      });
+    } catch (error) {
+      console.error('Error processing discharge:', error);
+      toast({
+        variant: "destructive",
+        title: "Discharge Failed",
+        description: "Failed to process discharge. Please try again."
+      });
+    }
   };
 
   const canPrint = () => {
@@ -313,12 +339,13 @@ const Discharge = () => {
   };
 
   const filteredDischarges = pendingDischarges.filter(patient => {
-    const matchesSearch = patient.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.condition.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.physician.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      (patient.patient_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.room || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.condition || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.status || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.physician_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.department || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = activeFilters.status.length === 0 || activeFilters.status.includes(patient.status);
     const matchesDepartment = activeFilters.department.length === 0 || activeFilters.department.includes(patient.department);
@@ -326,6 +353,31 @@ const Discharge = () => {
 
     return matchesSearch && matchesStatus && matchesDepartment && matchesCondition;
   });
+
+  const handleDeleteDischarge = async (id: number) => {
+    try {
+      await dischargeService.delete(id);
+
+      // Reload data
+      const pendingData = await dischargeService.getPending();
+      setPendingDischarges(pendingData as any);
+
+      const dischargedData = await dischargeService.getDischarged();
+      setDischargedPatients(dischargedData as any);
+
+      toast({
+        title: "Success",
+        description: "Discharge record deleted successfully."
+      });
+    } catch (error) {
+      console.error('Error deleting discharge record:', error);
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: "Failed to delete discharge record. Please try again."
+      });
+    }
+  };
 
   const hasActiveFilters = Object.values(activeFilters).some(filter => filter.length > 0);
 
@@ -338,39 +390,18 @@ const Discharge = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
-            onClick={handleLoadBillingPatients}
-            disabled={isLoadingBilling}
-            variant="outline"
-            className="border-green-600 text-green-600 hover:bg-green-50"
+            onClick={handleSyncFromAdmissions}
+            className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
           >
-            <Download className="w-4 h-4 mr-2" />
-            {isLoadingBilling ? 'Loading...' : 'Import from Billing'}
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Module
           </Button>
-          <Button
-            onClick={() => setIsAddRecordModalOpen(true)}
-            className="bg-primary hover:bg-primary/90 flex-1 sm:flex-none"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Record
-          </Button>
-          {canPrint() ? (
-            <PrintButton
-              onPrint={handlePrintDischarge}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Print Available - {dischargedPatients.length} Patients
-            </PrintButton>
-          ) : (
-            <Button disabled variant="outline" className="cursor-not-allowed">
-              <FileText className="w-4 h-4 mr-2" />
-              No Discharged Patients to Print
-            </Button>
-          )}
+
         </div>
       </div>
 
       <Tabs defaultValue="active" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 h-auto">
           <TabsTrigger value="active" className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             Active Discharges
@@ -379,14 +410,10 @@ const Discharge = () => {
             <CheckCircle className="w-4 h-4" />
             Discharged Patients ({dischargedPatients.length})
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center">
@@ -410,22 +437,6 @@ const Discharge = () => {
                   <div className="ml-4">
                     <p className="text-sm font-medium text-muted-foreground">Ready for Discharge</p>
                     <p className="text-2xl font-bold text-foreground">{pendingDischarges.filter(p => p.status === 'ready').length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Discharged Today</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {dischargedPatients.filter(p => p.dischargeDate === new Date().toISOString().split('T')[0]).length}
-                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -507,7 +518,7 @@ const Discharge = () => {
                     {filteredDischarges.map((patient) => (
                       <div key={patient.id} className="border rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-lg">{patient.patientName}</h3>
+                          <h3 className="font-semibold text-lg">{patient.patient_name}</h3>
                           <DischargeStatusBadge status={patient.status} />
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
@@ -521,10 +532,18 @@ const Discharge = () => {
                             <span className="font-medium text-foreground">Department:</span> {patient.department}
                           </div>
                           <div>
-                            <span className="font-medium text-foreground">Physician:</span> {patient.physician}
+                            <span className="font-medium text-foreground">Physician:</span> {patient.physician_name}
                           </div>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="destructive" size="sm"
+                            onClick={() => {
+                              if (confirm('Delete this discharge record?')) handleDeleteDischarge(patient.id);
+                            }}
+                          >
+                            Remove
+                          </Button>
                           <Button
                             size="sm"
                             onClick={() => handleProcessDischarge(patient)}
@@ -549,6 +568,7 @@ const Discharge = () => {
               {selectedPatient && (
                 <PendingItemsSection
                   requirements={selectedPatient.requirements}
+                  onRequirementChange={(key, value) => handleRequirementChange(selectedPatient.id, key, value)}
                   className="mb-6"
                 />
               )}
@@ -586,10 +606,6 @@ const Discharge = () => {
         </TabsContent>
 
         <TabsContent value="discharged" className="space-y-6">
-          <DischargedPatientsReport dischargedPatients={dischargedPatients} />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-6">
@@ -613,7 +629,7 @@ const Discharge = () => {
               <CardContent className="p-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">
-                    {dischargedPatients.filter(p => p.followUpRequired).length}
+                    {dischargedPatients.filter(p => p.follow_up_required).length}
                   </p>
                   <p className="text-sm text-muted-foreground">Follow-up Required</p>
                 </div>
@@ -630,6 +646,7 @@ const Discharge = () => {
               </CardContent>
             </Card>
           </div>
+          <DischargedPatientsReport dischargedPatients={dischargedPatients} onDelete={handleDeleteDischarge} />
         </TabsContent>
       </Tabs>
 
@@ -637,12 +654,13 @@ const Discharge = () => {
       <Dialog open={isDischargeModalOpen} onOpenChange={setIsDischargeModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Process Discharge - {selectedPatient?.patientName}</DialogTitle>
+            <DialogTitle>Process Discharge - {selectedPatient?.patient_name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             {selectedPatient && (
               <PendingItemsSection
                 requirements={selectedPatient.requirements}
+                onRequirementChange={(key, value) => handleRequirementChange(selectedPatient.id, key, value)}
                 className="mb-6"
               />
             )}
@@ -694,146 +712,30 @@ const Discharge = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add New Discharge Record Modal */}
+      {/* Add New Discharge Record Modal - Import from Billing */}
       <Dialog open={isAddRecordModalOpen} onOpenChange={setIsAddRecordModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Discharge Record</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="patientName">Patient Name *</Label>
-                <Input
-                  id="patientName"
-                  value={newRecordForm.patientName}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, patientName: e.target.value })}
-                  placeholder="Enter patient name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="room">Room *</Label>
-                <Input
-                  id="room"
-                  value={newRecordForm.room}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, room: e.target.value })}
-                  placeholder="e.g., 101A"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="admissionDate">Admission Date *</Label>
-                <Input
-                  id="admissionDate"
-                  type="date"
-                  value={newRecordForm.admissionDate}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, admissionDate: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="age">Age *</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  value={newRecordForm.age}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, age: e.target.value })}
-                  placeholder="Enter age"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="condition">Condition *</Label>
-                <Input
-                  id="condition"
-                  value={newRecordForm.condition}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, condition: e.target.value })}
-                  placeholder="e.g., Pneumonia"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="physician">Physician *</Label>
-                <Input
-                  id="physician"
-                  value={newRecordForm.physician}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, physician: e.target.value })}
-                  placeholder="e.g., Dr. Smith"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="department">Department *</Label>
-                <Input
-                  id="department"
-                  value={newRecordForm.department}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, department: e.target.value })}
-                  placeholder="e.g., Cardiology"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimatedDischarge">Estimated Discharge Date</Label>
-                <Input
-                  id="estimatedDischarge"
-                  type="date"
-                  value={newRecordForm.estimatedDischarge}
-                  onChange={(e) => setNewRecordForm({ ...newRecordForm, estimatedDischarge: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                New discharge records will be created with "Pending" status. All discharge requirements will need to be completed before the patient can be discharged.
-              </AlertDescription>
-            </Alert>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button variant="outline" onClick={() => {
-                setIsAddRecordModalOpen(false);
-                setNewRecordForm({
-                  patient: '',
-                  patientName: '',
-                  room: '',
-                  admissionDate: '',
-                  condition: '',
-                  physician: '',
-                  department: '',
-                  age: '',
-                  estimatedDischarge: ''
-                });
-              }}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddNewRecord} className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Record
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Import from Billing Modal */}
-      <Dialog open={isBillingImportModalOpen} onOpenChange={setIsBillingImportModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Import Patients from Billing</DialogTitle>
+            <DialogTitle>Add Discharge Record from Billing</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Select patients from existing billing records to create discharge records
+            </p>
           </DialogHeader>
           <div className="space-y-6">
             <Alert>
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-sm">
-                Select patients with billing records to create discharge records. Only patients without existing discharge records are shown.
+                Select patients below to add them to the discharge queue for processing
               </AlertDescription>
             </Alert>
 
             {billingPatients.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No eligible patients found in billing records.
+              <div className="text-center py-12">
+                <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium text-muted-foreground">No patients available</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  All billing records have been added to discharge queue
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -856,64 +758,68 @@ const Discharge = () => {
                   </Button>
                 </div>
 
-                {billingPatients.map((patient) => (
-                  <div
-                    key={patient.billing_id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                    onClick={() => handleToggleBillingPatient(patient.billing_id)}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <Checkbox
-                        checked={selectedBillingIds.includes(patient.billing_id)}
-                        onCheckedChange={() => handleToggleBillingPatient(patient.billing_id)}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold">{patient.patient_name}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {patient.hospital_id}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
-                          <div>
-                            <span className="font-medium">Room:</span> {patient.room}
-                          </div>
-                          <div>
-                            <span className="font-medium">Admission:</span> {patient.admission_date}
-                          </div>
-                          <div>
-                            <span className="font-medium">Payment:</span>{' '}
-                            <Badge
-                              variant="outline"
-                              className={
-                                patient.payment_status === 'Paid'
-                                  ? 'bg-green-100 text-green-800 border-green-200'
-                                  : patient.payment_status === 'Partial'
-                                    ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                                    : 'bg-red-100 text-red-800 border-red-200'
-                              }
-                            >
-                              {patient.payment_status}
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {billingPatients.map((patient) => (
+                    <div
+                      key={patient.billing_id}
+                      className={`flex items-start p-4 border-2 rounded-lg transition-all cursor-pointer ${selectedBillingIds.includes(patient.billing_id)
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                        }`}
+                      onClick={() => handleToggleBillingPatient(patient.billing_id)}
+                    >
+                      <div className="flex items-start gap-4 flex-1">
+                        <Checkbox
+                          checked={selectedBillingIds.includes(patient.billing_id)}
+                          onCheckedChange={() => handleToggleBillingPatient(patient.billing_id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-base">{patient.patient_name}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              ID: {patient.hospital_id}
                             </Badge>
                           </div>
-                        </div>
-                        {patient.running_balance && parseFloat(patient.running_balance) > 0 && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            <span className="font-medium">Balance:</span> ₱{parseFloat(patient.running_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Room:</span>
+                              <span className="ml-2 font-medium">{patient.room}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Age:</span>
+                              <span className="ml-2 font-medium">{patient.age} years</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Department:</span>
+                              <span className="ml-2 font-medium">{patient.department}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Admission:</span>
+                              <span className="ml-2 font-medium">{patient.admission_date}</span>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Physician:</span>
+                              <span className="ml-2 font-medium">{patient.physician_name || patient.physician || patient.attending_physician}</span>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Condition:</span>
+                              <span className="ml-2 font-medium">{patient.condition}</span>
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => {
-                  setIsBillingImportModalOpen(false);
+                  setIsAddRecordModalOpen(false);
                   setBillingPatients([]);
                   setSelectedBillingIds([]);
                 }}
@@ -922,11 +828,17 @@ const Discharge = () => {
               </Button>
               <Button
                 onClick={handleImportFromBilling}
-                disabled={selectedBillingIds.length === 0}
+                disabled={selectedBillingIds.length === 0 || isLoadingBilling}
                 className="bg-primary hover:bg-primary/90"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Import {selectedBillingIds.length} Patient(s)
+                {isLoadingBilling ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Add {selectedBillingIds.length} Record{selectedBillingIds.length !== 1 ? 's' : ''}
+                  </>
+                )}
               </Button>
             </div>
           </div>

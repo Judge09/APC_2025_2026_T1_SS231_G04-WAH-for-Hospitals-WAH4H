@@ -44,8 +44,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               <td className="px-4 py-2">
                 {patient.last_name}, {patient.first_name}
               </td>
-              <td className="px-4 py-2">{patient.sex}</td>
-              <td className="px-4 py-2">{patient.status}</td>
+              <td className="px-4 py-2">{patient.gender}</td>
+              <td className="px-4 py-2">{patient.active ? 'Active' : 'Inactive'}</td>
 
               <td className="px-4 py-2">
                 <div className="flex justify-center gap-2">
